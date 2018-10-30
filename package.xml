@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>twin_motors</name>
+  <version>1.0.0</version>
+  <description>
+    This project implements a small example when using the dynamic graph
+  </description>
+  <author email="mnaveau@tue.mpg.de">Maximilien Naveau</author>
+  <maintainer email="mnaveau@tue.mpg.de">Maximilien Naveau</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend> blmc_drivers </build_depend>
+  <run_depend>   blmc_drivers </run_depend>
+</package>
