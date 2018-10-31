@@ -1,7 +1,10 @@
 #ifndef COMMON_HEADER_H
 #define COMMON_HEADER_H
 
-using namespace blmc_motors
+#include <blmc_drivers/devices/motor.hpp>
+#include <blmc_drivers/devices/analog_sensor.hpp>
+
+namespace blmc_motors
 {
 
 typedef std::shared_ptr<blmc_drivers::SafeMotor> SafeMotor_ptr;

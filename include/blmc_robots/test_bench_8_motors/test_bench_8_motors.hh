@@ -1,9 +1,10 @@
 #ifndef TEST_BENCH_8_MOTORS_HH
 #define TEST_BENCH_8_MOTORS_HH
 
+#include <Eigen/Eigen>
 #include<blmc_robots/common_header.hh>
 
-using namespace blmc_motors
+namespace blmc_motors
 {
 
 class TestBench8Motors
@@ -39,7 +40,15 @@ public:
   /**
    * @brief get_motor_velocities
    */
-  Eigen::Ref<Eigen::Matrix<double, 8, 1> > void get_motor_velocities()
+  Eigen::Ref<Eigen::Matrix<double, 8, 1> > get_motor_velocities()
+  {
+    return motor_velocities_;
+  }
+
+  /**
+   * @brief get_slider_positions
+   */
+  Eigen::Ref<Eigen::Matrix<double, 8, 1> > get_slider_positions()
   {
     return motor_velocities_;
   }
@@ -55,6 +64,7 @@ public:
 
 private:
 
+  Eigen::Matrix<double, 8, 1> slider_positions_;
   Eigen::Matrix<double, 8, 1> motor_positions_;
   Eigen::Matrix<double, 8, 1> motor_velocities_;
   Eigen::Matrix<double, 8, 1> target_currents;
@@ -72,11 +82,23 @@ private:
 
   double max_current_ ;
 
-  board0_
-  board1_
-  board2_
-  board3_
+  SafeMotor_ptr board0_motor0;
+  SafeMotor_ptr board1_motor0;
+  SafeMotor_ptr board2_motor0;
+  SafeMotor_ptr board3_motor0;
+  SafeMotor_ptr board0_motor1;
+  SafeMotor_ptr board1_motor1;
+  SafeMotor_ptr board2_motor1;
+  SafeMotor_ptr board3_motor1;
 
+  Slider_ptr board0_slider0;
+  Slider_ptr board1_slider0;
+  Slider_ptr board2_slider0;
+  Slider_ptr board3_slider0;
+  Slider_ptr board0_slider1;
+  Slider_ptr board1_slider1;
+  Slider_ptr board2_slider1;
+  Slider_ptr board3_slider1;
 };
 
 } // namespace blmc_motors

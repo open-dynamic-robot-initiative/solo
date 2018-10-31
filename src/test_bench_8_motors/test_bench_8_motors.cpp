@@ -1,6 +1,6 @@
-#include "test_bench_8_motors.hh"
+#include "blmc_robots/test_bench_8_motors/test_bench_8_motors.hh"
 
-using namespace blmc_motors
+namespace blmc_motors
 {
 
 void TestBench8Motors::initialize()

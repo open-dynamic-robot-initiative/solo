@@ -27,11 +27,6 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 search_for_eigen()
 
-####################################
-# Define the OS to be used locally #
-####################################
-
-
 ######################################################
 # define the include directory of all ${CATKIN_PKGS} #
 ######################################################
