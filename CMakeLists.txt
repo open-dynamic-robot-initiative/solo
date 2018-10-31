@@ -17,6 +17,8 @@ set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 ############################
 # Search for dependencies. #
 ############################
+include(cmake/pkg-config.cmake)
+include(cmake/eigen.cmake)
 
 set(CATKIN_PKGS ${CATKIN_PKGS}
   blmc_drivers
