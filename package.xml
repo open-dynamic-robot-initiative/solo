@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>twin_motors</name>
+  <name>blmc_robots</name>
   <version>1.0.0</version>
   <description>
     This project implements a small example when using the dynamic graph

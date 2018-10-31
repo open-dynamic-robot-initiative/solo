@@ -1,6 +1,6 @@
 # see CMakeLists.txt for details
 
-PROJECT_NAME           = "twin_motors"
+PROJECT_NAME           = "blmc_robots"
 OUTPUT_DIRECTORY       = doc
 JAVADOC_AUTOBRIEF      = YES
 TAB_SIZE               = 4
