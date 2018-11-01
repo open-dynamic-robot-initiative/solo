@@ -13,9 +13,9 @@
 #define TEST_BENCH_8_MOTORS_HH
 
 #include <Eigen/Eigen>
-#include<blmc_robots/common_header.hh>
+#include <blmc_robots/common_header.hh>
 
-namespace blmc_motors
+namespace blmc_robots
 {
 
 /**
@@ -163,6 +163,6 @@ private:
   Slider_ptr board3_slider1_;
 };
 
-} // namespace blmc_motors
+} // namespace blmc_robots
 
 #endif // TEST_BENCH_8_MOTORS_HH

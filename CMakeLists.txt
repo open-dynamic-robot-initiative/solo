@@ -36,18 +36,18 @@ include_directories(
     ${Eigen_INCLUDE_DIRS}
 )
 
+########################################################
+# manage the creation of the libraries and executables #
+########################################################
+add_subdirectory(src)
+
 ##########################################
 # export the package as a catkin package #
 ##########################################
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS ${CATKIN_PKGS}
+  LIBRARIES ${EXPORTED_LIBRAIRIES}
 )
-
-########################################################
-# manage the creation of the libraries and executables #
-########################################################
-add_subdirectory(src)
 
 #########################
 # manage the unit tests #

@@ -9,7 +9,7 @@
 
 #include "blmc_robots/test_bench_8_motors/test_bench_8_motors.hh"
 
-namespace blmc_motors
+namespace blmc_robots
 {
 
 TestBench8Motors::TestBench8Motors()
@@ -148,4 +148,4 @@ void TestBench8Motors::send_target_current(
   board3_motor1_->send_if_input_changed();
 }
 
-} // namespace blmc_motors
+} // namespace blmc_robots

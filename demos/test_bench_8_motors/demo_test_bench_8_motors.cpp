@@ -9,7 +9,7 @@
 
 #include "blmc_robots/test_bench_8_motors/test_bench_8_motors.hh"
 
-using namespace blmc_motors;
+using namespace blmc_robots;
 
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
