@@ -106,14 +106,45 @@ void TestBench8Motors::acquire_sensors()
   motor_currents_(7) = board3_motor1_->get_measurement(mi::current)->newest_element();
 
   // acquire the motors encoder index
-//  motor_encoder_indexes_(0) = board0_motor0_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(1) = board0_motor1_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(2) = board1_motor0_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(3) = board1_motor1_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(4) = board2_motor0_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(5) = board2_motor1_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(6) = board3_motor0_->get_measurement(mi::encoder_index)->newest_element();
-//  motor_encoder_indexes_(7) = board3_motor1_->get_measurement(mi::encoder_index)->newest_element();
+  motor_encoder_indexes_(0) =
+      board0_motor0_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board0_motor0_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(1) =
+      board0_motor1_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board0_motor1_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(2) =
+      board1_motor0_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board1_motor0_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(3) =
+      board1_motor1_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board1_motor1_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(4) =
+      board2_motor0_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board2_motor0_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(5) =
+      board2_motor1_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board2_motor1_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(6) =
+      board3_motor0_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board3_motor0_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
+
+  motor_encoder_indexes_(7) =
+      board3_motor1_->get_measurement(mi::encoder_index)->length() > 0 ?
+        board3_motor1_->get_measurement(mi::encoder_index)->newest_element():
+        std::nan("");
 
   // acquire the slider positions
   slider_positions_(0) = board0_slider0_->get_measurement()->newest_element();
