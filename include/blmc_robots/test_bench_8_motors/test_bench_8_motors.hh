@@ -49,8 +49,8 @@ public:
       const Vector8d target_currents);
 
   /**
-   * @brief acquire_sensors acquire all available sensors, this method has to
-   * be called prior to any gettter to have up to date data.
+   * @brief acquire_sensors acquire all available sensors, WARNING !!!!
+   * this method has to be called prior to any gettter to have up to date data.
    */
   void acquire_sensors();
 

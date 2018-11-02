@@ -39,16 +39,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     desired_current = kp * (desired_motor_position - robot.get_motor_positions()) -
                       kd * robot.get_motor_velocities();
 
-    debug_des_pd = desired_current;
-
     // Saturate the desired current
     desired_current = desired_current.array().min(robot.get_max_current() * Vector8d::Ones().array());
-
-    debug_des_u_sat = desired_current;
-
     desired_current = desired_current.array().max(-robot.get_max_current() * Vector8d::Ones().array());
-
-    debug_des_l_sat = desired_current;
 
     // Send the current to the motor
     robot.send_target_current(desired_current);
@@ -59,34 +52,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     time_logger.end_and_start_interval();
     if ((time_logger.count() % 1000) == 0)
     {
-//      rt_printf("desired_motor_position: [");
-//      for(int i=0 ; i<desired_motor_position.size() ; ++i)
-//      {
-//        rt_printf("%f, ", desired_motor_position(i));
-//      }
-//      rt_printf("]\n");
-
-//      rt_printf("debug_des_pd: [");
-//      for(int i=0 ; i<debug_des_pd.size() ; ++i)
-//      {
-//        rt_printf("%f, ", debug_des_pd(i));
-//      }
-//      rt_printf("]\n");
-
-//      rt_printf("debug_des_u_sat: [");
-//      for(int i=0 ; i<debug_des_u_sat.size() ; ++i)
-//      {
-//        rt_printf("%f, ", debug_des_u_sat(i));
-//      }
-//      rt_printf("]\n");
-
-//      rt_printf("debug_des_l_sat: [");
-//      for(int i=0 ; i<debug_des_l_sat.size() ; ++i)
-//      {
-//        rt_printf("%f, ", debug_des_l_sat(i));
-//      }
-//      rt_printf("]\n");
-
       rt_printf("sending currents: [");
       for(int i=0 ; i<desired_current.size() ; ++i)
       {
