@@ -141,27 +141,12 @@ private:
   Eigen::Vector3d slider_positions_;
   Eigen::Vector3d target_currents;
 
-
-  std::shared_ptr<blmc_drivers::CanBus> can_bus0_;
-  std::shared_ptr<blmc_drivers::CanBus> can_bus1_;
-
-
-  std::shared_ptr<blmc_drivers::CanBusMotorBoard> board0_;
-  std::shared_ptr<blmc_drivers::CanBusMotorBoard> board1_;
-
   double max_current_ ;
   double max_range_ ;
 
   // we have 4 board with each possessing 2 motors and 2 sliders
   std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> motors_;
   std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3> sliders_;
-
-
-  Slider_ptr board0_slider0_;
-  Slider_ptr board0_slider1_;
-
-  Slider_ptr board1_slider0_;
-
 };
 
 } // namespace blmc_robots

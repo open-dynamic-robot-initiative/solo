@@ -35,24 +35,24 @@ void Finger::initialize()
   osi::initialize_realtime_printing();
 
   // initialize the communication with the can cards
-  can_bus0_ = std::make_shared<blmc_drivers::CanBus>("can0");
-  can_bus1_ = std::make_shared<blmc_drivers::CanBus>("can1");
+  auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
+  auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can1");
 
   // get all informatino about the control cards
-  board0_ = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus0_);
-  board1_ = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus1_);
+  auto board_0 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_0);
+  auto board_1 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_1);
 
   // get the drivers for the motors and the sliders
   // two individual motors on individual leg style mounting on the left of the
   // table
-  motors_[MotorIndexing::base]  = std::make_shared<blmc_drivers::SafeMotor>   (board0_, 0, max_current_);
-  motors_[MotorIndexing::center]  = std::make_shared<blmc_drivers::SafeMotor>   (board0_, 1, max_current_);
-  sliders_[MotorIndexing::base] = std::make_shared<blmc_drivers::AnalogSensor>(board0_, 0);
-  sliders_[MotorIndexing::center] = std::make_shared<blmc_drivers::AnalogSensor>(board0_, 1);
+  motors_[MotorIndexing::base]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 0, max_current_);
+  motors_[MotorIndexing::center]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 1, max_current_);
+  sliders_[MotorIndexing::base] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 0);
+  sliders_[MotorIndexing::center] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 1);
 
   // two individual motors with a wheel on top
-  motors_[MotorIndexing::tip]  = std::make_shared<blmc_drivers::SafeMotor>   (board1_, 0, max_current_);
-  sliders_[MotorIndexing::tip] = std::make_shared<blmc_drivers::AnalogSensor>(board1_, 0);
+  motors_[MotorIndexing::tip]  = std::make_shared<blmc_drivers::SafeMotor>   (board_1, 0, max_current_);
+  sliders_[MotorIndexing::tip] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
 
   Timer<>::sleep_ms(10);
 }
