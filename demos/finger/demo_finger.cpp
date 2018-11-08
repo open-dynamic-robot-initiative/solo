@@ -28,9 +28,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   Timer<10> time_logger("controller");
   while(true)
   {
-    // acquire the sensors
-    robot.acquire_sensors();
-
     // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
     desired_motor_position = robot.get_max_range() *
                              (robot.get_slider_positions().array() - 0.5);
@@ -44,7 +41,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     desired_current = desired_current.array().max(-robot.get_max_current() * Eigen::Vector3d::Ones().array());
 
     // Send the current to the motor
-    robot.send_target_current(desired_current);
+    robot.send_torques(desired_current);
 
     // print -----------------------------------------------------------
     Timer<>::sleep_ms(1);

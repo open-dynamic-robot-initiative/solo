@@ -62,20 +62,6 @@ public:
     }
 
 
-    /**
-   * @brief send_target_torques sends the target currents to the motors
-   */
-    void send_target_current(
-            const Eigen::Vector3d target_currents);
-
-    /**
-   * @brief acquire_sensors acquire all available sensors, WARNING !!!!
-   * this method has to be called prior to any gettter to have up to date data.
-   */
-    void acquire_sensors();
-
-
-
     void send_torques(const Eigen::Vector3d& desired_torques)
     {
         for(size_t i = 0; i < motor_count; i++)
@@ -137,43 +123,16 @@ public:
         return encoder_indices;
     }
 
-
-
-
-    /**
-   * @brief get_motor_velocities
-   * @return the current motors velocities (rad/s).
-   */
-    const Eigen::Vector3d get_motor_velocities()
-    {
-        return motor_velocities_;
-    }
-
-    /**
-   * @brief get_motor_currents
-   * @return the current motors currents in (Amper: A).
-   */
-    const Eigen::Vector3d get_motor_currents()
-    {
-        return motor_currents_;
-    }
-
-    /**
-   * @brief get_motor_encoder_indexes
-   * @return TODO: ask Manuel what is this exactly.
-   */
-    const Eigen::Vector3d get_motor_encoder_indexes()
-    {
-        return motor_encoder_indexes_;
-    }
-
-    /**
-   * @brief get_slider_positions
-   * @return the current sliders positions.
-   */
     const Eigen::Vector3d get_slider_positions()
     {
-        return slider_positions_;
+        Eigen::Vector3d slider_positions;
+
+        for(size_t i = 0; i < motor_count; i++)
+        {
+            slider_positions(i) =
+                    sliders_[i]->get_measurement()->newest_element();
+        }
+        return slider_positions;
     }
 
     /**
@@ -199,14 +158,6 @@ private:
     double zero_position_;
     double gear_ratio_;
     double motor_constant_;
-
-
-    Eigen::Vector3d motor_positions_;
-    Eigen::Vector3d motor_velocities_;
-    Eigen::Vector3d motor_currents_;
-    Eigen::Vector3d motor_encoder_indexes_;
-    Eigen::Vector3d slider_positions_;
-    Eigen::Vector3d target_currents;
 
     double max_current_ ;
     double max_range_ ;
