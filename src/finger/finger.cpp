@@ -18,7 +18,7 @@ Finger::Finger()
 {
     zero_position_ = 0;
     gear_ratio_ = 9.0;
-    motor_constant_ = 1;
+    motor_constant_ = 0.02; // Nm/A
 
 
     max_current_ = 1.0 ;

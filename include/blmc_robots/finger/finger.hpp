@@ -66,7 +66,7 @@ public:
     {
         for(size_t i = 0; i < motor_count; i++)
         {
-            motors_[i]->set_current_target(desired_torques(i) / gear_ratio_);
+            motors_[i]->set_current_target(desired_torques(i) / gear_ratio_ / motor_constant_);
         }
         for(size_t i = 0; i < motor_count; i++)
         {
@@ -81,7 +81,7 @@ public:
 
         for(size_t i = 0; i < motor_count; i++)
         {
-            torques(i) = get_motor_measurement(i, current) * gear_ratio_;
+            torques(i) = get_motor_measurement(i, current) * gear_ratio_ * motor_constant_;
         }
         return torques;
     }

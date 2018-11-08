@@ -16,8 +16,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
   Finger& robot = *(static_cast<Finger*>(robot_void_ptr));
 
-  double kp = 50;
-  double kd = 10;
+  double kp = 1;
+  double kd = 0.2;
   Eigen::Vector3d desired_motor_position;
   Eigen::Vector3d desired_torque;
 
@@ -36,8 +36,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                       kd * robot.get_velocities();
 
     // Saturate the desired current
-    desired_torque = desired_torque.array().min(10. * Eigen::Vector3d::Ones().array());
-    desired_torque = desired_torque.array().max(-10. * Eigen::Vector3d::Ones().array());
+    desired_torque = desired_torque.array().min(0.2 * Eigen::Vector3d::Ones().array());
+    desired_torque = desired_torque.array().max(-0.2 * Eigen::Vector3d::Ones().array());
 
     // Send the current to the motor
     robot.send_torques(desired_torque);
