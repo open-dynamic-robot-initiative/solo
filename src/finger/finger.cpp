@@ -16,15 +16,20 @@ namespace blmc_robots
 
 Finger::Finger()
 {
-  max_current_ = 1.0 ;
-  max_range_ = 2.0;
+    zero_position_ = 0;
+    gear_ratio_ = 1;
+    motor_constant_ = 1;
 
-  motor_positions_.setZero();
-  motor_velocities_.setZero();
-  motor_currents_.setZero();
-  motor_encoder_indexes_.setZero();
-  slider_positions_.setZero();
-  target_currents.setZero();
+
+    max_current_ = 1.0 ;
+    max_range_ = 2.0;
+
+    motor_positions_.setZero();
+    motor_velocities_.setZero();
+    motor_currents_.setZero();
+    motor_encoder_indexes_.setZero();
+    slider_positions_.setZero();
+    target_currents.setZero();
 
 }
 

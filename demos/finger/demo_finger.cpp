@@ -36,8 +36,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                              (robot.get_slider_positions().array() - 0.5);
 
     // we implement here a small pd control at the current level
-    desired_current = kp * (desired_motor_position - robot.get_motor_positions()) -
-                      kd * robot.get_motor_velocities();
+    desired_current = kp * (desired_motor_position - robot.get_positions()) -
+                      kd * robot.get_velocities();
 
     // Saturate the desired current
     desired_current = desired_current.array().min(robot.get_max_current() * Eigen::Vector3d::Ones().array());
