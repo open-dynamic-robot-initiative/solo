@@ -17,7 +17,7 @@ namespace blmc_robots
 Finger::Finger()
 {
     zero_position_ = 0;
-    gear_ratio_ = 1;
+    gear_ratio_ = 9.0;
     motor_constant_ = 1;
 
 

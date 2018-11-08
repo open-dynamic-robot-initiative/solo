@@ -16,10 +16,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
   Finger& robot = *(static_cast<Finger*>(robot_void_ptr));
 
-  double kp = 5;
-  double kd = 1;
+  double kp = 50;
+  double kd = 10;
   Eigen::Vector3d desired_motor_position;
-  Eigen::Vector3d desired_current;
+  Eigen::Vector3d desired_torque;
 
   Eigen::Vector3d debug_des_pd;
   Eigen::Vector3d debug_des_u_sat;
@@ -29,19 +29,18 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   while(true)
   {
     // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
-    desired_motor_position = robot.get_max_range() *
-                             (robot.get_slider_positions().array() - 0.5);
+    desired_motor_position = (robot.get_slider_positions().array() - 0.5);
 
     // we implement here a small pd control at the current level
-    desired_current = kp * (desired_motor_position - robot.get_positions()) -
+    desired_torque = kp * (desired_motor_position - robot.get_positions()) -
                       kd * robot.get_velocities();
 
     // Saturate the desired current
-    desired_current = desired_current.array().min(robot.get_max_current() * Eigen::Vector3d::Ones().array());
-    desired_current = desired_current.array().max(-robot.get_max_current() * Eigen::Vector3d::Ones().array());
+    desired_torque = desired_torque.array().min(10. * Eigen::Vector3d::Ones().array());
+    desired_torque = desired_torque.array().max(-10. * Eigen::Vector3d::Ones().array());
 
     // Send the current to the motor
-    robot.send_torques(desired_current);
+    robot.send_torques(desired_torque);
 
     // print -----------------------------------------------------------
     Timer<>::sleep_ms(1);
@@ -50,9 +49,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     if ((time_logger.count() % 1000) == 0)
     {
       rt_printf("sending currents: [");
-      for(int i=0 ; i<desired_current.size() ; ++i)
+      for(int i=0 ; i<desired_torque.size() ; ++i)
       {
-        rt_printf("%f, ", desired_current(i));
+        rt_printf("%f, ", desired_torque(i));
       }
       rt_printf("]\n");
     }
