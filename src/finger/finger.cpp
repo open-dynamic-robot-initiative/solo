@@ -46,13 +46,13 @@ void Finger::initialize()
   // two individual motors on individual leg style mounting on the left of the
   // table
   motors_[MotorIndexing::base]  = std::make_shared<blmc_drivers::SafeMotor>   (board0_, 0, max_current_);
-  board0_motor1_  = std::make_shared<blmc_drivers::SafeMotor>   (board0_, 1, max_current_);
-  board0_slider0_ = std::make_shared<blmc_drivers::AnalogSensor>(board0_, 0);
-  board0_slider1_ = std::make_shared<blmc_drivers::AnalogSensor>(board0_, 1);
+  motors_[MotorIndexing::center]  = std::make_shared<blmc_drivers::SafeMotor>   (board0_, 1, max_current_);
+  sliders_[MotorIndexing::base] = std::make_shared<blmc_drivers::AnalogSensor>(board0_, 0);
+  sliders_[MotorIndexing::center] = std::make_shared<blmc_drivers::AnalogSensor>(board0_, 1);
 
   // two individual motors with a wheel on top
-  board1_motor0_  = std::make_shared<blmc_drivers::SafeMotor>   (board1_, 0, max_current_);
-  board1_slider0_ = std::make_shared<blmc_drivers::AnalogSensor>(board1_, 0);
+  motors_[MotorIndexing::tip]  = std::make_shared<blmc_drivers::SafeMotor>   (board1_, 0, max_current_);
+  sliders_[MotorIndexing::tip] = std::make_shared<blmc_drivers::AnalogSensor>(board1_, 0);
 
   Timer<>::sleep_ms(10);
 }
@@ -61,18 +61,18 @@ void Finger::acquire_sensors()
 {
   // acquire the motors positions
   motor_positions_(0) = motors_[MotorIndexing::base]->get_measurement(mi::position)->newest_element();
-  motor_positions_(1) = board0_motor1_->get_measurement(mi::position)->newest_element();
-  motor_positions_(2) = board1_motor0_->get_measurement(mi::position)->newest_element();
+  motor_positions_(1) = motors_[MotorIndexing::center]->get_measurement(mi::position)->newest_element();
+  motor_positions_(2) = motors_[MotorIndexing::tip]->get_measurement(mi::position)->newest_element();
 
   // acquire the motors velocities
   motor_velocities_(0) = motors_[MotorIndexing::base]->get_measurement(mi::velocity)->newest_element();
-  motor_velocities_(1) = board0_motor1_->get_measurement(mi::velocity)->newest_element();
-  motor_velocities_(2) = board1_motor0_->get_measurement(mi::velocity)->newest_element();
+  motor_velocities_(1) = motors_[MotorIndexing::center]->get_measurement(mi::velocity)->newest_element();
+  motor_velocities_(2) = motors_[MotorIndexing::tip]->get_measurement(mi::velocity)->newest_element();
 
   // acquire the motors current
   motor_currents_(0) = motors_[MotorIndexing::base]->get_measurement(mi::current)->newest_element();
-  motor_currents_(1) = board0_motor1_->get_measurement(mi::current)->newest_element();
-  motor_currents_(2) = board1_motor0_->get_measurement(mi::current)->newest_element();
+  motor_currents_(1) = motors_[MotorIndexing::center]->get_measurement(mi::current)->newest_element();
+  motor_currents_(2) = motors_[MotorIndexing::tip]->get_measurement(mi::current)->newest_element();
 
 
   // acquire the motors encoder index
@@ -82,33 +82,33 @@ void Finger::acquire_sensors()
         std::numeric_limits<double>::quiet_NaN();
 
   motor_encoder_indexes_(1) =
-      board0_motor1_->get_measurement(mi::encoder_index)->length() > 0 ?
-        board0_motor1_->get_measurement(mi::encoder_index)->newest_element():
+      motors_[MotorIndexing::center]->get_measurement(mi::encoder_index)->length() > 0 ?
+        motors_[MotorIndexing::center]->get_measurement(mi::encoder_index)->newest_element():
         std::numeric_limits<double>::quiet_NaN();
 
   motor_encoder_indexes_(2) =
-      board1_motor0_->get_measurement(mi::encoder_index)->length() > 0 ?
-        board1_motor0_->get_measurement(mi::encoder_index)->newest_element():
+      motors_[MotorIndexing::tip]->get_measurement(mi::encoder_index)->length() > 0 ?
+        motors_[MotorIndexing::tip]->get_measurement(mi::encoder_index)->newest_element():
         std::numeric_limits<double>::quiet_NaN();
 
 
   // acquire the slider positions
-  slider_positions_(0) = board0_slider0_->get_measurement()->newest_element();
-  slider_positions_(1) = board0_slider1_->get_measurement()->newest_element();
-  slider_positions_(2) = board1_slider0_->get_measurement()->newest_element();
+  slider_positions_(0) = sliders_[MotorIndexing::base]->get_measurement()->newest_element();
+  slider_positions_(1) = sliders_[MotorIndexing::center]->get_measurement()->newest_element();
+  slider_positions_(2) = sliders_[MotorIndexing::tip]->get_measurement()->newest_element();
 }
 
 void Finger::send_target_current(
     const Eigen::Vector3d target_currents)
 {
   motors_[MotorIndexing::base]->set_current_target(target_currents(0));
-  board0_motor1_->set_current_target(target_currents(1));
-  board1_motor0_->set_current_target(target_currents(2));
+  motors_[MotorIndexing::center]->set_current_target(target_currents(1));
+  motors_[MotorIndexing::tip]->set_current_target(target_currents(2));
 
 
   motors_[MotorIndexing::base]->send_if_input_changed();
-  board0_motor1_->send_if_input_changed();
-  board1_motor0_->send_if_input_changed();
+  motors_[MotorIndexing::center]->send_if_input_changed();
+  motors_[MotorIndexing::tip]->send_if_input_changed();
 }
 
 } // namespace blmc_robots

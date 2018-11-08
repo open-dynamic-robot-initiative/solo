@@ -154,12 +154,12 @@ private:
 
   // we have 4 board with each possessing 2 motors and 2 sliders
   std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> motors_;
-  SafeMotor_ptr board0_motor0_;
-  SafeMotor_ptr board0_motor1_;
+  std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3> sliders_;
+
+
   Slider_ptr board0_slider0_;
   Slider_ptr board0_slider1_;
 
-  SafeMotor_ptr board1_motor0_;
   Slider_ptr board1_slider0_;
 
 };
