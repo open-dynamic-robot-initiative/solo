@@ -45,7 +45,7 @@ public:
    * @brief send_target_torques sends the target currents to the motors
    */
   void send_target_current(
-      const Vector8d target_currents);
+      const Eigen::Vector3d target_currents);
 
   /**
    * @brief acquire_sensors acquire all available sensors, WARNING !!!!
@@ -57,7 +57,7 @@ public:
    * @brief get_motor_positions
    * @return the current motors positions (rad).
    */
-  const Vector8d get_motor_positions()
+  const Eigen::Vector3d get_motor_positions()
   {
     return motor_positions_;
   }
@@ -66,7 +66,7 @@ public:
    * @brief get_motor_velocities
    * @return the current motors velocities (rad/s).
    */
-  const Vector8d get_motor_velocities()
+  const Eigen::Vector3d get_motor_velocities()
   {
     return motor_velocities_;
   }
@@ -75,7 +75,7 @@ public:
    * @brief get_motor_currents
    * @return the current motors currents in (Amper: A).
    */
-  const Vector8d get_motor_currents()
+  const Eigen::Vector3d get_motor_currents()
   {
     return motor_currents_;
   }
@@ -84,7 +84,7 @@ public:
    * @brief get_motor_encoder_indexes
    * @return TODO: ask Manuel what is this exactly.
    */
-  const Vector8d get_motor_encoder_indexes()
+  const Eigen::Vector3d get_motor_encoder_indexes()
   {
     return motor_encoder_indexes_;
   }
@@ -93,7 +93,7 @@ public:
    * @brief get_slider_positions
    * @return the current sliders positions.
    */
-  const Vector8d get_slider_positions()
+  const Eigen::Vector3d get_slider_positions()
   {
     return slider_positions_;
   }
@@ -119,23 +119,20 @@ public:
 private:
 
 
-  Eigen::Matrix<double, 8, 1> motor_positions_;
-  Eigen::Matrix<double, 8, 1> motor_velocities_;
-  Eigen::Matrix<double, 8, 1> motor_currents_;
-  Eigen::Matrix<double, 8, 1> motor_encoder_indexes_;
-  Eigen::Matrix<double, 8, 1> slider_positions_;
-  Eigen::Matrix<double, 8, 1> target_currents;
+  Eigen::Vector3d motor_positions_;
+  Eigen::Vector3d motor_velocities_;
+  Eigen::Vector3d motor_currents_;
+  Eigen::Vector3d motor_encoder_indexes_;
+  Eigen::Vector3d slider_positions_;
+  Eigen::Vector3d target_currents;
 
 
   std::shared_ptr<blmc_drivers::CanBus> can_bus0_;
   std::shared_ptr<blmc_drivers::CanBus> can_bus1_;
-  std::shared_ptr<blmc_drivers::CanBus> can_bus2_;
-  std::shared_ptr<blmc_drivers::CanBus> can_bus3_;
+
 
   std::shared_ptr<blmc_drivers::CanBusMotorBoard> board0_;
   std::shared_ptr<blmc_drivers::CanBusMotorBoard> board1_;
-  std::shared_ptr<blmc_drivers::CanBusMotorBoard> board2_;
-  std::shared_ptr<blmc_drivers::CanBusMotorBoard> board3_;
 
   double max_current_ ;
   double max_range_ ;
@@ -147,19 +144,8 @@ private:
   Slider_ptr board0_slider1_;
 
   SafeMotor_ptr board1_motor0_;
-  SafeMotor_ptr board1_motor1_;
   Slider_ptr board1_slider0_;
-  Slider_ptr board1_slider1_;
 
-  SafeMotor_ptr board2_motor0_;
-  SafeMotor_ptr board2_motor1_;
-  Slider_ptr board2_slider0_;
-  Slider_ptr board2_slider1_;
-
-  SafeMotor_ptr board3_motor0_;
-  SafeMotor_ptr board3_motor1_;
-  Slider_ptr board3_slider0_;
-  Slider_ptr board3_slider1_;
 };
 
 } // namespace blmc_robots

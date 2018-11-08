@@ -18,12 +18,12 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
   double kp = 5;
   double kd = 1;
-  Vector8d desired_motor_position;
-  Vector8d desired_current;
+  Eigen::Vector3d desired_motor_position;
+  Eigen::Vector3d desired_current;
 
-  Vector8d debug_des_pd;
-  Vector8d debug_des_u_sat;
-  Vector8d debug_des_l_sat;
+  Eigen::Vector3d debug_des_pd;
+  Eigen::Vector3d debug_des_u_sat;
+  Eigen::Vector3d debug_des_l_sat;
 
   Timer<10> time_logger("controller");
   while(true)
@@ -40,8 +40,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                       kd * robot.get_motor_velocities();
 
     // Saturate the desired current
-    desired_current = desired_current.array().min(robot.get_max_current() * Vector8d::Ones().array());
-    desired_current = desired_current.array().max(-robot.get_max_current() * Vector8d::Ones().array());
+    desired_current = desired_current.array().min(robot.get_max_current() * Eigen::Vector3d::Ones().array());
+    desired_current = desired_current.array().max(-robot.get_max_current() * Eigen::Vector3d::Ones().array());
 
     // Send the current to the motor
     robot.send_target_current(desired_current);
