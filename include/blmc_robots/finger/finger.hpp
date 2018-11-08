@@ -41,6 +41,21 @@ public:
    */
   void initialize();
 
+
+  enum MotorMeasurementIndexing {current, position, velocity, encoder_index,
+                                 motor_measurement_count};
+  enum MotorIndexing {base, center, tip, motor_count};
+
+  /// getters ================================================================
+  // device outputs ----------------------------------------------------------
+  double get_measurement(const int& motor_index,
+                         const int& measurement_index) const
+  {
+      return motors_[motor_index]->get_measurement(measurement_index)->newest_element();
+
+  }
+
+
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
@@ -138,6 +153,7 @@ private:
   double max_range_ ;
 
   // we have 4 board with each possessing 2 motors and 2 sliders
+  std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> motors_;
   SafeMotor_ptr board0_motor0_;
   SafeMotor_ptr board0_motor1_;
   Slider_ptr board0_slider0_;
