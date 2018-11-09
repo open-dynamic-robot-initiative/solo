@@ -15,7 +15,7 @@
 #include <blmc_robots/common_header.hh>
 #include <math.h>
 
-#include <blmc_robots/blmc_module/blmc_module.hpp>
+#include <blmc_robots/blmc_joint_module/blmc_joint_module.hpp>
 #include <blmc_robots/slider/slider.hpp>
 
 
@@ -26,14 +26,14 @@ namespace blmc_robots
  * @brief The Finger class implements the control of the test bench
  * containing 8 motors and 8 sliders using the blmc drivers.
  */
-class Finger: public BlmcModules<3>
+class Finger: public BlmcJointModules<3>
 {
 public:
     enum JointIndexing {base, center, tip, joint_count};
 
     Finger(const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3>& motors,
            const std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3>& sliders):
-        BlmcModules<3>(motors,
+        BlmcJointModules<3>(motors,
                        0.02 * Eigen::Vector3d::Ones(),
                        9.0 * Eigen::Vector3d::Ones(),
                        Eigen::Vector3d::Zero()),

@@ -11,14 +11,14 @@
 namespace blmc_robots
 {
 
-class BlmcModule
+class BlmcJointModule
 {
 public:
 
     typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
 
 
-    BlmcModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
+    BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
                const double& motor_constant = 1.0,
                const double& gear_ratio = 1.0,
                const double& zero_position = 0.0)
@@ -91,13 +91,13 @@ private:
 
 
 template <int COUNT>
-class BlmcModules
+class BlmcJointModules
 {
 public:
     typedef Eigen::Matrix<double, COUNT, 1> Vector;
 
 
-    BlmcModules(
+    BlmcJointModules(
             const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>& motors,
             const Vector& motor_constants,
             const Vector& gear_ratios,
@@ -105,7 +105,7 @@ public:
     {
         for(size_t i = 0; i < COUNT; i++)
         {
-            modules_[i] = std::make_shared<BlmcModule>(motors[i],
+            modules_[i] = std::make_shared<BlmcJointModule>(motors[i],
                                                        motor_constants[i],
                                                        gear_ratios[i],
                                                        zero_positions[i]);
@@ -173,7 +173,7 @@ public:
     }
 
 private:
-    std::array<std::shared_ptr<BlmcModule>, COUNT> modules_;
+    std::array<std::shared_ptr<BlmcJointModule>, COUNT> modules_;
 
 };
 
