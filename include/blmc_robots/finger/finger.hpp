@@ -57,20 +57,17 @@ public:
         return measurement_history->newest_element();
     }
 
-
     void send_torques(const Eigen::Vector3d& desired_torques)
     {
         for(size_t i = 0; i < motor_count; i++)
         {
-            motors_[i]->set_current_target(desired_torques(i)
-                                           / gear_ratio_ / motor_constant_);
+            modules_[i]->set_torque(desired_torques(i));
         }
         for(size_t i = 0; i < motor_count; i++)
         {
-            motors_[i]->send_if_input_changed();
+            modules_[i]->send_torque();
         }
     }
-
 
     Eigen::Vector3d get_torques() const
     {
@@ -78,14 +75,10 @@ public:
 
         for(size_t i = 0; i < motor_count; i++)
         {
-            torques(i) = get_motor_measurement(i, current)
-                    * gear_ratio_ * motor_constant_;
+            torques(i) = modules_[i]->get_torque();
         }
         return torques;
     }
-
-
-
 
     Eigen::Vector3d get_angles() const
     {
@@ -93,12 +86,10 @@ public:
 
         for(size_t i = 0; i < motor_count; i++)
         {
-            positions(i) = get_motor_measurement(i, position) / gear_ratio_ * 2 * M_PI
-                    - zero_angle_;
+            positions(i) = modules_[i]->get_angle();
         }
         return positions;
     }
-
 
     Eigen::Vector3d get_angular_velocities() const
     {
@@ -106,22 +97,21 @@ public:
 
         for(size_t i = 0; i < motor_count; i++)
         {
-            velocities(i) = get_motor_measurement(i, velocity) / gear_ratio_ * 2 * M_PI;
+            velocities(i) = modules_[i]->get_angular_velocity();
         }
         return velocities;
     }
 
 
-    Eigen::Vector3d get_angle_indices() const
+    Eigen::Vector3d get_index_angles() const
     {
-        Eigen::Vector3d encoder_indices;
+        Eigen::Vector3d index_angles;
 
         for(size_t i = 0; i < motor_count; i++)
         {
-            encoder_indices(i) =
-                    get_motor_measurement(i, encoder_index) / gear_ratio_ * 2 * M_PI;
+            index_angles(i) = modules_[i]->get_index_angle();
         }
-        return encoder_indices;
+        return index_angles;
     }
 
     const Eigen::Vector3d get_slider_positions()
