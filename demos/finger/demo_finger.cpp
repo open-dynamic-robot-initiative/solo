@@ -60,20 +60,43 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char **argv)
 {
-  Finger robot;
+    osi::initialize_realtime_printing();
 
-  robot.initialize();
 
-  rt_printf("controller is set up \n");
+    // initialize the communication with the can cards
+    auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
+    auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can1");
 
-  osi::start_thread(&control_loop, &robot);
+    // get all informatino about the control cards
+    auto board_0 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_0);
+    auto board_1 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_1);
 
-  rt_printf("control loop started \n");
+    // get the drivers for the motors and the sliders
+    // two individual motors on individual leg style mounting on the left of the
+    // table
+    std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> motors;
+    motors[0]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 0, 2.0);
+    motors[1]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 1, 2.0);
+    motors[2]  = std::make_shared<blmc_drivers::SafeMotor>   (board_1, 0, 2.0);
 
-  while(true)
-  {
+    std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3> sliders;
+    sliders[0] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 0);
+    sliders[1] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 1);
+    sliders[2] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
+
+    Finger finger(motors, sliders);
     Timer<>::sleep_ms(10);
-  }
 
-  return 0;
+    rt_printf("controller is set up \n");
+
+    osi::start_thread(&control_loop, &finger);
+
+    rt_printf("control loop started \n");
+
+    while(true)
+    {
+        Timer<>::sleep_ms(10);
+    }
+
+    return 0;
 }

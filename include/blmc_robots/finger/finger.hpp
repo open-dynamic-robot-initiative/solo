@@ -30,40 +30,27 @@ class Finger
 public:
 
     typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
+    enum MotorIndexing {base, center, tip, joint_count};
 
-
-    Finger();
-
-
-    void initialize();
-
-
-    enum MotorMeasurementIndexing {current, position, velocity, encoder_index,
-                                   motor_measurement_count};
-    enum MotorIndexing {base, center, tip, motor_count};
-
-    /// getters ================================================================
-    // device outputs ----------------------------------------------------------
-    double get_motor_measurement(const int& motor_index,
-                           const int& measurement_index) const
+    Finger(const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3>& motors,
+                   const std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3>& sliders)
     {
-        auto measurement_history =
-                motors_[motor_index]->get_measurement(measurement_index);
+        motors_ = motors;
+        sliders_ = sliders;
 
-        if(measurement_history->length() == 0)
-        {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-        return measurement_history->newest_element();
+        modules_[MotorIndexing::base]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::base], 0.02, 9.0, 0.0);
+        modules_[MotorIndexing::center]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::center], 0.02, 9.0, 0.0);
+        modules_[MotorIndexing::tip]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::tip], 0.02, 9.0, 0.0);
     }
+
 
     void send_torques(const Eigen::Vector3d& desired_torques)
     {
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             modules_[i]->set_torque(desired_torques(i));
         }
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             modules_[i]->send_torque();
         }
@@ -73,7 +60,7 @@ public:
     {
         Eigen::Vector3d torques;
 
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             torques(i) = modules_[i]->get_torque();
         }
@@ -84,7 +71,7 @@ public:
     {
         Eigen::Vector3d positions;
 
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             positions(i) = modules_[i]->get_angle();
         }
@@ -95,7 +82,7 @@ public:
     {
         Eigen::Vector3d velocities;
 
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             velocities(i) = modules_[i]->get_angular_velocity();
         }
@@ -107,7 +94,7 @@ public:
     {
         Eigen::Vector3d index_angles;
 
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             index_angles(i) = modules_[i]->get_index_angle();
         }
@@ -118,7 +105,7 @@ public:
     {
         Eigen::Vector3d slider_positions;
 
-        for(size_t i = 0; i < motor_count; i++)
+        for(size_t i = 0; i < joint_count; i++)
         {
             slider_positions(i) =
                     sliders_[i]->get_measurement()->newest_element();
@@ -128,13 +115,6 @@ public:
 
 
 private:
-
-    double zero_angle_;
-    double gear_ratio_;
-    double motor_constant_;
-
-    double max_current_ ;
-
     std::array<std::shared_ptr<BlmcModule>, 3> modules_;
 
     // we have 4 board with each possessing 2 motors and 2 sliders
