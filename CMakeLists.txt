@@ -48,7 +48,6 @@ add_subdirectory(src)
 ##########################################
 # export the package as a catkin package #
 ##########################################
-message(STATUS "EXPORTED_LIBRAIRIES= ${EXPORTED_LIBRAIRIES}")
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${EXPORTED_LIBRAIRIES}
