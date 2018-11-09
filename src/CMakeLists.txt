@@ -13,10 +13,9 @@ target_link_libraries(test_bench_8_motors
   rt
   pthread
 )
-endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+endif()
 
-set(EXPORTED_LIBRAIRIES ${EXPORTED_LIBRAIRIES} test_bench_8_motors
-    PARENT_SCOPE)
+set(EXPORTED_LIBRAIRIES_LOCAL ${EXPORTED_LIBRAIRIES_LOCAL} test_bench_8_motors)
 
 
 #############################
@@ -34,8 +33,9 @@ target_link_libraries(finger
   rt
   pthread
 )
-endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+endif()
 
+set(EXPORTED_LIBRAIRIES_LOCAL ${EXPORTED_LIBRAIRIES_LOCAL} finger)
 
-set(EXPORTED_LIBRAIRIES ${EXPORTED_LIBRAIRIES} finger
-    PARENT_SCOPE)
+set(EXPORTED_LIBRAIRIES ${EXPORTED_LIBRAIRIES_LOCAL} PARENT_SCOPE)
+
