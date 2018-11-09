@@ -41,7 +41,6 @@ public:
         motor_->send_if_input_changed();
     }
 
-
     double get_torque() const
     {
 

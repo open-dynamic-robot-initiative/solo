@@ -34,7 +34,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     robot.send_torques();
 
 
-    // print -----------------------------------------------------------
+    // print -------------------------------------------------------------------
     Timer<>::sleep_ms(1);
 
     time_logger.end_and_start_interval();

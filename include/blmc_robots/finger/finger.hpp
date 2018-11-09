@@ -37,35 +37,19 @@ public:
                        0.02 * Eigen::Vector3d::Ones(),
                        9.0 * Eigen::Vector3d::Ones(),
                        Eigen::Vector3d::Zero()),
-        actual_sliders_(sliders,
-                        Eigen::Vector3d::Zero(),
-                        Eigen::Vector3d::Ones())
-    {
-        sliders_ = sliders;
-    }
+        sliders_(sliders,
+                 Eigen::Vector3d::Zero(),
+                 Eigen::Vector3d::Ones()) {}
 
 
     const Eigen::Vector3d get_slider_positions()
     {
-//        Eigen::Vector3d slider_positions;
-
-//        for(size_t i = 0; i < joint_count; i++)
-//        {
-//            slider_positions(i) =
-//                    sliders_[i]->get_measurement()->newest_element();
-//        }
-//        return slider_positions;
-        return actual_sliders_.get_positions();
+        return sliders_.get_positions();
     }
 
-
 private:
-    std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3> sliders_;
 
-    Sliders<3> actual_sliders_;
-
-
-
+    Sliders<3> sliders_;
 };
 
 } // namespace blmc_robots
