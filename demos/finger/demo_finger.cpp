@@ -16,28 +16,18 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
   Finger& robot = *(static_cast<Finger*>(robot_void_ptr));
 
-  double kp = 1;
-  double kd = 0.2;
-  Eigen::Vector3d desired_motor_position;
-  Eigen::Vector3d desired_torque;
-
-  Eigen::Vector3d debug_des_pd;
-  Eigen::Vector3d debug_des_u_sat;
-  Eigen::Vector3d debug_des_l_sat;
+  double kp = 0.2;
+  double kd = 0.04;
 
   Timer<10> time_logger("controller");
   while(true)
   {
     // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
-    desired_motor_position = (robot.get_slider_positions().array() - 0.5);
+    Eigen::Vector3d desired_angles = (robot.get_slider_positions().array() - 0.5) * 2 * M_PI;
 
     // we implement here a small pd control at the current level
-    desired_torque = kp * (desired_motor_position - robot.get_positions()) -
-                      kd * robot.get_velocities();
-
-    // Saturate the desired current
-    desired_torque = desired_torque.array().min(0.2 * Eigen::Vector3d::Ones().array());
-    desired_torque = desired_torque.array().max(-0.2 * Eigen::Vector3d::Ones().array());
+    Eigen::Vector3d desired_torque = kp * (desired_angles - robot.get_angles()) -
+                      kd * robot.get_angular_velocities();
 
     // Send the current to the motor
     robot.send_torques(desired_torque);
@@ -52,6 +42,16 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
       for(int i=0 ; i<desired_torque.size() ; ++i)
       {
         rt_printf("%f, ", desired_torque(i));
+      }
+      rt_printf("]\n");
+
+
+      Eigen::Vector3d angles = robot.get_angles();
+
+      rt_printf("positions: [");
+      for(int i=0 ; i < angles.size() ; ++i)
+      {
+        rt_printf("%f, ", angles(i));
       }
       rt_printf("]\n");
     }

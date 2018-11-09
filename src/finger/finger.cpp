@@ -16,13 +16,11 @@ namespace blmc_robots
 
 Finger::Finger()
 {
-    zero_position_ = 0;
+    zero_angle_ = 0;
     gear_ratio_ = 9.0;
     motor_constant_ = 0.02; // Nm/A
 
-
-    max_current_ = 1.0 ;
-    max_range_ = 2.0;
+    max_current_ = 2.0 ;
 }
 
 
@@ -44,12 +42,23 @@ void Finger::initialize()
   // table
   motors_[MotorIndexing::base]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 0, max_current_);
   motors_[MotorIndexing::center]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 1, max_current_);
+
+
   sliders_[MotorIndexing::base] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 0);
   sliders_[MotorIndexing::center] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 1);
 
   // two individual motors with a wheel on top
   motors_[MotorIndexing::tip]  = std::make_shared<blmc_drivers::SafeMotor>   (board_1, 0, max_current_);
   sliders_[MotorIndexing::tip] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
+
+
+
+  modules_[MotorIndexing::base]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::base], 0.02, 9.0, 0.0);
+  modules_[MotorIndexing::center]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::center], 0.02, 9.0, 0.0);
+  modules_[MotorIndexing::tip]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::tip], 0.02, 9.0, 0.0);
+
+
+
 
   Timer<>::sleep_ms(10);
 }
