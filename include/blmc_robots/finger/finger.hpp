@@ -25,7 +25,7 @@ namespace blmc_robots
  * @brief The Finger class implements the control of the test bench
  * containing 8 motors and 8 sliders using the blmc drivers.
  */
-class Finger
+class Finger: public BlmcModules<3>
 {
 public:
 
@@ -33,7 +33,11 @@ public:
     enum MotorIndexing {base, center, tip, joint_count};
 
     Finger(const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3>& motors,
-                   const std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3>& sliders)
+           const std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3>& sliders):
+        BlmcModules<3>(motors,
+                       0.02 * Eigen::Vector3d::Ones(),
+                       9.0 * Eigen::Vector3d::Ones(),
+                       Eigen::Vector3d::Zero())
     {
         motors_ = motors;
         sliders_ = sliders;
@@ -43,63 +47,6 @@ public:
         modules_[MotorIndexing::tip]  = std::make_shared<BlmcModule> (motors_[MotorIndexing::tip], 0.02, 9.0, 0.0);
     }
 
-
-    void send_torques(const Eigen::Vector3d& desired_torques)
-    {
-        for(size_t i = 0; i < joint_count; i++)
-        {
-            modules_[i]->set_torque(desired_torques(i));
-        }
-        for(size_t i = 0; i < joint_count; i++)
-        {
-            modules_[i]->send_torque();
-        }
-    }
-
-    Eigen::Vector3d get_torques() const
-    {
-        Eigen::Vector3d torques;
-
-        for(size_t i = 0; i < joint_count; i++)
-        {
-            torques(i) = modules_[i]->get_torque();
-        }
-        return torques;
-    }
-
-    Eigen::Vector3d get_angles() const
-    {
-        Eigen::Vector3d positions;
-
-        for(size_t i = 0; i < joint_count; i++)
-        {
-            positions(i) = modules_[i]->get_angle();
-        }
-        return positions;
-    }
-
-    Eigen::Vector3d get_angular_velocities() const
-    {
-        Eigen::Vector3d velocities;
-
-        for(size_t i = 0; i < joint_count; i++)
-        {
-            velocities(i) = modules_[i]->get_angular_velocity();
-        }
-        return velocities;
-    }
-
-
-    Eigen::Vector3d get_index_angles() const
-    {
-        Eigen::Vector3d index_angles;
-
-        for(size_t i = 0; i < joint_count; i++)
-        {
-            index_angles(i) = modules_[i]->get_index_angle();
-        }
-        return index_angles;
-    }
 
     const Eigen::Vector3d get_slider_positions()
     {

@@ -30,7 +30,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                       kd * robot.get_angular_velocities();
 
     // Send the current to the motor
-    robot.send_torques(desired_torque);
+    robot.set_torques(desired_torque);
+    robot.send_torques();
+
 
     // print -----------------------------------------------------------
     Timer<>::sleep_ms(1);
