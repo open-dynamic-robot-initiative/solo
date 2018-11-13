@@ -119,14 +119,12 @@ public:
 
 private:
 
-
-  Eigen::Matrix<double, 8, 1> motor_positions_;
-  Eigen::Matrix<double, 8, 1> motor_velocities_;
-  Eigen::Matrix<double, 8, 1> motor_currents_;
-  Eigen::Matrix<double, 8, 1> motor_encoder_indexes_;
-  Eigen::Matrix<double, 8, 1> slider_positions_;
-  Eigen::Matrix<double, 8, 1> target_currents;
-
+  Vector8d motor_positions_;
+  Vector8d motor_velocities_;
+  Vector8d motor_currents_;
+  Vector8d motor_encoder_indexes_;
+  Vector8d slider_positions_;
+  Vector8d target_currents;
 
   std::shared_ptr<blmc_drivers::CanBus> can_bus0_;
   std::shared_ptr<blmc_drivers::CanBus> can_bus1_;

@@ -28,6 +28,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
+define_os()
 search_for_eigen()
 
 ######################################################
