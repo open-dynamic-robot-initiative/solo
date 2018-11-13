@@ -21,14 +21,13 @@ add_custom_target(blmc_robots_headers SOURCES ${LibFiles})
 ############################
 # Search for dependencies. #
 ############################
-include(cmake/pkg-config.cmake)
-include(cmake/eigen.cmake)
 
 set(CATKIN_PKGS ${CATKIN_PKGS}
   blmc_drivers
   real_time_tools
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
+
 search_for_eigen()
 
 ######################################################
