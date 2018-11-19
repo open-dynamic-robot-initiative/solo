@@ -13,7 +13,7 @@
 #define TEST_BENCH_8_MOTORS_HH
 
 #include <Eigen/Eigen>
-#include <blmc_robots/common_header.hh>
+#include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
 {

@@ -3,7 +3,7 @@
 ##########################################
 
 set(SOURCES
-  test_bench_8_motors/test_bench_8_motors.cpp
+  test_bench_8_motors.cpp
 )
 add_library(test_bench_8_motors SHARED ${SOURCES})
 target_link_libraries(test_bench_8_motors ${catkin_LIBRARIES})
@@ -23,7 +23,7 @@ set(EXPORTED_LIBRAIRIES_LOCAL ${EXPORTED_LIBRAIRIES_LOCAL} test_bench_8_motors)
 #############################
 
 set(SOURCES
-  finger/finger.cpp
+  finger.cpp
 )
 add_library(finger SHARED ${SOURCES})
 target_link_libraries(finger ${catkin_LIBRARIES})

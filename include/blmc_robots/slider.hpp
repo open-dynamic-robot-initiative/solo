@@ -3,7 +3,7 @@
 #include <array>
 
 #include <Eigen/Eigen>
-#include <blmc_robots/common_header.hh>
+#include <blmc_robots/common_header.hpp>
 #include <math.h>
 #include <blmc_drivers/devices/motor.hpp>
 

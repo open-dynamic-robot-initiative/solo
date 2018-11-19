@@ -7,7 +7,7 @@
  * This file defines the Finger class.
  */
 
-#include "blmc_robots/finger/finger.hpp"
+#include "blmc_robots/finger.hpp"
 
 #include <limits>
 

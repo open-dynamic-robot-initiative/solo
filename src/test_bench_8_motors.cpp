@@ -7,7 +7,7 @@
  * This file defines the TestBench8Motors class.
  */
 
-#include "blmc_robots/test_bench_8_motors/test_bench_8_motors.hh"
+#include "blmc_robots/test_bench_8_motors.hpp"
 
 namespace blmc_robots
 {

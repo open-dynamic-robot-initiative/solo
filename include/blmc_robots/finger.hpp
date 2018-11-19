@@ -12,11 +12,11 @@
 
 
 #include <Eigen/Eigen>
-#include <blmc_robots/common_header.hh>
+#include <blmc_robots/common_header.hpp>
 #include <math.h>
 
-#include <blmc_robots/blmc_joint_module/blmc_joint_module.hpp>
-#include <blmc_robots/slider/slider.hpp>
+#include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_robots/slider.hpp>
 
 
 namespace blmc_robots

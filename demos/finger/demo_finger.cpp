@@ -7,7 +7,7 @@
  * This file uses the Finger class in a small demo.
  */
 
-#include "blmc_robots/finger/finger.hpp"
+#include "blmc_robots/finger.hpp"
 
 using namespace blmc_robots;
 
