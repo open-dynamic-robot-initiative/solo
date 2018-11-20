@@ -98,18 +98,32 @@ public:
 
 
     BlmcJointModules(
-            const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>& motors,
+            const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
+            COUNT>& motors,
             const Vector& motor_constants,
             const Vector& gear_ratios,
             const Vector& zero_positions)
     {
-        for(size_t i = 0; i < COUNT; i++)
-        {
-            modules_[i] = std::make_shared<BlmcJointModule>(motors[i],
-                                                       motor_constants[i],
-                                                       gear_ratios[i],
-                                                       zero_positions[i]);
-        }
+      set_motor_array(motors, motor_constants, gear_ratios, zero_positions);
+    }
+
+    BlmcJointModules()
+    {
+    }
+
+    void set_motor_array(
+        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>& motors,
+        const Vector& motor_constants,
+        const Vector& gear_ratios,
+        const Vector& zero_positions)
+    {
+      for(size_t i = 0; i < COUNT; i++)
+      {
+          modules_[i] = std::make_shared<BlmcJointModule>(motors[i],
+                                                     motor_constants[i],
+                                                     gear_ratios[i],
+                                                     zero_positions[i]);
+      }
     }
 
     void set_torques(const Vector& desired_torques)

@@ -1,41 +1,32 @@
-##########################################
-# create the test_bench_8_motors library #
-##########################################
+###############################################
+# Declare a simple macro to build the library #
+###############################################
 
-set(SOURCES
-  test_bench_8_motors.cpp
-)
-add_library(test_bench_8_motors SHARED ${SOURCES})
-target_link_libraries(test_bench_8_motors ${catkin_LIBRARIES})
+macro(create_robots_library lib_name)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-target_link_libraries(test_bench_8_motors
-  rt
-  pthread
-)
-endif()
+add_library(${lib_name} SHARED ${lib_name}.cpp)
 
-set(EXPORTED_LIBRAIRIES_LOCAL ${EXPORTED_LIBRAIRIES_LOCAL} test_bench_8_motors)
-
-
-#############################
-# create the finger library #
-#############################
-
-set(SOURCES
-  finger.cpp
-)
-add_library(finger SHARED ${SOURCES})
-target_link_libraries(finger ${catkin_LIBRARIES})
+target_link_libraries(${lib_name} ${catkin_LIBRARIES})
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-target_link_libraries(finger
-  rt
-  pthread
-)
+  target_link_libraries(${lib_name} rt pthread)
 endif()
 
-set(EXPORTED_LIBRAIRIES_LOCAL ${EXPORTED_LIBRAIRIES_LOCAL} finger)
+set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${lib_name})
 
-set(EXPORTED_LIBRAIRIES ${EXPORTED_LIBRAIRIES_LOCAL} PARENT_SCOPE)
+endmacro(create_dgm_library lib_name)
 
+####################
+# build the Robots #
+####################
+
+create_robots_library(test_bench_8_motors)
+create_robots_library(finger)
+create_robots_library(quadruped)
+
+######################################################
+# Export the libraries in the devel folder of catkin #
+######################################################
+
+set(EXPORTED_LIBRAIRIES ${EXPORTED_LIBRAIRIES} ${LIBRARIES_TO_BE_EXPORTED}
+    PARENT_SCOPE)

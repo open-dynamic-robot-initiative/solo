@@ -2,28 +2,36 @@
 # create some demos #
 #####################
 
+
 include_directories(
   ${PROJECT_SOURCE_DIR}/demos
 )
 
-#### demo of the 8 blmc motor test bench ####
-add_executable(demo_test_bench_8_motors
-  test_bench_8_motors/demo_test_bench_8_motors.cpp
+#############################################
+# Declare a simple macro to build the demos #
+#############################################
+
+macro(create_demo demo_name)
+
+### demo off the 8 blmc motor test bench ####
+add_executable(demo_${demo_name}
+  demo_${demo_name}.cpp
 )
 
-target_link_libraries(demo_test_bench_8_motors
-  test_bench_8_motors
+target_link_libraries(demo_${demo_name}
+  ${demo_name}
   ${catkin_LIBRARIES}
 )
 
+target_compile_definitions(demo_${demo_name} PUBLIC
+  YAML_PARAMS="${CMAKE_CURRENT_SOURCE_DIR}/config/${demo_name}.yaml")
 
-#### demo of the finger ####
-add_executable(demo_finger
-  finger/demo_finger.cpp
-)
+endmacro(create_demo demo_name)
 
-target_link_libraries(demo_finger
-  finger
-  ${catkin_LIBRARIES}
-)
+###############
+# build demos #
+###############
 
+create_demo(test_bench_8_motors)
+create_demo(finger)
+create_demo(quadruped)

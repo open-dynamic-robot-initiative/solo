@@ -1,6 +1,6 @@
 /**
- * \file test_bench_8_motors.hh
- * \brief The hardware wrapper of the the test bench with 8 blmc motors
+ * \file test_bench_8_motors.hpp
+ * \brief The hardware wrapper of the test bench with 8 blmc motors
  * \author Maximilien Naveau
  * \date 2018
  *
@@ -9,10 +9,9 @@
  */
 
 
-#ifndef TEST_BENCH_8_MOTORS_HH
-#define TEST_BENCH_8_MOTORS_HH
+#ifndef TEST_BENCH_8_MOTORS_HPP
+#define TEST_BENCH_8_MOTORS_HPP
 
-#include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
@@ -163,4 +162,4 @@ private:
 
 } // namespace blmc_robots
 
-#endif // TEST_BENCH_8_MOTORS_HH
+#endif // TEST_BENCH_8_MOTORS_HPP
