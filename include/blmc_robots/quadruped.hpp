@@ -68,12 +68,30 @@ public:
   }
 
   /**
+   * @brief get_motor_target_currents
+   * @return the target current motors currents in (Amper: A).
+   */
+  const Eigen::Ref<Vector8d> get_motor_target_currents()
+  {
+    return motor_target_currents_;
+  }
+
+  /**
    * @brief get_motor_torques
    * @return the motor torques in Nm
    */
   const Eigen::Ref<Vector8d> get_motor_torques()
   {
     return motor_torques_;
+  }
+
+  /**
+   * @brief get_target_motor_torques
+   * @return the target motor torques in Nm
+   */
+  const Eigen::Ref<Vector8d> get_target_motor_torques()
+  {
+    return motor_target_torques_;
   }
 
   /**
@@ -128,6 +146,15 @@ public:
   const Eigen::Ref<Vector8d> get_joint_torques()
   {
     return joint_torques_;
+  }
+
+  /**
+   * @brief get_joint_torques
+   * @return the target joint torques
+   */
+  const Eigen::Ref<Vector8d> get_joint_target_torques()
+  {
+    return joint_target_torques_;
   }
 
   /**
