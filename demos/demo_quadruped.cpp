@@ -32,7 +32,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   Quadruped& robot = *(static_cast<Quadruped*>(robot_void_ptr));
 
   double kp = 5.0 ;
-  double kd = 0.2 ; // above this gain we have unstability due to noise
+  double kd = 1.0 ;
   double max_range = M_PI;
   Vector8d desired_joint_position;
   Vector8d desired_torque;
