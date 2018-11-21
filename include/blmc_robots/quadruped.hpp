@@ -25,14 +25,14 @@ public:
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
-  void send_target_current(
-      const Eigen::Ref<Vector8d> target_currents);
+  void send_target_motor_current(
+      const Eigen::Ref<Vector8d> target_motor_current);
 
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
-  void send_target_torque(
-      const Eigen::Ref<Vector8d> target_torques);
+  void send_target_joint_torque(
+      const Eigen::Ref<Vector8d> target_joint_torque);
 
   /**
    * @brief acquire_sensors acquire all available sensors, WARNING !!!!
@@ -173,7 +173,17 @@ public:
    */
   const Eigen::Ref<Vector8d> get_max_current()
   {
-    return max_current_;
+    return motor_max_current_;
+  }
+
+  /**
+   * @brief get_max_torque
+   * @return the max torque that has been hardcoded in the constructor of this
+   * class. TODO: parametrize this via yaml or something else.
+   */
+  const Eigen::Ref<Vector8d> get_max_joint_torque()
+  {
+    return joint_max_torque_;
   }
 
   /**
@@ -183,13 +193,16 @@ public:
    */
   void set_max_current(const Eigen::Ref<Vector8d> max_current)
   {
-    max_current_ = max_current;
+    motor_max_current_ = max_current;
     for(unsigned i=0 ; i<motors_.size() ; ++i)
     {
       blmc_drivers::SafeMotor* a_safe_motor =
           (blmc_drivers::SafeMotor*)(&motors_[i]);
-      a_safe_motor->set_max_current(max_current_(i));
+      a_safe_motor->set_max_current(motor_max_current_(i));
     }
+    joint_max_torque_ = motor_max_current_.array() *
+                        motor_torque_constants_.array() *
+                        joint_gear_ratios_.array();
   }
 
 private:
@@ -234,6 +247,11 @@ private:
    * @brief motor_torque_constants_ are the motor torque constants
    */
   Vector8d motor_torque_constants_;
+  /**
+   * @brief target_motor_current_tmp_ is used to convert the joint torque to
+   * motor current
+   */
+  Vector8d target_motor_current_tmp_;
 
   /**
     * Joint data
@@ -264,6 +282,10 @@ private:
    * position
    */
   Vector8d joint_zero_positions_;
+  /**
+   * @brief joint_max_torque_
+   */
+  Vector8d joint_max_torque_;
 
   /**
     * Additional data
@@ -284,7 +306,7 @@ private:
    * @brief max_current_ is the current limit to be send to the motors,
    * this a safe guard for development
    */
-  Vector8d max_current_;
+  Vector8d motor_max_current_;
 
   /**
     * Drivers communication objects

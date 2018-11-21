@@ -8,8 +8,11 @@
  */
 
 #include <Eigen/Eigen>
-#include "blmc_robots/quadruped.hpp"
 #include <deque>
+#include <numeric>
+#include <cmath>
+#include "blmc_robots/quadruped.hpp"
+
 
 using namespace blmc_robots;
 
@@ -28,22 +31,22 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
   Quadruped& robot = *(static_cast<Quadruped*>(robot_void_ptr));
 
-  double kp = 5;
-  double kd = 1;
-  double max_range = 14.0*2.0;
-  Vector8d desired_motor_position;
-  Vector8d desired_current;
+  double kp = 5.0 ;
+  double kd = 0.2 ; // above this gain we have unstability due to noise
+  double max_range = M_PI;
+  Vector8d desired_joint_position;
+  Vector8d desired_torque;
 
-  Vector8d debug_des_pd;
-  Vector8d debug_des_u_sat;
-  Vector8d debug_des_l_sat;
+  Eigen::Vector4d sliders;
+  Eigen::Vector4d sliders_filt;
 
-//  std::vector<std::deque<double> > desired_pose(4);
-//  for(unsigned i=0 ; i<desired_pose.size() ; ++i)
-//  {
-//    desired_pose.clear();
-//    desired_pose.reserve(200);
-//  }
+  std::vector<std::deque<double> > sliders_filt_buffer(
+        robot.get_slider_positions().size());
+  int max_filt_dim = 200;
+  for(unsigned i=0 ; i<sliders_filt_buffer.size() ; ++i)
+  {
+    sliders_filt_buffer[i].clear();
+  }
 
   Timer<10> time_logger("controller");
   while(true)
@@ -51,29 +54,35 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     // acquire the sensors
     robot.acquire_sensors();
 
+    // aquire the slider signal
+    sliders = robot.get_slider_positions();
+    // filter it
+    for(unsigned i=0 ; i<sliders_filt_buffer.size() ; ++i)
+    {
+      if(sliders_filt_buffer[i].size() >= max_filt_dim)
+      {
+        sliders_filt_buffer[i].pop_front();
+      }
+      sliders_filt_buffer[i].push_back(sliders(i));
+      sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
+                                        sliders_filt_buffer[i].end(), 0.0)/
+                        (double)sliders_filt_buffer[i].size();
+    }
+
     // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
     for(unsigned i=0 ; i<4 ; ++i)
     {
       //desired_pose[i].push_back
-      desired_motor_position(2*i) =
-          max_range * (robot.get_slider_positions()(i) - 0.5);
-      desired_motor_position(2*i+1) =
-          max_range * (robot.get_slider_positions()(i) - 0.5);
+      desired_joint_position(2*i) = max_range * (sliders_filt(i) - 0.5);
+      desired_joint_position(2*i+1) = max_range * (sliders_filt(i) - 0.5);
     }
 
-
     // we implement here a small pd control at the current level
-    desired_current = kp * (desired_motor_position - robot.get_motor_positions()) -
-                      kd * robot.get_motor_velocities();
-
-    // Saturate the desired current
-    desired_current = desired_current.array().min(
-                        robot.get_max_current().array());
-    desired_current = desired_current.array().max(
-                        -robot.get_max_current().array());
+    desired_torque = kp * (desired_joint_position - robot.get_joint_positions())
+                     - kd * robot.get_joint_velocities();
 
     // Send the current to the motor
-    robot.send_target_current(desired_current);
+    robot.send_target_joint_torque(desired_torque);
 
     // print -----------------------------------------------------------
     Timer<>::sleep_ms(1);
@@ -81,11 +90,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     time_logger.end_and_start_interval();
     if ((time_logger.count() % 1000) == 0)
     {
-      print_vector("desired_current", desired_current);
-      print_vector("slider", robot.get_slider_positions());
-      print_vector("contact_states", robot.get_contact_sensors_states());
-      print_vector("joint_pos", robot.get_joint_positions());
-      print_vector("motor_pos", robot.get_motor_positions());
+      print_vector("des_joint_tau", desired_torque);
+      print_vector("    joint_pos", robot.get_joint_positions());
+      print_vector("des_joint_pos", desired_joint_position);
     }
   }//endwhile
 }// end control_loop

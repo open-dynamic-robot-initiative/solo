@@ -17,11 +17,11 @@ Quadruped::Quadruped()
   motor_target_currents_.setZero();
   motor_target_torques_.setZero();
   motor_torque_constants_.setZero();
+  target_motor_current_tmp_.setZero();
 
   /**
     * Joint data
     */
-
   joint_positions_.setZero();
   joint_velocities_.setZero();
   joint_torques_.setZero();
@@ -34,17 +34,20 @@ Quadruped::Quadruped()
     */
   slider_positions_.setZero();
   contact_sensors_states_.setZero();
-  max_current_.setZero();
+  motor_max_current_.setZero();
 
   /**
     * Setup some known data
     */
 
   // for now this value is very small but it is currently for debug mode
-  max_current_.fill(2.0);
+  motor_max_current_.fill(2.0);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
+  joint_max_torque_ = motor_max_current_.array() *
+                      motor_torque_constants_.array() *
+                      joint_gear_ratios_.array();
 }
 
 
@@ -67,34 +70,34 @@ void Quadruped::initialize()
   // can 0
   // FR_HFE
   motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 1, max_current_[0]);
+                 can_motor_boards_[0], 1, motor_max_current_[0]);
   // FR_KFE
   motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 0, max_current_[1]);
+                 can_motor_boards_[0], 0, motor_max_current_[1]);
 
   // can 1
   // HR_HFE
   motors_[2] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[1], 1, max_current_[2]);
+                 can_motor_boards_[1], 1, motor_max_current_[2]);
   // HR_KFE
   motors_[3] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[1], 0, max_current_[3]);
+                 can_motor_boards_[1], 0, motor_max_current_[3]);
 
   // can 2
   // HL_HFE
   motors_[4] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[2], 1, max_current_[4]);
+                 can_motor_boards_[2], 1, motor_max_current_[4]);
   // HL_KFE
   motors_[5] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[2], 0, max_current_[5]);
+                 can_motor_boards_[2], 0, motor_max_current_[5]);
 
   // can 3
   // FL_HFE
   motors_[6] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[3], 1, max_current_[6]);
+                 can_motor_boards_[3], 1, motor_max_current_[6]);
   // FL_KFE
   motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[3], 0, max_current_[7]);
+                 can_motor_boards_[3], 0, motor_max_current_[7]);
 
   Timer<>::sleep_ms(10);
 }
@@ -159,13 +162,13 @@ void Quadruped::acquire_sensors()
   }
 }
 
-void Quadruped::send_target_current(
-    const Eigen::Ref<Vector8d> target_currents)
+void Quadruped::send_target_motor_current(
+    const Eigen::Ref<Vector8d> target_motor_current)
 {
   // set up the target current
   for(unsigned i=0 ; i<motors_.size() ; ++i)
   {
-    motors_[i]->set_current_target(target_currents(i));
+    motors_[i]->set_current_target(target_motor_current(i));
   }
 
   // actually send the torques to the robot
@@ -175,12 +178,13 @@ void Quadruped::send_target_current(
   }
 }
 
-void Quadruped::send_target_torque(const Eigen::Ref<Vector8d> target_torques)
+void Quadruped::send_target_joint_torque(
+    const Eigen::Ref<Vector8d> target_joint_torque)
 {
-  // set up the target torque
-  // joints_.set_torques(target_torques);
-  // send the torques to the hardware
-  // joints_.send_torques();
+  target_motor_current_tmp_ = target_joint_torque.array() /
+                              joint_gear_ratios_.array() /
+                              motor_torque_constants_.array();
+  send_target_motor_current(target_motor_current_tmp_);
 }
 
 } // namespace blmc_robots
