@@ -14,7 +14,7 @@ endif()
 
 set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${lib_name})
 
-endmacro(create_dgm_library lib_name)
+endmacro()
 
 ####################
 # build the Robots #

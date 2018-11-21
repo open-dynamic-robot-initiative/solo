@@ -141,7 +141,7 @@ void Quadruped::acquire_sensors()
   // acquire the joint position
   joint_positions_ = motor_positions_.array() / joint_gear_ratios_.array();
   // acquire the joint velocities
-  joint_velocities_ = motor_positions_.array() / joint_gear_ratios_.array();
+  joint_velocities_ = motor_velocities_.array() / joint_gear_ratios_.array();
   // acquire the joint torques
   joint_torques_ = motor_torques_.array() * joint_gear_ratios_.array();
   // acquire the tqrget joint torques
