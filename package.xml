@@ -14,5 +14,5 @@
   <run_depend>   blmc_drivers </run_depend>
 
   <build_depend> real_time_tools </build_depend>
-  <run_depend>     real_time_tools </run_depend>
+  <run_depend>   real_time_tools </run_depend>
 </package>
