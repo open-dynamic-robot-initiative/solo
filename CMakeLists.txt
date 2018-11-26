@@ -14,10 +14,6 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
-# for convenience for qtcreator, does nothing ----------
-FILE(GLOB_RECURSE LibFiles *.h *.hpp *.hh)
-add_custom_target(blmc_robots_headers SOURCES ${LibFiles})
-
 ############################
 # Search for dependencies. #
 ############################
