@@ -99,7 +99,7 @@ void Quadruped::initialize()
   motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[3], 0, motor_max_current_[7]);
 
-  Timer<>::sleep_ms(10);
+  real_time_tools::Timer::sleep_sec(0.01);
 }
 
 void Quadruped::acquire_sensors()

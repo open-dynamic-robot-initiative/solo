@@ -70,7 +70,7 @@ void TestBench8Motors::initialize()
   board3_slider0_ = std::make_shared<blmc_drivers::AnalogSensor>(board3_, 0);
   board3_slider1_ = std::make_shared<blmc_drivers::AnalogSensor>(board3_, 1);
 
-  Timer<>::sleep_ms(10);
+  real_time_tools::Timer::sleep_sec(0.01);
 }
 
 void TestBench8Motors::acquire_sensors()

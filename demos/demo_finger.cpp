@@ -7,6 +7,7 @@
  * This file uses the Finger class in a small demo.
  */
 
+#include "real_time_tools/spinner.hpp"
 #include "blmc_robots/finger.hpp"
 
 using namespace blmc_robots;
@@ -19,7 +20,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   double kp = 0.2;
   double kd = 0.04;
 
-  Timer<10> time_logger("controller");
+  real_time_tools::Spinner spinner;
+  spinner.set_period(0.001);
+  size_t count = 0;
   while(true)
   {
     // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
@@ -35,10 +38,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 
     // print -------------------------------------------------------------------
-    Timer<>::sleep_ms(1);
+    spinner.spin();
 
-    time_logger.end_and_start_interval();
-    if ((time_logger.count() % 1000) == 0)
+    if ((count % 1000) == 0)
     {
       rt_printf("sending currents: [");
       for(int i=0 ; i<desired_torque.size() ; ++i)
@@ -57,11 +59,13 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
       }
       rt_printf("]\n");
     }
+    ++count;
   }//endwhile
 }// end control_loop
 
 int main(int argc, char **argv)
 {
+    real_time_tools::RealTimeThread thread;
     osi::initialize_realtime_printing();
 
 
@@ -87,17 +91,18 @@ int main(int argc, char **argv)
     sliders[2] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
 
     Finger finger(motors, sliders);
-    Timer<>::sleep_ms(10);
+    real_time_tools::Timer::sleep_sec(0.01);
 
     rt_printf("controller is set up \n");
 
-    osi::start_thread(&control_loop, &finger);
+    real_time_tools::block_memory();
+    real_time_tools::create_realtime_thread(thread, &control_loop, &finger);
 
     rt_printf("control loop started \n");
 
     while(true)
     {
-        Timer<>::sleep_ms(10);
+        real_time_tools::Timer::sleep_sec(0.01);
     }
 
     return 0;

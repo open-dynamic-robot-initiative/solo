@@ -12,7 +12,7 @@
 #include <numeric>
 #include <cmath>
 #include "blmc_robots/quadruped.hpp"
-
+#include "real_time_tools/timer.hpp"
 
 using namespace blmc_robots;
 
@@ -47,8 +47,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   {
     sliders_filt_buffer[i].clear();
   }
-
-  Timer<10> time_logger("controller");
+  size_t count = 0;
   while(true)
   {
     // acquire the sensors
@@ -85,33 +84,35 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     robot.send_target_joint_torque(desired_torque);
 
     // print -----------------------------------------------------------
-    Timer<>::sleep_ms(1);
+    real_time_tools::Timer::sleep_sec(0.001);
 
-    time_logger.end_and_start_interval();
-    if ((time_logger.count() % 1000) == 0)
+    if ((count % 1000) == 0)
     {
       print_vector("des_joint_tau", desired_torque);
       print_vector("    joint_pos", robot.get_joint_positions());
       print_vector("des_joint_pos", desired_joint_position);
     }
+    ++count;
   }//endwhile
 }// end control_loop
 
 int main(int argc, char **argv)
 {
+  real_time_tools::RealTimeThread thread;
+
   Quadruped robot;
 
   robot.initialize();
 
   rt_printf("controller is set up \n");
 
-  osi::start_thread(&control_loop, &robot);
+  real_time_tools::create_realtime_thread(thread, &control_loop, &robot);
 
   rt_printf("control loop started \n");
 
   while(true)
   {
-    Timer<>::sleep_ms(10);
+      real_time_tools::Timer::sleep_sec(0.01);
   }
 
   return 0;

@@ -7,10 +7,27 @@
  * This file uses the TestBench8Motors class in a small demo.
  */
 
+#include <signal.h>
+#include <atomic>
+#include "real_time_tools/spinner.hpp"
+#include "real_time_tools/realtime_thread_creation.hpp"
 #include "blmc_robots/test_bench_8_motors.hpp"
 
 using namespace blmc_robots;
 
+/**
+ * @brief This boolean is here to kill cleanly the application upon ctrl+c
+ */
+std::atomic_bool StopDemos (false);
+
+/**
+ * @brief This function is the callback upon a ctrl+c call from the terminal.
+ * 
+ * @param s 
+ */
+void my_handler(int s){
+  StopDemos = true;
+}
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
@@ -25,8 +42,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   Vector8d debug_des_u_sat;
   Vector8d debug_des_l_sat;
 
-  Timer<10> time_logger("controller");
-  while(true)
+  real_time_tools::Spinner spinner;
+  spinner.set_period(0.001);
+  size_t count=0;
+  while(!StopDemos)
   {
     // acquire the sensors
     robot.acquire_sensors();
@@ -47,10 +66,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     robot.send_target_current(desired_current);
 
     // print -----------------------------------------------------------
-    Timer<>::sleep_ms(1);
-
-    time_logger.end_and_start_interval();
-    if ((time_logger.count() % 1000) == 0)
+    spinner.spin();
+    if ((count % 1000) == 0)
     {
       rt_printf("sending currents: [");
       for(int i=0 ; i<desired_current.size() ; ++i)
@@ -59,25 +76,39 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
       }
       rt_printf("]\n");
     }
+    ++count;
   }//endwhile
 }// end control_loop
 
 int main(int argc, char **argv)
 {
+  // make sure we catch the ctrl+c signal to kill the application properly.
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = my_handler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
+  StopDemos = false;
+
   TestBench8Motors robot;
 
   robot.initialize();
 
   rt_printf("controller is set up \n");
 
-  osi::start_thread(&control_loop, &robot);
+  real_time_tools::RealTimeThread rt_thread;
+  
+  real_time_tools::create_realtime_thread(
+          rt_thread, &control_loop, &robot);
 
   rt_printf("control loop started \n");
 
-  while(true)
+  // Wait until the application is killed.
+  while(!StopDemos)
   {
-    Timer<>::sleep_ms(10);
+      real_time_tools::Timer::sleep_sec(0.01);
   }
+  real_time_tools::join_thread(rt_thread);
 
   return 0;
 }
