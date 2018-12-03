@@ -48,6 +48,7 @@ add_subdirectory(src)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${EXPORTED_LIBRAIRIES}
+  CATKIN_DEPENDS ${CATKIN_PKGS}
 )
 
 #########################
