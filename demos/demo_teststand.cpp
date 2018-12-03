@@ -37,8 +37,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   Vector2d desired_joint_position;
   Vector2d desired_torque;
 
-  Eigen::Vector2d sliders;
-  Eigen::Vector2d sliders_filt;
+  Teststand::VectorSlider sliders;
+  Teststand::VectorSlider sliders_filt;
 
   std::vector<std::deque<double> > sliders_filt_buffer(
         robot.get_slider_positions().size());
@@ -69,11 +69,11 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     }
 
     // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
-    for(unsigned i=0 ; i < 2 ; ++i)
+    for(unsigned i=0 ; i < 1 ; ++i)
     {
       //desired_pose[i].push_back
-      desired_joint_position(i) = max_range * (sliders_filt(i) - 0.5);
-      desired_joint_position(i) = max_range * (sliders_filt(i) - 0.5);
+      desired_joint_position(2 * i + 0) = max_range * (sliders_filt(i) - 0.5);
+      desired_joint_position(2 * i + 1) = -2 * max_range * (sliders_filt(i) - 0.5);
     }
 
     // we implement here a small pd control at the current level

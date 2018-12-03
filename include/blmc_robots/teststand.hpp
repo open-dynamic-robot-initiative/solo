@@ -11,6 +11,10 @@ class Teststand
 {
 public:
 
+  typedef Eigen::Matrix<double, 1, 1> Vector1d;
+  typedef Eigen::Matrix<double, 1, 1> VectorSlider;
+  typedef Eigen::Matrix<double, 1, 1> VectorContact;
+
   /**
    * @brief TestBench8Motors is the constructor of the class.
    */
@@ -179,7 +183,7 @@ public:
    * @brief get_slider_positions
    * @return the current sliders positions.
    */
-  const Eigen::Ref<Vector2d> get_slider_positions()
+  const Eigen::Ref<Vector1d> get_slider_positions()
   {
     return slider_positions_;
   }
@@ -188,10 +192,10 @@ public:
   //  * @brief get_contact_sensors_states
   //  * @return the state of the contacts states
   //  */
-  // const Eigen::Ref<Eigen::Vector4d> get_contact_sensors_states()
-  // {
-  //   return contact_sensors_states_;
-  // }
+  const Eigen::Ref<Vector1d> get_contact_sensors_states()
+  {
+    return contact_sensors_states_;
+  }
 
   /**
    * @brief get_max_current
@@ -320,7 +324,12 @@ private:
    * @brief slider_positions_ is the position of the linear potentatiometer.
    * Can be used as a joystick input.
    */
-  Eigen::Vector2d slider_positions_;
+  Vector1d slider_positions_;
+
+  /**
+   * @brief contact_sensors_ is contact sensors at each feet of teh quadruped.
+   */
+  Vector1d contact_sensors_states_;
 
   /**
    * @brief max_current_ is the current limit to be send to the motors,
@@ -349,7 +358,13 @@ private:
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
    */
-  std::array<Slider_ptr, 2> sliders_;
+  std::array<Slider_ptr, 12> sliders_;
+
+    /**
+   * @brief contact_sensors_ is the contact sensors at each foot tips. They also
+   * are analogue inputs.
+   */
+  std::array<ContactSensor_ptr, 14> contact_sensors_;
 
 };
 

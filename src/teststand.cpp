@@ -60,20 +60,21 @@ void Teststand::initialize()
     can_buses_[i] = std::make_shared<blmc_drivers::CanBus>(oss.str());
     can_motor_boards_[i] =
         std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[i]);
-    sliders_[2 * i + 0] =
-        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
-    sliders_[2 * i + 1] =
+    sliders_[i] =
         std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 1);
+    contact_sensors_[i] =
+        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
   }
 
   // can 0
   // MOTOR_HFE
   motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 1, motor_max_current_[0]);
+                 can_motor_boards_[0], 0, motor_max_current_[0]);
   // MOTOR_KFE
   motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 0, motor_max_current_[1]);
+                 can_motor_boards_[0], 1, motor_max_current_[1]);
 
+  // Wait here to
   real_time_tools::Timer::sleep_sec(0.01);
 }
 
@@ -131,7 +132,12 @@ void Teststand::acquire_sensors()
   {
     // acquire the slider
     slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
+    // acquire the current contact states
+    contact_sensors_states_(i) =
+        contact_sensors_[i]->get_measurement()->newest_element();
   }
+
+  set_max_current(motor_max_current_);
 }
 
 void Teststand::send_target_motor_current(
