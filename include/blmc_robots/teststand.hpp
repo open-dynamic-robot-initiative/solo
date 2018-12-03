@@ -223,9 +223,7 @@ public:
     motor_max_current_ = max_current;
     for(unsigned i=0 ; i<motors_.size() ; ++i)
     {
-      blmc_drivers::SafeMotor* a_safe_motor =
-          (blmc_drivers::SafeMotor*)(&motors_[i]);
-      a_safe_motor->set_max_current(motor_max_current_(i));
+      motors_[i]->set_max_current(motor_max_current_(i));
     }
     joint_max_torque_ = motor_max_current_.array() *
                         motor_torque_constants_.array() *
@@ -346,7 +344,8 @@ private:
    * @brief motors_ are the objects alowing us to send motor commands and
    * receive data
    */
-  std::array<MotorInterface_ptr, 2> motors_;
+  std::array<SafeMotor_ptr, 2> motors_;
+
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
    */
