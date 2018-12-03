@@ -74,8 +74,17 @@ void Teststand::initialize()
   motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[0], 1, motor_max_current_[1]);
 
-  // Wait here to
-  real_time_tools::Timer::sleep_sec(0.01);
+  // Call the method to sync the max current with the max torques.
+  set_max_current(motor_max_current_);
+
+  // ATI sensor initialization.
+  ati_sensor_.initialize();
+
+  // Wait to make sure there is a first package when acquire_sensors() later.
+  real_time_tools::Timer::sleep_sec(0.5);
+
+  // Calibrate the zeros of the ati sensor given the current measurements.
+  ati_sensor_.setBias();
 }
 
 void Teststand::acquire_sensors()
@@ -137,7 +146,17 @@ void Teststand::acquire_sensors()
         contact_sensors_[i]->get_measurement()->newest_element();
   }
 
-  set_max_current(motor_max_current_);
+  /**
+   * Ati sensor readings.
+   */
+  ati_sensor_.getFT(&ati_force_(0), &ati_torque_(0));
+
+  // Rotate the force and torque values, such that pressing on the force
+  // sensor creates a positive force.
+  ati_force_(0) *= -1;
+  ati_force_(2) *= -1;
+  ati_torque_(0) *= -1;
+  ati_torque_(2) *= -1;
 }
 
 void Teststand::send_target_motor_current(

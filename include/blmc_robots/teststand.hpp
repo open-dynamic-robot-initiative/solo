@@ -4,6 +4,7 @@
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
+#include <AtiFTSensor.h>
 
 namespace blmc_robots{
 
@@ -14,6 +15,9 @@ public:
   typedef Eigen::Matrix<double, 1, 1> Vector1d;
   typedef Eigen::Matrix<double, 1, 1> VectorSlider;
   typedef Eigen::Matrix<double, 1, 1> VectorContact;
+
+  typedef Eigen::Matrix<double, 3, 1> VectorAtiForce;
+  typedef Eigen::Matrix<double, 3, 1> VectorAtiTorque;
 
   /**
    * @brief TestBench8Motors is the constructor of the class.
@@ -234,7 +238,24 @@ public:
                         joint_gear_ratios_.array();
   }
 
+  const Eigen::Ref<VectorAtiForce> get_ati_force()
+  {
+    return ati_force_;
+  }
+
+  const Eigen::Ref<VectorAtiTorque> get_ati_torque()
+  {
+    return ati_torque_;
+  }
+
 private:
+  /**
+   * ATI sensor.
+   */
+  ati_ft_sensor::AtiFTSensor ati_sensor_;
+
+  VectorAtiForce ati_force_;
+  VectorAtiTorque ati_torque_;
 
   /**
     * Motor data
@@ -365,7 +386,6 @@ private:
    * are analogue inputs.
    */
   std::array<ContactSensor_ptr, 14> contact_sensors_;
-
 };
 
 } // namespace blmc_robots

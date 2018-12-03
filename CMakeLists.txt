@@ -19,6 +19,7 @@ set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 ############################
 
 set(CATKIN_PKGS ${CATKIN_PKGS}
+  ati_ft_sensor
   blmc_drivers
   real_time_tools
 )

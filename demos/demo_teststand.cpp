@@ -91,6 +91,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
       print_vector("des_joint_tau", desired_torque);
       print_vector("    joint_pos", robot.get_joint_positions());
       print_vector("des_joint_pos", desired_joint_position);
+      print_vector("ati_force    ", robot.get_ati_force());
+      print_vector("ati_torque   ", robot.get_ati_torque());
     }
     ++count;
   }//endwhile
