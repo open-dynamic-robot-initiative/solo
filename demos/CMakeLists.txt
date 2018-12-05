@@ -36,3 +36,13 @@ create_demo(test_bench_8_motors)
 create_demo(finger)
 create_demo(quadruped)
 create_demo(teststand)
+
+
+add_executable(demo_finger_master_slave
+  demo_finger_master_slave.cpp
+)
+
+target_link_libraries(demo_finger_master_slave
+  finger
+  ${catkin_LIBRARIES}
+)
