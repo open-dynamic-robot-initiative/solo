@@ -60,11 +60,14 @@ void Teststand::initialize()
     can_buses_[i] = std::make_shared<blmc_drivers::CanBus>(oss.str());
     can_motor_boards_[i] =
         std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[i]);
-    sliders_[i] =
-        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 1);
-    contact_sensors_[i] =
-        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
   }
+
+  sliders_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
+  contact_sensors_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
+  height_sensors_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 1);
 
   // can 0
   // MOTOR_HFE
@@ -144,6 +147,9 @@ void Teststand::acquire_sensors()
     // acquire the current contact states
     contact_sensors_states_(i) =
         contact_sensors_[i]->get_measurement()->newest_element();
+    // acquire the height sensor.
+    height_sensors_states_(i) =
+        height_sensors_[i]->get_measurement()->newest_element();
   }
 
   /**

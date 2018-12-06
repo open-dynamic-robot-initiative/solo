@@ -192,13 +192,22 @@ public:
     return slider_positions_;
   }
 
-  // /**
-  //  * @brief get_contact_sensors_states
-  //  * @return the state of the contacts states
-  //  */
+  /**
+   * @brief get_contact_sensors_states
+   * @return the state of the contacts states
+   */
   const Eigen::Ref<Vector1d> get_contact_sensors_states()
   {
     return contact_sensors_states_;
+  }
+
+  /**
+   * @brief get_contact_sensors_states
+   * @return the state of the contacts states
+   */
+  const Eigen::Ref<Vector1d> get_height_sensors()
+  {
+    return height_sensors_states_;
   }
 
   /**
@@ -353,6 +362,11 @@ private:
   Vector1d contact_sensors_states_;
 
   /**
+   * @brief height_sensors_ is the height position of the base.
+   */
+  Vector1d height_sensors_states_;
+
+  /**
    * @brief max_current_ is the current limit to be send to the motors,
    * this a safe guard for development
    */
@@ -365,11 +379,11 @@ private:
   /**
    * @brief can_buses_ are the 4 can buses on the robot.
    */
-  std::array<CanBus_ptr, 1> can_buses_;
+  std::array<CanBus_ptr, 2> can_buses_;
   /**
    * @brief can_motor_boards_ are the 4 can motor board.
    */
-  std::array<CanBusMotorBoard_ptr, 1> can_motor_boards_;
+  std::array<CanBusMotorBoard_ptr, 2> can_motor_boards_;
   /**
    * @brief motors_ are the objects alowing us to send motor commands and
    * receive data
@@ -386,6 +400,13 @@ private:
    * are analogue inputs.
    */
   std::array<ContactSensor_ptr, 14> contact_sensors_;
+
+
+  /**
+   * @brief contact_sensors_ is the contact sensors at each foot tips. They also
+   * are analogue inputs.
+   */
+  std::array<HeightSensor_ptr, 1> height_sensors_;
 };
 
 } // namespace blmc_robots

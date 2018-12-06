@@ -88,11 +88,13 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     if ((count % 1000) == 0)
     {
-      print_vector("des_joint_tau", desired_torque);
-      print_vector("    joint_pos", robot.get_joint_positions());
-      print_vector("des_joint_pos", desired_joint_position);
-      print_vector("ati_force    ", robot.get_ati_force());
-      print_vector("ati_torque   ", robot.get_ati_torque());
+      print_vector("des_joint_tau  ", desired_torque);
+      print_vector("    joint_pos  ", robot.get_joint_positions());
+      print_vector("des_joint_pos  ", desired_joint_position);
+      print_vector("ati_force      ", robot.get_ati_force());
+      print_vector("ati_torque     ", robot.get_ati_torque());
+      print_vector("contact_sensors", robot.get_contact_sensors_states());
+      print_vector("height_sensors ", robot.get_height_sensors());
     }
     ++count;
   }//endwhile
