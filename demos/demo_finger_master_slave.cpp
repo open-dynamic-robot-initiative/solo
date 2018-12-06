@@ -104,6 +104,10 @@ private:
         slave_finger_->set_torques(desired_torque);
         slave_finger_->send_torques();
 
+        desired_torque(2) = - desired_torque(2);
+        master_finger_->set_torques(-desired_torque);
+        master_finger_->send_torques();
+
 
         // print -------------------------------------------------------------------
         spinner.spin();
