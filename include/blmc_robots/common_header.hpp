@@ -64,6 +64,12 @@ typedef std::shared_ptr<blmc_drivers::AnalogSensor> Slider_ptr;
 typedef std::shared_ptr<blmc_drivers::AnalogSensor> ContactSensor_ptr;
 
 /**
+ * @brief Slider_ptr shortcut for the height sensor. It is also an analogue
+ * sensors
+ */
+typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
+
+/**
  * @brief mi, this typdef is used to get the measurments form the blmc api
  */
 typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
