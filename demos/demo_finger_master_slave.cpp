@@ -81,7 +81,7 @@ private:
   void loop()
   {
 
-      double kp = 0.2;
+      double kp = 1.2;
       double kd = 0.04;
 
       real_time_tools::Spinner spinner;
@@ -91,10 +91,14 @@ private:
       {
         // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
         Eigen::Vector3d desired_angles = (slave_finger_->get_slider_positions().array() - 0.5) * 2 * M_PI;
+        desired_angles = master_finger_->get_angles();
+        desired_angles(2) = - desired_angles(2);
+
 
         // we implement here a small pd control at the current level
         Eigen::Vector3d desired_torque = kp * (desired_angles - slave_finger_->get_angles()) -
                           kd * slave_finger_->get_angular_velocities();
+
 
         // Send the current to the motor
         slave_finger_->set_torques(desired_torque);
@@ -112,6 +116,14 @@ private:
             rt_printf("%f, ", desired_torque(i));
           }
           rt_printf("]\n");
+
+          rt_printf("desired positions: [");
+          for(int i=0 ; i < desired_angles.size() ; ++i)
+          {
+            rt_printf("%f, ", desired_angles(i));
+          }
+          rt_printf("]\n");
+
 
 
           Eigen::Vector3d angles = slave_finger_->get_angles();
@@ -174,8 +186,8 @@ int main(int argc, char **argv)
     std::shared_ptr<Finger> master_finger;
     {
         // initialize the communication with the can cards
-        auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
-        auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can2");
+        auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can6");
+        auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can7");
 
         // get all informatino about the control cards
         auto board_0 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_0);
@@ -202,7 +214,7 @@ int main(int argc, char **argv)
 
 
 
-    real_time_tools::Timer::sleep_sec(0.01);
+    real_time_tools::Timer::sleep_sec(0.11);
 
     rt_printf("controller is set up \n");
 
