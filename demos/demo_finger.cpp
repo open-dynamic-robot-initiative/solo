@@ -70,8 +70,8 @@ int main(int argc, char **argv)
 
 
     // initialize the communication with the can cards
-    auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
-    auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can1");
+    auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can6");
+    auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can7");
 
     // get all informatino about the control cards
     auto board_0 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_0);
