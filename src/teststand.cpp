@@ -40,7 +40,7 @@ Teststand::Teststand()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(2.0);
+  motor_max_current_.fill(9.0);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -53,7 +53,8 @@ Teststand::Teststand()
 void Teststand::initialize()
 {
   // initialize the communication with the can cards
-  for(unsigned i=0 ; i<can_buses_.size() ; ++i)
+  // for(unsigned i=0 ; i< can_buses_.size() ; ++i)
+  for(unsigned i=0 ; i< 2 ; ++i)
   {
     std::ostringstream oss;
     oss << "can" << i;
@@ -72,10 +73,10 @@ void Teststand::initialize()
   // can 0
   // MOTOR_HFE
   motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 0, motor_max_current_[0]);
+                 can_motor_boards_[0], 1, motor_max_current_[0]);
   // MOTOR_KFE
   motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 1, motor_max_current_[1]);
+                 can_motor_boards_[0], 0, motor_max_current_[1]);
 
   // Call the method to sync the max current with the max torques.
   set_max_current(motor_max_current_);
