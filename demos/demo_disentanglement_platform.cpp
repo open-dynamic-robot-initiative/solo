@@ -81,7 +81,7 @@ private:
   void loop()
   {
 
-      double kp = 1.2;
+      double kp = 0.5;
       double kd = 0.04;
 
       real_time_tools::Spinner spinner;
@@ -90,7 +90,7 @@ private:
       size_t count = 0;
 
       double time = 0;
-      double frequency = 0.1;
+      double frequency = 0.2;
       while(true)
       {
           double desired_angle = (sin(time * frequency * 2 * M_PI)) * 0.5 * M_PI;
