@@ -12,6 +12,8 @@
 
 #include "blmc_robots/disentanglement_platform.hpp"
 
+#include <math.h>
+
 using namespace blmc_robots;
 
 
@@ -83,12 +85,25 @@ private:
       double kd = 0.04;
 
       real_time_tools::Spinner spinner;
-      spinner.set_period(0.001);
+      double interval = 0.001;
+      spinner.set_period(interval);
       size_t count = 0;
+
+      double time = 0;
+      double frequency = 0.1;
       while(true)
       {
+          double desired_angle = (sin(time * frequency * 2 * M_PI)) * 0.5 * M_PI;
+
+
+          time += interval;
+
         // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
         Eigen::Vector2d desired_angles = (disentanglement_platform_->get_slider_positions().array() - 0.5) * 2 * M_PI;
+
+        desired_angles[0] = desired_angle;
+        desired_angles[1] = desired_angle;
+
 
         // we implement here a small pd control at the current level
         Eigen::Vector2d desired_torque = kp * (desired_angles - disentanglement_platform_->get_angles()) -
@@ -105,14 +120,14 @@ private:
 
         if ((count % 1000) == 0)
         {
-          rt_printf("sending currents: [");
+          rt_printf("sending torques: [");
           for(int i=0 ; i<desired_torque.size() ; ++i)
           {
             rt_printf("%f, ", desired_torque(i));
           }
           rt_printf("]\n");
 
-          rt_printf("desired positions: [");
+          rt_printf("desired angles: [");
           for(int i=0 ; i < desired_angles.size() ; ++i)
           {
             rt_printf("%f, ", desired_angles(i));
@@ -179,7 +194,7 @@ int main(int argc, char **argv)
 
 
 
-    real_time_tools::Timer::sleep_sec(0.11);
+    real_time_tools::Timer::sleep_sec(5.);
 
     rt_printf("controller is set up \n");
 
