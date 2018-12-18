@@ -41,6 +41,21 @@ public:
         motor_->send_if_input_changed();
     }
 
+
+    double get_desired_torque() const
+    {
+        auto measurement_history =
+                motor_->get_sent_current_target();
+
+        if(measurement_history->length() == 0)
+        {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return measurement_history->newest_element()
+                * gear_ratio_ * motor_constant_;
+    }
+
+
     double get_torque() const
     {
 
@@ -140,6 +155,18 @@ public:
         {
             modules_[i]->send_torque();
         }
+    }
+
+
+    Vector get_desired_torques() const
+    {
+        Vector torques;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            torques(i) = modules_[i]->get_desired_torque();
+        }
+        return torques;
     }
 
     Vector get_torques() const
