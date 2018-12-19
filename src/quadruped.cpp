@@ -48,6 +48,11 @@ Quadruped::Quadruped()
   joint_max_torque_ = motor_max_current_.array() *
                       motor_torque_constants_.array() *
                       joint_gear_ratios_.array();
+
+  for(unsigned i=0; i<polarity_.size(); ++i)
+  {
+    polarity_[i] = 0.0;
+  }
 }
 
 
@@ -99,6 +104,16 @@ void Quadruped::initialize()
   motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[3], 0, motor_max_current_[7]);
 
+  // fix the polarity to be the same as the urdf model.
+  polarity_[0] = -1.0; // FR_HFE
+  polarity_[1] = -1.0; // FR_KFE
+  polarity_[2] = -1.0; // HR_HFE
+  polarity_[3] = -1.0; // HR_KFE
+  polarity_[4] =  1.0; // HL_HFE
+  polarity_[5] =  1.0; // HL_KFE
+  polarity_[6] =  1.0; // FL_HFE
+  polarity_[7] =  1.0; // FL_KFE
+
   real_time_tools::Timer::sleep_sec(0.01);
 }
 
@@ -111,24 +126,27 @@ void Quadruped::acquire_sensors()
   {
     // acquire the motors positions
     motor_positions_(i) =
-        motors_[i]->get_measurement(mi::position)->newest_element() * 2 * M_PI
-        - joint_zero_positions_(i) * joint_gear_ratios_(i) ;
+        polarity_[i] *
+        (motors_[i]->get_measurement(mi::position)->newest_element() * 2 * M_PI
+        - joint_zero_positions_(i) * joint_gear_ratios_(i)) ;
     // acquire the motors velocities
     motor_velocities_(i) =
-        motors_[i]->get_measurement(mi::velocity)->newest_element() *
-        2 * M_PI * (1000./60.);
+        polarity_[i] *
+        (motors_[i]->get_measurement(mi::velocity)->newest_element() *
+        2 * M_PI * (1000./60.));
     // acquire the motors current
     motor_currents_(i) =
-        motors_[i]->get_measurement(mi::current)->newest_element();
+        polarity_[i] * motors_[i]->get_measurement(mi::current)->newest_element();
     // acquire the last sent current sent
     motor_target_currents_(i) =
-        motors_[i]->get_sent_current_target()->newest_element();
+        polarity_[i] * motors_[i]->get_sent_current_target()->newest_element();
     // acquire the encoder indexes
     motor_encoder_indexes_(i) =
-        motors_[i]->get_measurement(mi::encoder_index)->length() > 0 ?
+        polarity_[i] * 
+        (motors_[i]->get_measurement(mi::encoder_index)->length() > 0 ?
           motors_[i]->get_measurement(mi::encoder_index)->newest_element() *
           2 * M_PI:
-          std::nan("");
+          std::nan(""));
   }
   // acquire the actual motor torques
   motor_torques_ = motor_currents_.array() * motor_torque_constants_.array();
@@ -169,7 +187,7 @@ void Quadruped::send_target_motor_current(
   // set up the target current
   for(unsigned i=0 ; i<motors_.size() ; ++i)
   {
-    motors_[i]->set_current_target(target_motor_current(i));
+    motors_[i]->set_current_target(polarity_[i] * target_motor_current(i));
   }
 
   // actually send the torques to the robot
@@ -185,6 +203,8 @@ void Quadruped::send_target_joint_torque(
   target_motor_current_tmp_ = target_joint_torque.array() /
                               joint_gear_ratios_.array() /
                               motor_torque_constants_.array();
+  // we do not use the polarity here because it is used in
+  // send_target_motor_current
   send_target_motor_current(target_motor_current_tmp_);
 }
 
