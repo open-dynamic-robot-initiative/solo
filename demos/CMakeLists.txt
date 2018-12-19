@@ -46,3 +46,10 @@ target_link_libraries(demo_finger_master_slave
   finger
   ${catkin_LIBRARIES}
 )
+
+add_executable(demo_disentanglement_platform
+  demo_disentanglement_platform.cpp
+)
+target_link_libraries(demo_disentanglement_platform
+  ${catkin_LIBRARIES}
+)
