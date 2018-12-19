@@ -32,8 +32,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
 
   double kp = 5.0 ;
-  double kd = 1.0 ;
-  double max_range = M_PI;
+  double kd = 0.1 ;
+  double max_range = 0.75 * M_PI;
   Vector2d desired_joint_position;
   Vector2d desired_torque;
 

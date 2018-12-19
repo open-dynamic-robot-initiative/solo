@@ -40,7 +40,7 @@ Teststand::Teststand()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(9.0);
+  motor_max_current_.fill(4.5);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -104,7 +104,8 @@ void Teststand::acquire_sensors()
         - joint_zero_positions_(i) * joint_gear_ratios_(i) ;
     // acquire the motors velocities
     motor_velocities_(i) =
-        motors_[i]->get_measurement(mi::velocity)->newest_element() * 2 * M_PI;
+        motors_[i]->get_measurement(mi::velocity)->newest_element() *
+        2 * M_PI * (1000./60.);
     // acquire the motors current
     motor_currents_(i) =
         motors_[i]->get_measurement(mi::current)->newest_element();
@@ -141,7 +142,7 @@ void Teststand::acquire_sensors()
     * Additional data
     */
   // acquire the slider positions
-  for (unsigned i=0 ; i<slider_positions_.size() ; ++i)
+  for (unsigned i=0 ; i < slider_positions_.size() ; ++i)
   {
     // acquire the slider
     slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
@@ -149,8 +150,10 @@ void Teststand::acquire_sensors()
     contact_sensors_states_(i) =
         contact_sensors_[i]->get_measurement()->newest_element();
     // acquire the height sensor.
+    // Transforms the measurement into a rough height measurement of the hip
+    // mounting point above the tabel.
     height_sensors_states_(i) =
-        height_sensors_[i]->get_measurement()->newest_element();
+        1.075 - height_sensors_[i]->get_measurement()->newest_element();
   }
 
   /**

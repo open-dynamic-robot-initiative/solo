@@ -115,7 +115,8 @@ void Quadruped::acquire_sensors()
         - joint_zero_positions_(i) * joint_gear_ratios_(i) ;
     // acquire the motors velocities
     motor_velocities_(i) =
-        motors_[i]->get_measurement(mi::velocity)->newest_element() * 2 * M_PI;
+        motors_[i]->get_measurement(mi::velocity)->newest_element() *
+        2 * M_PI * (1000./60.);
     // acquire the motors current
     motor_currents_(i) =
         motors_[i]->get_measurement(mi::current)->newest_element();
