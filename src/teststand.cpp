@@ -100,12 +100,11 @@ void Teststand::acquire_sensors()
   {
     // acquire the motors positions
     motor_positions_(i) =
-        motors_[i]->get_measurement(mi::position)->newest_element() * 2 * M_PI
+        motors_[i]->get_measurement(mi::position)->newest_element()
         - joint_zero_positions_(i) * joint_gear_ratios_(i) ;
     // acquire the motors velocities
     motor_velocities_(i) =
-        motors_[i]->get_measurement(mi::velocity)->newest_element() *
-        2 * M_PI * (1000./60.);
+        motors_[i]->get_measurement(mi::velocity)->newest_element();
     // acquire the motors current
     motor_currents_(i) =
         motors_[i]->get_measurement(mi::current)->newest_element();
@@ -115,8 +114,7 @@ void Teststand::acquire_sensors()
     // acquire the encoder indexes
     motor_encoder_indexes_(i) =
         motors_[i]->get_measurement(mi::encoder_index)->length() > 0 ?
-          motors_[i]->get_measurement(mi::encoder_index)->newest_element() *
-          2 * M_PI:
+          motors_[i]->get_measurement(mi::encoder_index)->newest_element():
           std::nan("");
   }
   // acquire the actual motor torques

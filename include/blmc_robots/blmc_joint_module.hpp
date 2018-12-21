@@ -65,19 +65,19 @@ public:
 
     double get_angle() const
     {
-        return get_motor_measurement(mi::position) / gear_ratio_ * 2 * M_PI
+        return get_motor_measurement(mi::position) / gear_ratio_;
                 - zero_angle_;
     }
 
     double get_angular_velocity() const
     {
-        return get_motor_measurement(mi::velocity) / gear_ratio_ * 2 * M_PI;
+        return get_motor_measurement(mi::velocity) / gear_ratio_;
 
     }
 
     double get_index_angle() const
     {
-        return get_motor_measurement(mi::encoder_index) / gear_ratio_ * 2 * M_PI;
+        return get_motor_measurement(mi::encoder_index) / gear_ratio_;
     }
 
 
