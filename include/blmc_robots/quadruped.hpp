@@ -352,6 +352,9 @@ private:
    * receive data
    */
   std::array<MotorInterface_ptr, 8> motors_;
+
+  std::array<double, 8> polarity_;
+
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
    */
