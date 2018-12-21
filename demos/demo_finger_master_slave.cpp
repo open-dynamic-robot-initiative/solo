@@ -82,7 +82,7 @@ private:
   {
 
       double kp = 1.2;
-      double kd = 0.04;
+      double kd = 0.0025;
 
       real_time_tools::Spinner spinner;
       spinner.set_period(0.001);

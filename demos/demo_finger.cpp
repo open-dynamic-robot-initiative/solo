@@ -18,7 +18,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   Finger& robot = *(static_cast<Finger*>(robot_void_ptr));
 
   double kp = 0.2;
-  double kd = 0.04;
+  double kd = 0.0025;
 
   real_time_tools::Spinner spinner;
   spinner.set_period(0.001);

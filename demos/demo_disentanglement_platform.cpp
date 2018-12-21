@@ -82,7 +82,7 @@ private:
   {
 
       double kp = 0.5;
-      double kd = 0.04;
+      double kd = 0.0025;
 
       real_time_tools::Spinner spinner;
       double interval = 0.001;
