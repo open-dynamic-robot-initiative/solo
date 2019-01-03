@@ -126,8 +126,9 @@ void Quadruped::acquire_sensors()
   {
     // acquire the motors positions
     motor_positions_(i) =
-        polarity_[i] * motors_[i]->get_measurement(mi::position)->newest_element()
-        - joint_zero_positions_(i) * joint_gear_ratios_(i)) ;
+        polarity_[i] *
+        (motors_[i]->get_measurement(mi::position)->newest_element()
+        - joint_zero_positions_(i) * joint_gear_ratios_(i));
     // acquire the motors velocities
     motor_velocities_(i) =
         polarity_[i] * motors_[i]->get_measurement(mi::velocity)->newest_element();
