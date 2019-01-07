@@ -1,9 +1,9 @@
 #include <math.h>
-#include "blmc_robots/teststand.hpp"
+#include "blmc_robots/single_motor.hpp"
 
 namespace blmc_robots{
 
-Teststand::Teststand()
+SingleMotor::SingleMotor()
 {
   /**
     * Motor data
@@ -43,18 +43,18 @@ Teststand::Teststand()
   motor_max_current_.fill(4.5);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
-  joint_gear_ratios_.fill(9.0);
+  joint_gear_ratios_.fill(1.0);
   joint_max_torque_ = motor_max_current_.array() *
                       motor_torque_constants_.array() *
                       joint_gear_ratios_.array();
 }
 
 
-void Teststand::initialize()
+void SingleMotor::initialize()
 {
   // initialize the communication with the can cards
   // for(unsigned i=0 ; i< can_buses_.size() ; ++i)
-  for(unsigned i=0 ; i< 2 ; ++i)
+  for(unsigned i=0 ; i< 1; ++i)
   {
     std::ostringstream oss;
     oss << "can" << i;
@@ -63,35 +63,21 @@ void Teststand::initialize()
         std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[i]);
   }
 
-  sliders_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
-  contact_sensors_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
-  height_sensors_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 1);
+  sliders_[0] = std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
 
   // can 0
-  // MOTOR_HFE
+  // MOTOR
   motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 1, motor_max_current_[0]);
-  // MOTOR_KFE
-  motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 0, motor_max_current_[1]);
+                 can_motor_boards_[0], 0, motor_max_current_[0]);
 
   // Call the method to sync the max current with the max torques.
   set_max_current(motor_max_current_);
 
-  // ATI sensor initialization.
-  ati_sensor_.initialize();
-
   // Wait to make sure there is a first package when acquire_sensors() later.
   real_time_tools::Timer::sleep_sec(0.5);
-
-  // Calibrate the zeros of the ati sensor given the current measurements.
-  ati_sensor_.setBias();
 }
 
-void Teststand::acquire_sensors()
+void SingleMotor::acquire_sensors()
 {
   /**
     * Motor data
@@ -147,31 +133,11 @@ void Teststand::acquire_sensors()
   {
     // acquire the slider
     slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
-    // acquire the current contact states
-    contact_sensors_states_(i) =
-        contact_sensors_[i]->get_measurement()->newest_element();
-    // acquire the height sensor.
-    // Transforms the measurement into a rough height measurement of the hip
-    // mounting point above the tabel.
-    height_sensors_states_(i) =
-        1.075 - height_sensors_[i]->get_measurement()->newest_element();
   }
-
-  /**
-   * Ati sensor readings.
-   */
-  ati_sensor_.getFT(&ati_force_(0), &ati_torque_(0));
-
-  // Rotate the force and torque values, such that pressing on the force
-  // sensor creates a positive force.
-  ati_force_(0) *= -1;
-  ati_force_(2) *= -1;
-  ati_torque_(0) *= -1;
-  ati_torque_(2) *= -1;
 }
 
-void Teststand::send_target_motor_current(
-    const Eigen::Ref<Vector2d> target_motor_current)
+void SingleMotor::send_target_motor_current(
+    const Eigen::Ref<Vector1d> target_motor_current)
 {
   // set up the target current
   for(unsigned i=0 ; i<motors_.size() ; ++i)
@@ -186,8 +152,8 @@ void Teststand::send_target_motor_current(
   }
 }
 
-void Teststand::send_target_joint_torque(
-    const Eigen::Ref<Vector2d> target_joint_torque)
+void SingleMotor::send_target_joint_torque(
+    const Eigen::Ref<Vector1d> target_joint_torque)
 {
   target_motor_current_tmp_ = target_joint_torque.array() /
                               joint_gear_ratios_.array() /
