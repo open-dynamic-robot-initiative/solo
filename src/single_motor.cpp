@@ -13,7 +13,7 @@ SingleMotor::SingleMotor()
   motor_currents_.setZero();
   motor_torques_.setZero();
   motor_inertias_.setZero();
-  motor_encoder_indexes_.setZero();
+  motor_encoder_indexes_.fill(std::nan(""));
   motor_target_currents_.setZero();
   motor_target_torques_.setZero();
   motor_torque_constants_.setZero();
@@ -84,6 +84,14 @@ void SingleMotor::acquire_sensors()
     */
   for (unsigned i=0 ; i<motors_.size() ; ++i)
   {
+    // acquire the encoder indexes
+    if (motors_[i]->get_measurement(mi::encoder_index)->length() == 1) {
+      motor_encoder_indexes_(i) = motors_[i]->get_measurement(mi::encoder_index)->newest_element();
+
+      // Automatically use the encoder position to ofset the joint zero position.
+      joint_zero_positions_(i) = motor_encoder_indexes_(i);
+    }
+
     // acquire the motors positions
     motor_positions_(i) =
         motors_[i]->get_measurement(mi::position)->newest_element()
@@ -97,12 +105,8 @@ void SingleMotor::acquire_sensors()
     // acquire the last sent current sent
     motor_target_currents_(i) =
         motors_[i]->get_sent_current_target()->newest_element();
-    // acquire the encoder indexes
-    motor_encoder_indexes_(i) =
-        motors_[i]->get_measurement(mi::encoder_index)->length() > 0 ?
-          motors_[i]->get_measurement(mi::encoder_index)->newest_element():
-          std::nan("");
   }
+
   // acquire the actual motor torques
   motor_torques_ = motor_currents_.array() * motor_torque_constants_.array();
   // acquire the last sent motor torques
