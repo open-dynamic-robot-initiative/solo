@@ -4,7 +4,6 @@
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
-#include <AtiFTSensor.h>
 
 namespace blmc_robots{
 
@@ -16,12 +15,12 @@ public:
   typedef Eigen::Matrix<double, 1, 1> VectorSlider;
 
   /**
-   * @brief TestBench8Motors is the constructor of the class.
+   * @brief SingleMotor is the constructor of the class.
    */
   SingleMotor();
 
   /**
-   * @brief initialize the robot by setting alining the motors and calibrate the
+   * @brief initialize the robot by setting aligning the motors and calibrate the
    * sensors to 0
    */
   void initialize();
@@ -64,7 +63,7 @@ public:
 
   /**
    * @brief get_motor_currents
-   * @return the current motors currents in (Amper: A).
+   * @return the current motors currents in (Ampere: A).
    */
   const Eigen::Ref<Vector1d> get_motor_currents()
   {
@@ -73,7 +72,7 @@ public:
 
   /**
    * @brief get_motor_target_currents
-   * @return the target current motors currents in (Amper: A).
+   * @return the target current motors currents in (Ampere: A).
    */
   const Eigen::Ref<Vector1d> get_motor_target_currents()
   {
@@ -172,7 +171,7 @@ public:
 
   /**
    * @brief get_joint_encoder_index
-   * @return The last observed encoder index in joint coordiantes.
+   * @return The last observed encoder index in joint coordinates.
    */
   const Eigen::Ref<Vector1d> get_joint_encoder_index()
   {
@@ -199,8 +198,8 @@ public:
 
   /**
    * @brief get_max_current
-   * @return the max current that has been hardcoded in the constructor of this
-   * class. TODO: parametrize this via yaml or something else.
+   * @return the max current that has been hard-coded in the constructor of this
+   * class. TODO: parametrize this via YAML or something else.
    */
   const Eigen::Ref<Vector1d> get_max_current()
   {
@@ -209,8 +208,8 @@ public:
 
   /**
    * @brief get_max_torque
-   * @return the max torque that has been hardcoded in the constructor of this
-   * class. TODO: parametrize this via yaml or something else.
+   * @return the max torque that has been hard-coded in the constructor of this
+   * class. TODO: parametrize this via YAML or something else.
    */
   const Eigen::Ref<Vector1d> get_max_joint_torque()
   {

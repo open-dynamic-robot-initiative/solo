@@ -122,7 +122,7 @@ void SingleMotor::acquire_sensors()
   joint_velocities_ = motor_velocities_.array() / joint_gear_ratios_.array();
   // acquire the joint torques
   joint_torques_ = motor_torques_.array() * joint_gear_ratios_.array();
-  // acquire the tqrget joint torques
+  // acquire the target joint torques
   joint_target_torques_ = motor_target_torques_.array() *
                           joint_gear_ratios_.array();
   joint_encoder_index_ = motor_encoder_indexes_.array() /
