@@ -26,7 +26,7 @@ class TestBench8Motors
 public:
 
   /**
-   * @brief mi this typdef is used to get the measurments form the blmc api
+   * @brief mi this typdef is used to get the measurements form the blmc api
    */
   typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
 
@@ -36,7 +36,7 @@ public:
   TestBench8Motors();
 
   /**
-   * @brief initialize the robot by setting alining the motors and calibrate the
+   * @brief initialize the robot by setting aligning the motors and calibrate the
    * sensors to 0
    */
   void initialize();
@@ -49,13 +49,16 @@ public:
 
   /**
    * @brief acquire_sensors acquire all available sensors, WARNING !!!!
-   * this method has to be called prior to any gettter to have up to date data.
+   * this method has to be called prior to any getter to have up to date data.
    */
   void acquire_sensors();
 
   /**
    * @brief get_motor_positions
    * @return the current motors positions (rad).
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
    */
   const Vector8d get_motor_positions()
   {
@@ -65,6 +68,9 @@ public:
   /**
    * @brief get_motor_velocities
    * @return the current motors velocities (rad/s).
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
    */
   const Vector8d get_motor_velocities()
   {
@@ -73,7 +79,10 @@ public:
 
   /**
    * @brief get_motor_currents
-   * @return the current motors currents in (Amper: A).
+   * @return the current motors currents in (Ampere: A).
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
    */
   const Vector8d get_motor_currents()
   {
@@ -83,6 +92,9 @@ public:
   /**
    * @brief get_motor_encoder_indexes
    * @return TODO: ask Manuel what is this exactly.
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
    */
   const Vector8d get_motor_encoder_indexes()
   {
@@ -92,6 +104,9 @@ public:
   /**
    * @brief get_slider_positions
    * @return the current sliders positions.
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
    */
   const Vector8d get_slider_positions()
   {

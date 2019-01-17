@@ -18,7 +18,7 @@
 namespace blmc_robots
 {
 /**
- * @brief Vector8d shortcut for the eigen vector of size 2.
+ * @brief Vector2d shortcut for the eigen vector of size 2.
  */
 typedef Eigen::Matrix<double, 2, 1> Vector2d;
 
@@ -53,19 +53,19 @@ typedef std::shared_ptr<blmc_drivers::Motor> Motor_ptr;
 typedef std::shared_ptr<blmc_drivers::SafeMotor> SafeMotor_ptr;
 
 /**
- * @brief Slider_ptr shortcut for the linear potentiometer analogue sensor
+ * @brief Slider_ptr shortcut for the linear potentiometer analog sensor
  */
 typedef std::shared_ptr<blmc_drivers::AnalogSensor> Slider_ptr;
 
 /**
- * @brief Slider_ptr shortcut for the contact sensor. It is also an analogue
- * sensors
+ * @brief ContactSensor_ptr shortcut for the contact sensor. It is also an 
+ * analog sensor
  */
 typedef std::shared_ptr<blmc_drivers::AnalogSensor> ContactSensor_ptr;
 
 /**
- * @brief Slider_ptr shortcut for the height sensor. It is also an analogue
- * sensors
+ * @brief HeightSensor_ptr shortcut for the height sensor. It is also an analog
+ * sensor
  */
 typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
 

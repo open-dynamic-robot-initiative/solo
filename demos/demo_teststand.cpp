@@ -4,7 +4,7 @@
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the TestBench8Motors class in a small demo.
+ * This file uses the Teststand class in a small demo.
  */
 
 #include <Eigen/Eigen>

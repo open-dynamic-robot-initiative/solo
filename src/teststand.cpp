@@ -152,7 +152,7 @@ void Teststand::acquire_sensors()
         contact_sensors_[i]->get_measurement()->newest_element();
     // acquire the height sensor.
     // Transforms the measurement into a rough height measurement of the hip
-    // mounting point above the tabel.
+    // mounting point above the table.
     height_sensors_states_(i) =
         1.075 - height_sensors_[i]->get_measurement()->newest_element();
   }

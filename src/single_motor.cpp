@@ -40,6 +40,7 @@ SingleMotor::SingleMotor()
     */
 
   // for now this value is very small but it is currently for debug mode
+  // TODO: this should go into a YAML file
   motor_max_current_.fill(4.5);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
