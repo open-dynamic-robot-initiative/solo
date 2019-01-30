@@ -40,7 +40,9 @@ Teststand::Teststand()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(4.5);
+  //motor_max_current_.fill(4.5);
+  // Max current in Amp
+  motor_max_current_.fill(4);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);

@@ -41,7 +41,7 @@ Quadruped::Quadruped()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(6.0);
+  motor_max_current_.fill(4.0);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -74,18 +74,18 @@ void Quadruped::initialize()
 
   // can 0
   // FR_HFE
-  motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
+  motors_[2] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[0], 1, motor_max_current_[0]);
   // FR_KFE
-  motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
+  motors_[3] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[0], 0, motor_max_current_[1]);
 
   // can 1
   // HR_HFE
-  motors_[2] = std::make_shared<blmc_drivers::SafeMotor> (
+  motors_[6] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[1], 1, motor_max_current_[2]);
   // HR_KFE
-  motors_[3] = std::make_shared<blmc_drivers::SafeMotor> (
+  motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[1], 0, motor_max_current_[3]);
 
   // can 2
@@ -98,21 +98,21 @@ void Quadruped::initialize()
 
   // can 3
   // FL_HFE
-  motors_[6] = std::make_shared<blmc_drivers::SafeMotor> (
+  motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[3], 1, motor_max_current_[6]);
   // FL_KFE
-  motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
+  motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[3], 0, motor_max_current_[7]);
 
   // fix the polarity to be the same as the urdf model.
-  polarity_[0] = -1.0; // FR_HFE
-  polarity_[1] = -1.0; // FR_KFE
-  polarity_[2] = -1.0; // HR_HFE
-  polarity_[3] = -1.0; // HR_KFE
+  polarity_[0] = -1.0; // FL_HFE
+  polarity_[1] = -1.0; // FL_KFE
+  polarity_[2] = -1.0; // FR_HFE
+  polarity_[3] = -1.0; // FR_KFE
   polarity_[4] =  1.0; // HL_HFE
   polarity_[5] =  1.0; // HL_KFE
-  polarity_[6] =  1.0; // FL_HFE
-  polarity_[7] =  1.0; // FL_KFE
+  polarity_[6] =  1.0; // HR_HFE
+  polarity_[7] =  1.0; // HR_KFE
 
   real_time_tools::Timer::sleep_sec(0.01);
 }
