@@ -105,14 +105,14 @@ void Quadruped::initialize()
                  can_motor_boards_[3], 0, motor_max_current_[7]);
 
   // fix the polarity to be the same as the urdf model.
-  polarity_[0] =  1.0; // FL_HFE
-  polarity_[1] =  1.0; // FL_KFE
-  polarity_[2] = -1.0; // FR_HFE
-  polarity_[3] = -1.0; // FR_KFE
-  polarity_[4] =  1.0; // HL_HFE
-  polarity_[5] =  1.0; // HL_KFE
-  polarity_[6] = -1.0; // HR_HFE
-  polarity_[7] = -1.0; // HR_KFE
+  polarity_[0] = -1.0; // FL_HFE
+  polarity_[1] = -1.0; // FL_KFE
+  polarity_[2] =  1.0; // FR_HFE
+  polarity_[3] =  1.0; // FR_KFE
+  polarity_[4] = -1.0; // HL_HFE
+  polarity_[5] = -1.0; // HL_KFE
+  polarity_[6] =  1.0; // HR_HFE
+  polarity_[7] =  1.0; // HR_KFE
 
   real_time_tools::Timer::sleep_sec(0.01);
 }
