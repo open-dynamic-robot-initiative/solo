@@ -36,7 +36,7 @@ create_demo(test_bench_8_motors)
 create_demo(finger)
 create_demo(quadruped)
 create_demo(teststand)
-
+create_demo(stuggihop)
 
 add_executable(demo_finger_master_slave
   demo_finger_master_slave.cpp
