@@ -17,7 +17,7 @@ SingleMotor::SingleMotor()
   motor_target_currents_.setZero();
   motor_target_torques_.setZero();
   motor_torque_constants_.setZero();
-  target_motor_current_tmp_.setZero();
+  target_motor_tmp_.setZero();
 
   /**
     * Joint data
@@ -141,15 +141,8 @@ void SingleMotor::acquire_sensors()
   }
 }
 
-void SingleMotor::send_target_motor_current(
-    const Eigen::Ref<Vector1d> target_motor_current)
+void SingleMotor::send_motor_commands_if_input_changed()
 {
-  // set up the target current
-  for(unsigned i=0 ; i<motors_.size() ; ++i)
-  {
-    motors_[i]->set_current_target(target_motor_current(i));
-  }
-
   // actually send the torques to the robot
   for(unsigned i=0 ; i<motors_.size() ; ++i)
   {
@@ -160,10 +153,61 @@ void SingleMotor::send_target_motor_current(
 void SingleMotor::send_target_joint_torque(
     const Eigen::Ref<Vector1d> target_joint_torque)
 {
-  target_motor_current_tmp_ = target_joint_torque.array() /
-                              joint_gear_ratios_.array() /
-                              motor_torque_constants_.array();
-  send_target_motor_current(target_motor_current_tmp_);
+  target_motor_tmp_ = target_joint_torque.array() /
+                      joint_gear_ratios_.array() /
+                      motor_torque_constants_.array();
+
+  for(unsigned i=0 ; i < motors_.size() ; ++i) {
+    motors_[i]->set_current_target(target_motor_tmp_(i));
+  }
+}
+
+void SingleMotor::send_joint_kp(
+    const Eigen::Ref<Vector1d> joint_kp)
+{
+  static int c = 0;
+
+  target_motor_tmp_ = joint_kp.array() /
+                      joint_gear_ratios_.array() /
+                      motor_torque_constants_.array();
+
+  for(unsigned i=0 ; i < motors_.size() ; ++i) {
+    motors_[i]->set_kp(target_motor_tmp_(i));
+  }
+}
+
+void SingleMotor::send_joint_kd(
+    const Eigen::Ref<Vector1d> joint_kd)
+{
+  target_motor_tmp_ = joint_kd.array() /
+                      joint_gear_ratios_.array() /
+                      motor_torque_constants_.array();
+
+  for(unsigned i=0 ; i < motors_.size() ; ++i) {
+    motors_[i]->set_kd(target_motor_tmp_(i));
+  }
+}
+
+void SingleMotor::send_joint_position_target(
+    const Eigen::Ref<Vector1d> target_joint_position_target)
+{
+  target_motor_tmp_ = target_joint_position_target.array() /
+                      joint_gear_ratios_.array();
+
+  for(unsigned i=0 ; i < motors_.size() ; ++i) {
+    motors_[i]->set_position_target(target_motor_tmp_(i));
+  }
+}
+
+void SingleMotor::send_joint_velocity_target(
+    const Eigen::Ref<Vector1d> target_joint_velocity_target)
+{
+  target_motor_tmp_ = target_joint_velocity_target.array() /
+                      joint_gear_ratios_.array();
+
+  for(unsigned i=0 ; i < motors_.size() ; ++i) {
+    motors_[i]->set_velocity_target(target_motor_tmp_(i));
+  }
 }
 
 } // namespace blmc_robots

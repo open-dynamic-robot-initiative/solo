@@ -28,14 +28,24 @@ public:
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
-  void send_target_motor_current(
-      const Eigen::Ref<Vector1d> target_motor_current);
-
-  /**
-   * @brief send_target_torques sends the target currents to the motors
-   */
   void send_target_joint_torque(
       const Eigen::Ref<Vector1d> target_joint_torque);
+
+
+  void send_joint_kp(
+      const Eigen::Ref<Vector1d> joint_kp);
+
+  void send_joint_kd(
+      const Eigen::Ref<Vector1d> joint_kd);
+
+  void send_joint_position_target(
+      const Eigen::Ref<Vector1d> target_joint_position_target);
+
+  void send_joint_velocity_target(
+      const Eigen::Ref<Vector1d> target_joint_velocity_target);
+
+  void send_motor_commands_if_input_changed();
+
 
   /**
    * @brief acquire_sensors acquire all available sensors, WARNING !!!!
@@ -276,10 +286,10 @@ private:
    */
   Vector1d motor_torque_constants_;
   /**
-   * @brief target_motor_current_tmp_ is used to convert the joint torque to
-   * motor current
+   * @brief target_motor_tmp_ is used to convert the joint properties to
+   * motor properties.
    */
-  Vector1d target_motor_current_tmp_;
+  Vector1d target_motor_tmp_;
 
   /**
     * Joint data
