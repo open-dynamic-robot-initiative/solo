@@ -28,6 +28,8 @@ Quadruped::Quadruped()
   joint_target_torques_.setZero();
   joint_gear_ratios_.setZero();
   joint_zero_positions_.setZero();
+  joint_hardstop2zero_offsets_.setZero();
+  joint_start2hardstop_offsets_.setZero();
 
   /**
     * Additional data
@@ -128,7 +130,8 @@ void Quadruped::acquire_sensors()
     motor_positions_(i) =
         polarity_[i] *
         (motors_[i]->get_measurement(mi::position)->newest_element()
-        - joint_zero_positions_(i) * joint_gear_ratios_(i));
+        - (joint_zero_positions_(i) + joint_start2hardstop_offsets_(i) 
+           + joint_hardstop2zero_offsets_(i) ) * joint_gear_ratios_(i));
     // acquire the motors velocities
     motor_velocities_(i) =
         polarity_[i] * motors_[i]->get_measurement(mi::velocity)->newest_element();
