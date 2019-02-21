@@ -130,7 +130,7 @@ void Quadruped::acquire_sensors()
         polarity_[i] *
         (motors_[i]->get_measurement(mi::position)->newest_element()
         + (joint_start2hardstop_offsets_(i) - joint_hardstop2zero_offsets_(i)) 
-           *joint_gear_ratios_(i)); //joint_zero_positions
+           *joint_gear_ratios_(i));
     // acquire the motors velocities
     motor_velocities_(i) =
         polarity_[i] * motors_[i]->get_measurement(mi::velocity)->newest_element();

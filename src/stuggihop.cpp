@@ -27,7 +27,8 @@ Stuggihop::Stuggihop()
   joint_torques_.setZero();
   joint_target_torques_.setZero();
   joint_gear_ratios_.setZero();
-  joint_zero_positions_.setZero();
+  joint_hardstop2zero_offsets_.setZero();
+  joint_start2hardstop_offsets_.setZero();
 
   /**
     * Additional data
@@ -114,8 +115,9 @@ void Stuggihop::acquire_sensors()
   {
     // acquire the motors positions
     motor_positions_(i) =
-        motors_[i]->get_measurement(mi::position)->newest_element()
-        - joint_zero_positions_(i) * joint_gear_ratios_(i) ;
+        (motors_[i]->get_measurement(mi::position)->newest_element()
+        + (joint_start2hardstop_offsets_(i) - joint_hardstop2zero_offsets_(i)) 
+           *joint_gear_ratios_(i));
     // acquire the motors velocities
     motor_velocities_(i) =
         motors_[i]->get_measurement(mi::velocity)->newest_element();
@@ -189,6 +191,16 @@ void Stuggihop::acquire_sensors()
   //   // acquire the slider
   //   slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
   // }
+}
+
+void Stuggihop::set_hardstop2zero_offsets(const Eigen::Ref<Vector2d> hardstop2zero_offsets)
+{
+  joint_hardstop2zero_offsets_ = hardstop2zero_offsets;
+}
+
+void Stuggihop::set_start2hardstop_offsets(const Eigen::Ref<Vector2d> start2hardstop_offsets)
+{
+  joint_start2hardstop_offsets_ = start2hardstop_offsets;
 }
 
 void Stuggihop::send_target_motor_current(
