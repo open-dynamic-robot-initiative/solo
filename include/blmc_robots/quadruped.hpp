@@ -44,22 +44,15 @@ public:
    * @brief set_hardstop2zero_offsets
    *
    */
-  void set_hardstop2zero_offsets();
+  void set_hardstop2zero_offsets(
+      const Eigen::Ref<Vector8d> hardstop2zero_offsets);
 
   /**
    * @brief set_start2hardstop_offsets
    *
    */
-  void set_start2hardstop_offsets();
-
-  /**
-   * @brief set_zero_positions_offsets
-   *
-   */
-  void set_zero_positions_offsets();
-
-
-
+  void set_start2hardstop_offsets(
+      const Eigen::Ref<Vector8d> start2hardstop_offsets);
 
   /**
    * @brief get_motor_positions
@@ -205,14 +198,6 @@ public:
     return joint_gear_ratios_;
   }
 
-  /**
-   * @brief get_zero_positions
-   * @return the position where the robot should be in "zero" configuration
-   */
-  const Eigen::Ref<Vector8d> get_zero_positions()
-  {
-    return joint_zero_positions_;
-  }
   /**
    * @brief get_hardstop2zero_offsets
    * @return the position where the robot should be in "zero" configuration
@@ -360,11 +345,6 @@ private:
    * @brief joint_gear_ratios are the joint gear ratios
    */
   Vector8d joint_gear_ratios_;
-   /**
-   * @brief joint_zero_positions_ is the configuration considered as zero
-   * position
-   */
-  Vector8d joint_zero_positions_;
    /**
    * @brief joint_hardstop2zero_offsets_ are the offsets from the hardstops to 
    * the 0 position (legs straight down). This a constant hardware parameter.

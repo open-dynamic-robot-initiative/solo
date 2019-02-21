@@ -27,7 +27,6 @@ Quadruped::Quadruped()
   joint_torques_.setZero();
   joint_target_torques_.setZero();
   joint_gear_ratios_.setZero();
-  joint_zero_positions_.setZero();
   joint_hardstop2zero_offsets_.setZero();
   joint_start2hardstop_offsets_.setZero();
 
@@ -130,8 +129,8 @@ void Quadruped::acquire_sensors()
     motor_positions_(i) =
         polarity_[i] *
         (motors_[i]->get_measurement(mi::position)->newest_element()
-        - (joint_zero_positions_(i) + joint_start2hardstop_offsets_(i) 
-           + joint_hardstop2zero_offsets_(i) ) * joint_gear_ratios_(i));
+        + (joint_start2hardstop_offsets_(i) - joint_hardstop2zero_offsets_(i)) 
+           *joint_gear_ratios_(i)); //joint_zero_positions
     // acquire the motors velocities
     motor_velocities_(i) =
         polarity_[i] * motors_[i]->get_measurement(mi::velocity)->newest_element();
@@ -180,6 +179,17 @@ void Quadruped::acquire_sensors()
         contact_sensors_[i]->get_measurement()->newest_element();
   }
 }
+
+void Quadruped::set_hardstop2zero_offsets(const Eigen::Ref<Vector8d> hardstop2zero_offsets)
+{
+  joint_hardstop2zero_offsets_ = hardstop2zero_offsets;
+}
+
+void Quadruped::set_start2hardstop_offsets(const Eigen::Ref<Vector8d> start2hardstop_offsets)
+{
+  joint_start2hardstop_offsets_ = start2hardstop_offsets;
+}
+
 
 void Quadruped::send_target_motor_current(
     const Eigen::Ref<Vector8d> target_motor_current)
