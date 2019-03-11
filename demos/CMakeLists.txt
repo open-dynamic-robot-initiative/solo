@@ -36,28 +36,20 @@ create_demo(test_bench_8_motors)
 create_demo(finger)
 create_demo(quadruped)
 create_demo(teststand)
+create_demo(stuggihop)
 
+ add_executable(demo_finger_master_slave
+   demo_finger_master_slave.cpp
+ )
 
-add_executable(demo_finger_master_slave
-  demo_finger_master_slave.cpp
-)
+ target_link_libraries(demo_finger_master_slave
+   finger
+   ${catkin_LIBRARIES}
+ )
 
-target_link_libraries(demo_finger_master_slave
-  finger
-  ${catkin_LIBRARIES}
-)
-
-add_executable(demo_disentanglement_platform
-  demo_disentanglement_platform.cpp
-)
-target_link_libraries(demo_disentanglement_platform
-  ${catkin_LIBRARIES}
-)
-
-add_executable(demo_disentanglement_ros
-  demo_disentanglement_ros.cpp
-)
-target_link_libraries(demo_disentanglement_ros
-  ${catkin_LIBRARIES}
-)
-
+ add_executable(demo_disentanglement_platform
+   demo_disentanglement_platform.cpp
+ )
+ target_link_libraries(demo_disentanglement_platform
+   ${catkin_LIBRARIES}
+ )

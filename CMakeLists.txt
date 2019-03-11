@@ -17,28 +17,13 @@ set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 ############################
 # Search for dependencies. #
 ############################
-# ati_ft_sensor
+
 set(CATKIN_PKGS ${CATKIN_PKGS}
+  ati_ft_sensor
   blmc_drivers
   real_time_tools
-  ati_ft_sensor
-  roscpp
-  std_msgs
-  message_generation
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
-
-#add_dependencies(blmc_robots/RobotData ${CATKIN_PKGS})
-
-add_message_files(
-  FILES
-  RobotData.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
 
 define_os()
 search_for_eigen()
@@ -63,7 +48,7 @@ add_subdirectory(src)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${EXPORTED_LIBRAIRIES}
-  CATKIN_DEPENDS ${CATKIN_PKGS} message_runtime std_msgs
+  CATKIN_DEPENDS ${CATKIN_PKGS}
 )
 
 #########################
