@@ -41,6 +41,20 @@ public:
   void acquire_sensors();
 
   /**
+   * @brief set_hardstop2zero_offsets
+   *
+   */
+  void set_hardstop2zero_offsets(
+      const Eigen::Ref<Vector8d> hardstop2zero_offsets);
+
+  /**
+   * @brief set_start2hardstop_offsets
+   *
+   */
+  void set_start2hardstop_offsets(
+      const Eigen::Ref<Vector8d> start2hardstop_offsets);
+
+  /**
    * @brief get_motor_positions
    * @return the current motors positions (rad).
    * WARNING !!!!
@@ -185,14 +199,21 @@ public:
   }
 
   /**
-   * @brief get_zero_positions
+   * @brief get_hardstop2zero_offsets
    * @return the position where the robot should be in "zero" configuration
    */
-  const Eigen::Ref<Vector8d> get_zero_positions()
+  const Eigen::Ref<Vector8d> get_hardstop2zero_offsets()
   {
-    return joint_zero_positions_;
+    return joint_hardstop2zero_offsets_;
   }
-
+  /**
+   * @brief get_start2hardstop_offsets_
+   * @return the position where the robot should be in "zero" configuration
+   */
+  const Eigen::Ref<Vector8d> get_start2hardstop_offsets_()
+  {
+    return joint_start2hardstop_offsets_;
+  }
   /**
    * @brief get_slider_positions
    * @return the current sliders positions.
@@ -324,11 +345,16 @@ private:
    * @brief joint_gear_ratios are the joint gear ratios
    */
   Vector8d joint_gear_ratios_;
-  /**
-   * @brief joint_zero_positions_ is the configuration considered as zero
-   * position
+   /**
+   * @brief joint_hardstop2zero_offsets_ are the offsets from the hardstops to 
+   * the 0 position (legs straight down). This a constant hardware parameter.
    */
-  Vector8d joint_zero_positions_;
+  Vector8d joint_hardstop2zero_offsets_;
+  /**
+   * @brief joint_start2hardstop_offsets_ are the offsets from the encoders when
+   * powered on, till the hardstops. These need to be calibrated each time.
+   */
+  Vector8d joint_start2hardstop_offsets_;
   /**
    * @brief joint_max_torque_
    */
