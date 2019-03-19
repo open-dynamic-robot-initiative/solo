@@ -70,8 +70,8 @@ int main(int argc, char **argv)
 
 
     // initialize the communication with the can cards
-    auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can6");
-    auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can7");
+    auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
+    auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can1");
 
     // get all informatino about the control cards
     auto board_0 = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_bus_0);
@@ -81,9 +81,13 @@ int main(int argc, char **argv)
     // two individual motors on individual leg style mounting on the left of the
     // table
     std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> motors;
-    motors[0]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 0, 2.0);
-    motors[1]  = std::make_shared<blmc_drivers::SafeMotor>   (board_0, 1, 2.0);
-    motors[2]  = std::make_shared<blmc_drivers::SafeMotor>   (board_1, 0, 2.0);
+    double max_motor_velocity = 20;
+    motors[0]  = std::make_shared<blmc_drivers::SafeMotor>(board_0, 0, 2.0,
+        1000, max_motor_velocity);
+    motors[1]  = std::make_shared<blmc_drivers::SafeMotor>(board_0, 1, 2.0,
+        1000, max_motor_velocity);
+    motors[2]  = std::make_shared<blmc_drivers::SafeMotor>(board_1, 0, 2.0,
+        1000, max_motor_velocity);
 
     std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3> sliders;
     sliders[0] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 0);
