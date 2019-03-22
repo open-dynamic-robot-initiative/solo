@@ -36,11 +36,15 @@ public:
                                    / gear_ratio_ / motor_constant_);
     }
 
+    void set_zero_angle(const double& zero_position)
+    {
+        zero_angle_ = zero_position;
+    }
+
     void send_torque()
     {
         motor_->send_if_input_changed();
     }
-
 
     double get_desired_torque() const
     {
@@ -55,7 +59,6 @@ public:
                 * gear_ratio_ * motor_constant_;
     }
 
-
     double get_torque() const
     {
 
@@ -65,8 +68,7 @@ public:
 
     double get_angle() const
     {
-        return get_motor_measurement(mi::position) / gear_ratio_;
-                - zero_angle_;
+        return get_motor_measurement(mi::position) / gear_ratio_ - zero_angle_;
     }
 
     double get_angular_velocity() const
@@ -80,6 +82,10 @@ public:
         return get_motor_measurement(mi::encoder_index) / gear_ratio_;
     }
 
+    double get_zero_angle() const
+    {
+        return zero_angle_;
+    }
 
 private:
     double get_motor_measurement(const int& measurement_index) const
@@ -149,6 +155,14 @@ public:
         }
     }
 
+    void set_zero_angles(const Vector& zero_positions)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_zero_angle(zero_positions(i));
+        }
+    }
+
     void send_torques()
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -156,7 +170,6 @@ public:
             modules_[i]->send_torque();
         }
     }
-
 
     Vector get_desired_torques() const
     {
@@ -211,6 +224,17 @@ public:
             index_angles(i) = modules_[i]->get_index_angle();
         }
         return index_angles;
+    }
+
+    Vector get_zero_angles() const
+    {
+        Vector positions;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            positions(i) = modules_[i]->get_zero_angle();
+        }
+        return positions;
     }
 
 private:
