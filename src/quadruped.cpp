@@ -42,7 +42,7 @@ Quadruped::Quadruped()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(4.0);
+  motor_max_current_.fill(15.0);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -129,7 +129,7 @@ void Quadruped::acquire_sensors()
     motor_positions_(i) =
         polarity_[i] *
         (motors_[i]->get_measurement(mi::position)->newest_element()
-        + (joint_start2hardstop_offsets_(i) - joint_hardstop2zero_offsets_(i)) 
+        + (joint_start2hardstop_offsets_(i) - joint_hardstop2zero_offsets_(i))
            *joint_gear_ratios_(i));
     // acquire the motors velocities
     motor_velocities_(i) =

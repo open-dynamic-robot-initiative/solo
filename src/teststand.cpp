@@ -42,7 +42,7 @@ Teststand::Teststand()
   // for now this value is very small but it is currently for debug mode
   //motor_max_current_.fill(4.5);
   // Max current in Amp
-  motor_max_current_.fill(8);
+  motor_max_current_.fill(12);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -66,6 +66,8 @@ void Teststand::initialize()
   }
 
   sliders_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
+  sliders_[1] =
       std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
   contact_sensors_[0] =
       std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
@@ -145,10 +147,16 @@ void Teststand::acquire_sensors()
     * Additional data
     */
   // acquire the slider positions
+
   for (unsigned i=0 ; i < slider_positions_.size() ; ++i)
   {
     // acquire the slider
     slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
+  }
+
+
+  for (unsigned i=0 ; i < contact_sensors_states_.size() ; ++i)
+  {
     // acquire the current contact states
     contact_sensors_states_(i) =
         contact_sensors_[i]->get_measurement()->newest_element();

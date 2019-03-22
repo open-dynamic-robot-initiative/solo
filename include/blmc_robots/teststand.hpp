@@ -13,7 +13,7 @@ class Teststand
 public:
 
   typedef Eigen::Matrix<double, 1, 1> Vector1d;
-  typedef Eigen::Matrix<double, 1, 1> VectorSlider;
+  typedef Eigen::Matrix<double, 2, 1> VectorSlider;
   typedef Eigen::Matrix<double, 1, 1> VectorContact;
 
   typedef Eigen::Matrix<double, 3, 1> VectorAtiForce;
@@ -229,7 +229,7 @@ public:
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
    */
-  const Eigen::Ref<Vector1d> get_slider_positions()
+  const Eigen::Ref<Vector2d> get_slider_positions()
   {
     return slider_positions_;
   }
@@ -407,7 +407,7 @@ private:
    * @brief slider_positions_ is the position of the linear potentiometer.
    * Can be used as a joystick input.
    */
-  Vector1d slider_positions_;
+  Vector2d slider_positions_;
 
   /**
    * @brief contact_sensors_ is contact sensors at the foot
