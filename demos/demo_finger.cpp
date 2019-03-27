@@ -65,10 +65,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char **argv)
 {
-    real_time_tools::RealTimeThread thread;
-    osi::initialize_realtime_printing();
-
-
     // initialize the communication with the can cards
     auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
     auto can_bus_1 = std::make_shared<blmc_drivers::CanBus>("can1");
@@ -95,11 +91,12 @@ int main(int argc, char **argv)
     sliders[2] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
 
     Finger finger(motors, sliders);
-    real_time_tools::Timer::sleep_sec(0.01);
 
-    rt_printf("controller is set up \n");
+    board_0->wait_until_ready();
+    board_1->wait_until_ready();
 
     real_time_tools::block_memory();
+    real_time_tools::RealTimeThread thread;
     real_time_tools::create_realtime_thread(thread, &control_loop, &finger);
 
     rt_printf("control loop started \n");
