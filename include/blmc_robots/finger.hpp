@@ -37,7 +37,8 @@ public:
     typedef std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3>
     AnalogSensors;
 
-    Finger(): Finger(create_motors_and_analog_sensors()){}
+    Finger(std::string can_0, std::string can_1):
+        Finger(create_motors_and_analog_sensors(can_0, can_1)){}
 
     Finger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
         Finger(std::get<0>(motors_and_analog_sensors),
@@ -68,12 +69,13 @@ private:
 
 
 
-    std::tuple<Motors, AnalogSensors> create_motors_and_analog_sensors()
+    std::tuple<Motors, AnalogSensors>
+    create_motors_and_analog_sensors(std::string can_0, std::string can_1)
     {
         // setup can buses -----------------------------------------------------
         std::array<std::shared_ptr<blmc_drivers::CanBus>, 2> can_buses;
-        can_buses[0] = std::make_shared<blmc_drivers::CanBus>("can0");
-        can_buses[1] = std::make_shared<blmc_drivers::CanBus>("can1");
+        can_buses[0] = std::make_shared<blmc_drivers::CanBus>(can_0);
+        can_buses[1] = std::make_shared<blmc_drivers::CanBus>(can_1);
 
         // set up motor boards -------------------------------------------------
         std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>

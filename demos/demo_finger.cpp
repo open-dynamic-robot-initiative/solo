@@ -65,7 +65,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char **argv)
 {
-    Finger finger;
+    Finger finger("can0", "can1");
     rt_printf("done creating finger \n");
 
     real_time_tools::block_memory();
