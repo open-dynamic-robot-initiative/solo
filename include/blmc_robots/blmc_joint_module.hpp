@@ -46,7 +46,7 @@ public:
         motor_->send_if_input_changed();
     }
 
-    double get_desired_torque() const
+    double get_sent_torque() const
     {
         auto measurement_history =
                 motor_->get_sent_current_target();
@@ -59,9 +59,8 @@ public:
                 * gear_ratio_ * motor_constant_;
     }
 
-    double get_torque() const
+    double get_measured_torque() const
     {
-
         return get_motor_measurement(mi::current)
                 * gear_ratio_ * motor_constant_;
     }
@@ -77,6 +76,7 @@ public:
 
     }
 
+private:
     double get_index_angle() const
     {
         return get_motor_measurement(mi::encoder_index) / gear_ratio_;
@@ -87,7 +87,6 @@ public:
         return zero_angle_;
     }
 
-private:
     double get_motor_measurement(const int& measurement_index) const
     {
         auto measurement_history =
@@ -171,24 +170,24 @@ public:
         }
     }
 
-    Vector get_desired_torques() const
+    Vector get_sent_torques() const
     {
         Vector torques;
 
         for(size_t i = 0; i < COUNT; i++)
         {
-            torques(i) = modules_[i]->get_desired_torque();
+            torques(i) = modules_[i]->get_sent_torque();
         }
         return torques;
     }
 
-    Vector get_torques() const
+    Vector get_measured_torques() const
     {
         Vector torques;
 
         for(size_t i = 0; i < COUNT; i++)
         {
-            torques(i) = modules_[i]->get_torque();
+            torques(i) = modules_[i]->get_measured_torque();
         }
         return torques;
     }
