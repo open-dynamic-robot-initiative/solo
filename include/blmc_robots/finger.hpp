@@ -44,13 +44,17 @@ public:
     Finger(std::string can_0, std::string can_1):
         Finger(create_motor_boards(can_0, can_1))
     {
-//        calibrate();
     }
 
     Finger(const MotorBoards& motor_boards):
         Finger(create_motors_and_analog_sensors(motor_boards))
     {
         motor_boards_ = motor_boards;
+
+        /// \todo: is this the right place to calibrate?
+        calibrate();
+        motor_boards_[0]->pause_motors();
+        motor_boards_[1]->pause_motors();
     }
 
     Finger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
