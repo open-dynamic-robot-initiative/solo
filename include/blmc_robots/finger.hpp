@@ -53,8 +53,7 @@ public:
 
         /// \todo: is this the right place to calibrate?
         calibrate();
-        motor_boards_[0]->pause_motors();
-        motor_boards_[1]->pause_motors();
+        pause_motors();
     }
 
     Finger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
@@ -74,6 +73,12 @@ public:
     const Eigen::Vector3d get_slider_positions()
     {
         return sliders_.get_positions();
+    }
+
+    void pause_motors()
+    {
+        motor_boards_[0]->pause_motors();
+        motor_boards_[1]->pause_motors();
     }
 
 private:
