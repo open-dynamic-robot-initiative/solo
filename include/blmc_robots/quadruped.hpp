@@ -322,6 +322,28 @@ private:
   Vector8d target_motor_current_tmp_;
 
   /**
+   * @brief This gives the status (enabled/disabled) of each motors using the
+   * joint ordering convention.
+   */
+  std::array<bool, 8> motor_enabled_;
+
+  /**
+   * @brief This gives the status (enabled/disabled) of each motors using the
+   * joint ordering convention.
+   */
+  std::array<bool, 8> motor_ready_;
+
+  /**
+   * @brief This gives the status (enabled/disabled of the onboard control cards)
+   */
+  std::array<bool, 4> motor_board_enabled_;
+
+  /**
+   * @brief This gives the status (enabled/disabled of the onboard control cards)
+   */
+  std::array<int, 4> motor_board_errors_;
+
+  /**
     * Joint data
     */
 
@@ -382,6 +404,16 @@ private:
   Vector8d motor_max_current_;
 
   /**
+   * @brief This map for every motor the card number
+   */
+  std::array<int, 8> motor_to_card_index_;
+
+  /**
+   * @brief This map for every motor the card port
+   */
+  std::array<int, 8> motor_to_card_port_index_;
+
+  /**
     * Drivers communication objects
     */
 
@@ -393,6 +425,9 @@ private:
    * @brief can_motor_boards_ are the 4 can motor board.
    */
   std::array<CanBusMotorBoard_ptr, 4> can_motor_boards_;
+
+
+
   /**
    * @brief motors_ are the objects allowing us to send motor commands and
    * receive data

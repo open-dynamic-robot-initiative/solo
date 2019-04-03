@@ -19,6 +19,20 @@ Quadruped::Quadruped()
   motor_torque_constants_.setZero();
   target_motor_current_tmp_.setZero();
 
+  for(unsigned i=0 ; i<motor_enabled_.size(); ++i)
+  {
+    motor_enabled_[i] = false;
+    motor_ready_[i] = false;
+    motor_to_card_index_[i] = 0;
+    motor_to_card_port_index_[i] = 0;
+  }
+  
+  for(unsigned i=0 ; i<motor_board_enabled_.size(); ++i)
+  {
+    motor_board_enabled_[0] = false;
+    motor_board_errors_[0] = 0;
+  }
+
   /**
     * Joint data
     */
@@ -73,37 +87,34 @@ void Quadruped::initialize()
         std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
   }
 
-  // can 0
-  // FR_HFE
-  motors_[2] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 1, motor_max_current_[0]);
-  // FR_KFE
-  motors_[3] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[0], 0, motor_max_current_[1]);
+  /**
+   * Mapping between the can and the motor
+   * FL_HFE - motor 0 - can 3 - port 1
+   * FL_KFE - motor 1 - can 3 - port 0
+   * FR_HFE - motor 2 - can 0 - port 1
+   * FR_KFE - motor 3 - can 0 - port 0
+   * HL_HFE - motor 4 - can 2 - port 1
+   * HL_KFE - motor 5 - can 2 - port 0
+   * HR_HFE - motor 6 - can 1 - port 1
+   * HR_KFE - motor 7 - can 1 - port 0
+   */
+  motor_to_card_index_[0] = 3; // FL_HFE
+  motor_to_card_index_[1] = 3; // FL_KFE
+  motor_to_card_index_[2] = 0; // FR_HFE
+  motor_to_card_index_[3] = 0; // FR_KFE
+  motor_to_card_index_[4] = 2; // HL_HFE
+  motor_to_card_index_[5] = 2; // HL_KFE
+  motor_to_card_index_[6] = 1; // HR_HFE
+  motor_to_card_index_[7] = 1; // HR_KFE
 
-  // can 1
-  // HR_HFE
-  motors_[6] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[1], 1, motor_max_current_[2]);
-  // HR_KFE
-  motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[1], 0, motor_max_current_[3]);
-
-  // can 2
-  // HL_HFE
-  motors_[4] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[2], 1, motor_max_current_[4]);
-  // HL_KFE
-  motors_[5] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[2], 0, motor_max_current_[5]);
-
-  // can 3
-  // FL_HFE
-  motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[3], 1, motor_max_current_[6]);
-  // FL_KFE
-  motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[3], 0, motor_max_current_[7]);
+  motor_to_card_port_index_[0] = 1; // FL_HFE
+  motor_to_card_port_index_[1] = 0; // FL_KFE
+  motor_to_card_port_index_[2] = 1; // FR_HFE
+  motor_to_card_port_index_[3] = 0; // FR_KFE
+  motor_to_card_port_index_[4] = 1; // HL_HFE
+  motor_to_card_port_index_[5] = 0; // HL_KFE
+  motor_to_card_port_index_[6] = 1; // HR_HFE
+  motor_to_card_port_index_[7] = 0; // HR_KFE
 
   // fix the polarity to be the same as the urdf model.
   polarity_[0] = -1.0; // FL_HFE
@@ -115,6 +126,15 @@ void Quadruped::initialize()
   polarity_[6] =  1.0; // HR_HFE
   polarity_[7] =  1.0; // HR_KFE
 
+  for(unsigned i=0; i<motors_.size() ; ++i)
+  {
+    motors_[i] = std::make_shared<blmc_drivers::SafeMotor> (
+      can_motor_boards_[motor_to_card_index_[i]],
+      motor_to_card_port_index_[i],
+      motor_max_current_[6]
+    );
+  }
+  // TODO: Add the method to wait until the motors are ready.
   real_time_tools::Timer::sleep_sec(0.01);
 }
 
@@ -178,6 +198,24 @@ void Quadruped::acquire_sensors()
     contact_sensors_states_(i) =
         contact_sensors_[i]->get_measurement()->newest_element();
   }
+
+  /**
+   * The different status.
+   */
+    
+  motor_enabled_[0] = can_motor_boards_[3]; // FL_HFE
+  motor_enabled_[1] = can_motor_boards_[3]; // FL_KFE
+  motor_enabled_[2] = can_motor_boards_[]; // FR_HFE
+  motor_enabled_[3] = can_motor_boards_[]; // FR_KFE
+  motor_enabled_[4] = can_motor_boards_[3]; // HL_HFE
+  motor_enabled_[5] = can_motor_boards_[3]; // HL_KFE
+  motor_enabled_[6] = can_motor_boards_[3]; // HR_HFE
+  motor_enabled_[7] = can_motor_boards_[3]; // HR_KFE
+  
+  for(unsigned i=0 ; i<motor_board_enabled_.size(); ++i)
+  {
+    motor_board_enabled_[0] = false;
+    motor_board_errors_[0] = 0;
 }
 
 void Quadruped::set_hardstop2zero_offsets(const Eigen::Ref<Vector8d> hardstop2zero_offsets)
