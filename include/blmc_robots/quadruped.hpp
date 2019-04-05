@@ -253,6 +253,44 @@ public:
   {
     return joint_max_torque_;
   }
+  
+  /**
+   * @brief get_motor_enabled
+   * @return This gives the status (enabled/disabled) of each motors using the
+   * joint ordering convention.
+   */
+  const std::array<bool, 8>& get_motor_enabled()
+  {
+    return motor_enabled_;
+  }
+
+  /**
+   * @brief get_motor_ready
+   * @return This gives the status (enabled/disabled) of each motors using the
+   * joint ordering convention.
+   */
+  const std::array<bool, 8>& get_motor_ready()
+  {
+    return motor_ready_;
+  }
+
+  /**
+   * @brief get_motor_board_enabled
+   * @return This gives the status (enabled/disabled of the onboard control cards)
+   */
+  const std::array<bool, 4>& get_motor_board_enabled()
+  {
+    return motor_board_enabled_;
+  }
+
+  /**
+   * @brief get_motor_board_errors
+   * @return This gives the status (enabled/disabled of the onboard control cards)
+   */
+  const std::array<int, 4>& get_motor_board_errors()
+  {
+    return motor_board_errors_;
+  }
 
   /**
    * @brief set_max_current sets the maximum current that the motor can

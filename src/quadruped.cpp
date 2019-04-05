@@ -135,7 +135,10 @@ void Quadruped::initialize()
     );
   }
   // TODO: Add the method to wait until the motors are ready.
-  real_time_tools::Timer::sleep_sec(0.01);
+  for(unsigned i=0 ; i<can_buses_.size() ; ++i)
+  {
+    can_motor_boards_[i]->wait_until_ready();
+  }
 }
 
 void Quadruped::acquire_sensors()
@@ -202,20 +205,43 @@ void Quadruped::acquire_sensors()
   /**
    * The different status.
    */
-    
-  motor_enabled_[0] = can_motor_boards_[3]; // FL_HFE
-  motor_enabled_[1] = can_motor_boards_[3]; // FL_KFE
-  motor_enabled_[2] = can_motor_boards_[]; // FR_HFE
-  motor_enabled_[3] = can_motor_boards_[]; // FR_KFE
-  motor_enabled_[4] = can_motor_boards_[3]; // HL_HFE
-  motor_enabled_[5] = can_motor_boards_[3]; // HL_KFE
-  motor_enabled_[6] = can_motor_boards_[3]; // HR_HFE
-  motor_enabled_[7] = can_motor_boards_[3]; // HR_KFE
   
-  for(unsigned i=0 ; i<motor_board_enabled_.size(); ++i)
-  {
-    motor_board_enabled_[0] = false;
-    motor_board_errors_[0] = 0;
+  blmc_drivers::MotorBoardStatus FL_status = 
+      can_motor_boards_[3]->get_status()->newest_element();
+  blmc_drivers::MotorBoardStatus FR_status = 
+      can_motor_boards_[0]->get_status()->newest_element();
+  blmc_drivers::MotorBoardStatus HL_status = 
+      can_motor_boards_[2]->get_status()->newest_element();
+  blmc_drivers::MotorBoardStatus HR_status = 
+      can_motor_boards_[1]->get_status()->newest_element();
+
+  motor_board_enabled_[0] = static_cast<bool>(FL_status.system_enabled); // FL board
+  motor_board_enabled_[1] = static_cast<bool>(FR_status.system_enabled); // FR board
+  motor_board_enabled_[2] = static_cast<bool>(HL_status.system_enabled); // HL board
+  motor_board_enabled_[3] = static_cast<bool>(HR_status.system_enabled); // HR board
+
+  motor_board_errors_[0] = static_cast<int>(FL_status.error_code); // FL board
+  motor_board_errors_[1] = static_cast<int>(FR_status.error_code); // FR board
+  motor_board_errors_[2] = static_cast<int>(HL_status.error_code); // HL board
+  motor_board_errors_[3] = static_cast<int>(HR_status.error_code); // HR board
+
+  motor_enabled_[0] = static_cast<bool>(FL_status.motor2_enabled); // FL_HFE
+  motor_enabled_[1] = static_cast<bool>(FL_status.motor1_enabled); // FL_KFE
+  motor_enabled_[2] = static_cast<bool>(FR_status.motor2_enabled); // FR_HFE
+  motor_enabled_[3] = static_cast<bool>(FR_status.motor1_enabled); // FR_KFE
+  motor_enabled_[4] = static_cast<bool>(HL_status.motor2_enabled); // HL_HFE
+  motor_enabled_[5] = static_cast<bool>(HL_status.motor1_enabled); // HL_KFE
+  motor_enabled_[6] = static_cast<bool>(HR_status.motor2_enabled); // HR_HFE
+  motor_enabled_[7] = static_cast<bool>(HR_status.motor1_enabled); // HR_KFE
+
+  motor_ready_[0] = static_cast<bool>(FL_status.motor2_ready); // FL_HFE
+  motor_ready_[1] = static_cast<bool>(FL_status.motor1_ready); // FL_KFE
+  motor_ready_[2] = static_cast<bool>(FR_status.motor2_ready); // FR_HFE
+  motor_ready_[3] = static_cast<bool>(FR_status.motor1_ready); // FR_KFE
+  motor_ready_[4] = static_cast<bool>(HL_status.motor2_ready); // HL_HFE
+  motor_ready_[5] = static_cast<bool>(HL_status.motor1_ready); // HL_KFE
+  motor_ready_[6] = static_cast<bool>(HR_status.motor2_ready); // HR_HFE
+  motor_ready_[7] = static_cast<bool>(HR_status.motor1_ready); // HR_KFE
 }
 
 void Quadruped::set_hardstop2zero_offsets(const Eigen::Ref<Vector8d> hardstop2zero_offsets)
