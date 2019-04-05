@@ -83,10 +83,17 @@ void Quadruped::initialize()
         std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[i]);
     sliders_[i] =
         std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 1);
-    contact_sensors_[i] =
-        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
   }
 
+  // mapping contact sensor in the right sequence (FL, FR, HL, HR)
+  contact_sensors_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[3], 0);
+  contact_sensors_[1] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
+  contact_sensors_[2] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[2], 0);
+  contact_sensors_[3] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
   /**
    * Mapping between the can and the motor
    * FL_HFE - motor 0 - can 3 - port 1
