@@ -42,7 +42,7 @@ Quadruped::Quadruped()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(15.0);
+  motor_max_current_.fill(10.0);
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -69,9 +69,30 @@ void Quadruped::initialize()
         std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[i]);
     sliders_[i] =
         std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 1);
-    contact_sensors_[i] =
-        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
+    // contact_sensors_[i] =
+    //     std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 0);
   }
+
+// Assigning contact sensor array data in FL, FR, HL, HR order instead out
+// FR, HR, HL, FL
+// should be removed and cleaned up
+  contact_sensors_[0] =
+        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[3], 0);
+  contact_sensors_[1] =
+        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
+  contact_sensors_[2] =
+        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[2], 0);
+  contact_sensors_[3] =
+        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
+
+
+  // can 3
+  // FL_HFE
+  motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
+                 can_motor_boards_[3], 1, motor_max_current_[6]);
+  // FL_KFE
+  motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
+                 can_motor_boards_[3], 0, motor_max_current_[7]);
 
   // can 0
   // FR_HFE
@@ -81,14 +102,6 @@ void Quadruped::initialize()
   motors_[3] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[0], 0, motor_max_current_[1]);
 
-  // can 1
-  // HR_HFE
-  motors_[6] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[1], 1, motor_max_current_[2]);
-  // HR_KFE
-  motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[1], 0, motor_max_current_[3]);
-
   // can 2
   // HL_HFE
   motors_[4] = std::make_shared<blmc_drivers::SafeMotor> (
@@ -97,13 +110,15 @@ void Quadruped::initialize()
   motors_[5] = std::make_shared<blmc_drivers::SafeMotor> (
                  can_motor_boards_[2], 0, motor_max_current_[5]);
 
-  // can 3
-  // FL_HFE
-  motors_[0] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[3], 1, motor_max_current_[6]);
-  // FL_KFE
-  motors_[1] = std::make_shared<blmc_drivers::SafeMotor> (
-                 can_motor_boards_[3], 0, motor_max_current_[7]);
+ // can 1
+ // HR_HFE
+ motors_[6] = std::make_shared<blmc_drivers::SafeMotor> (
+                can_motor_boards_[1], 1, motor_max_current_[2]);
+ // HR_KFE
+ motors_[7] = std::make_shared<blmc_drivers::SafeMotor> (
+                can_motor_boards_[1], 0, motor_max_current_[3]);
+
+
 
   // fix the polarity to be the same as the urdf model.
   polarity_[0] = -1.0; // FL_HFE
