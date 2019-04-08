@@ -21,6 +21,8 @@
 #include <blmc_robots/slider.hpp>
 #include "real_time_tools/spinner.hpp"
 
+#include <blmc_robots/finger_interface.hpp>
+
 
 
 namespace blmc_robots
@@ -30,7 +32,7 @@ namespace blmc_robots
  * @brief The Finger class implements the control of the test bench
  * containing 8 motors and 8 sliders using the blmc drivers.
  */
-class Finger: public BlmcJointModules<3>
+class Finger: public BlmcJointModules<3>, public FingerInterface
 {
 public:
     enum JointIndexing {base, center, tip, joint_count};
@@ -70,6 +72,37 @@ public:
                  Eigen::Vector3d::Zero(),
                  Eigen::Vector3d::Ones()) {}
 
+    void set_torques(const Eigen::Vector3d& desired_torques)
+    {
+        BlmcJointModules<3>::set_torques(desired_torques);
+    }
+
+    void send_torques()
+    {
+        BlmcJointModules<3>::send_torques();
+    }
+
+    Eigen::Vector3d get_sent_torques() const
+    {
+        return BlmcJointModules<3>::get_sent_torques();
+    }
+
+    Eigen::Vector3d get_measured_torques() const
+    {
+        return BlmcJointModules<3>::get_measured_torques();
+    }
+
+    Eigen::Vector3d get_angles() const
+    {
+        return BlmcJointModules<3>::get_angles();
+    }
+
+    Eigen::Vector3d get_angular_velocities() const
+    {
+        return BlmcJointModules<3>::get_angular_velocities();
+    }
+
+    /// \todo: this should probably not be in this class!!
     const Eigen::Vector3d get_slider_positions()
     {
         return sliders_.get_positions();
@@ -79,6 +112,11 @@ public:
     {
         motor_boards_[0]->pause_motors();
         motor_boards_[1]->pause_motors();
+    }
+
+    void wait_since_last_send(const double& time_s)
+    {
+        /// \todo: this needs to be filled in
     }
 
 private:

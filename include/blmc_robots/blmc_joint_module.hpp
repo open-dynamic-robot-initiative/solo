@@ -154,14 +154,6 @@ public:
         }
     }
 
-    void set_zero_angles(const Vector& zero_positions)
-    {
-        for(size_t i = 0; i < COUNT; i++)
-        {
-            modules_[i]->set_zero_angle(zero_positions(i));
-        }
-    }
-
     void send_torques()
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -214,15 +206,13 @@ public:
         return velocities;
     }
 
-    Vector get_index_angles() const
+protected:
+    void set_zero_angles(const Vector& zero_positions)
     {
-        Vector index_angles;
-
         for(size_t i = 0; i < COUNT; i++)
         {
-            index_angles(i) = modules_[i]->get_index_angle();
+            modules_[i]->set_zero_angle(zero_positions(i));
         }
-        return index_angles;
     }
 
     Vector get_zero_angles() const
@@ -235,6 +225,18 @@ public:
         }
         return positions;
     }
+
+    Vector get_index_angles() const
+    {
+        Vector index_angles;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            index_angles(i) = modules_[i]->get_index_angle();
+        }
+        return index_angles;
+    }
+
 
 private:
     std::array<std::shared_ptr<BlmcJointModule>, COUNT> modules_;
