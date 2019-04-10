@@ -62,12 +62,15 @@ public:
         Finger(std::get<0>(motors_and_analog_sensors),
                std::get<1>(motors_and_analog_sensors)) {}
 
-
     Finger(const Motors& motors, const AnalogSensors& analog_sensors):
         BlmcJointModules<3>(motors,
-                            0.02 * Eigen::Vector3d::Ones(),
-                            9.0 * Eigen::Vector3d::Ones(),
-                            Eigen::Vector3d::Zero()),
+                2.0 * Eigen::Vector3d::Ones(),
+                20 * Eigen::Vector3d::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
+                0.02 * Eigen::Vector3d::Ones(),
+                9.0 * Eigen::Vector3d::Ones(),
+                Eigen::Vector3d::Zero()),
         sliders_(analog_sensors,
                  Eigen::Vector3d::Zero(),
                  Eigen::Vector3d::Ones()) {}

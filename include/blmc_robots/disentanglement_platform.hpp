@@ -34,13 +34,16 @@ public:
     DisentanglementPlatform(const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 2>& motors,
            const std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 2>& sliders):
         BlmcJointModules<2>(motors,
-                       0.02 * Eigen::Vector2d::Ones(),
-                       9.0 * Eigen::Vector2d::Ones(),
-                       Eigen::Vector2d::Zero()),
+                2.0 * Eigen::Vector2d::Ones(),
+                20 * Eigen::Vector2d::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector2d::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector2d::Ones(),
+                0.02 * Eigen::Vector2d::Ones(),
+                9.0 * Eigen::Vector2d::Ones(),
+                Eigen::Vector2d::Zero()),
         sliders_(sliders,
-                 Eigen::Vector2d::Zero(),
-                 Eigen::Vector2d::Ones()) {}
-
+                Eigen::Vector2d::Zero(),
+                Eigen::Vector2d::Ones()) {}
 
     const Eigen::Vector2d get_slider_positions()
     {

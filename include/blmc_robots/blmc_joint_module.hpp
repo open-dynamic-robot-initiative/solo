@@ -19,25 +19,71 @@ public:
 
 
     BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
+               const double& max_current,
+               const double& max_velocity,
+               const double& min_joint_angle,
+               const double& max_joint_angle,
                const double& motor_constant = 1.0,
                const double& gear_ratio = 1.0,
                const double& zero_position = 0.0)
     {
         motor_ = motor;
-
         motor_constant_ = motor_constant;
         gear_ratio_ = gear_ratio;
-        zero_angle_ = zero_position;
+        set_max_current(max_current);
+        set_max_velocity(max_velocity);
+        set_joint_limits(min_joint_angle, max_joint_angle);
+        set_zero_angle(zero_position);
+    }
+
+    void set_max_current(const double& max_current)
+    {
+        assert(max_current > 0);
+        max_current_ = max_current;
+    }
+
+    void set_max_velocity(const double& max_velocity)
+    {
+        assert(std::isnan(max_velocity) || max_velocity > 0);
+        max_velocity_ = max_velocity;
+    }
+
+    void set_joint_limits(const double& min_joint_angle,
+            const double& max_joint_angle)
+    {
+        assert(std::isnan(min_joint_angle) || std::isnan(max_joint_angle) || (
+                    min_joint_angle < max_joint_angle &&
+                    max_joint_angle - min_joint_angle < 2*M_PI));
+        min_joint_angle_ = min_joint_angle;
+        max_joint_angle_ = max_joint_angle;
     }
 
     void set_torque(const double& desired_torque)
     {
-        motor_->set_current_target(desired_torque
+        double current_target = desired_torque;
+
+        // Current safety feature to avoid overheating.
+        current_target = std::min(current_target, max_current_);
+        current_target = std::max(current_target, -max_current_);
+
+        // Velocity safety feature.
+        if (!std::isnan(max_velocity_) && std::fabs(
+                get_angular_velocity()) > max_velocity_)
+            current_target = 0;
+
+        // Joint limits safety feature.
+        if (!std::isnan(max_joint_angle_) && get_angle() > max_joint_angle_)
+            current_target = -max_current_;
+        if (!std::isnan(min_joint_angle_) && get_angle() < min_joint_angle_)
+            current_target = max_current_;
+
+        motor_->set_current_target(current_target
                                    / gear_ratio_ / motor_constant_);
     }
 
     void set_zero_angle(const double& zero_position)
     {
+        assert(-M_PI < zero_position && zero_position < M_PI);
         zero_angle_ = zero_position;
     }
 
@@ -101,8 +147,11 @@ private:
 
     std::shared_ptr<blmc_drivers::MotorInterface> motor_;
 
+    double max_current_;
+    double max_velocity_;
+    double min_joint_angle_;
+    double max_joint_angle_;
     double motor_constant_;
-
     double gear_ratio_;
     double zero_angle_;
 };
@@ -120,11 +169,16 @@ public:
     BlmcJointModules(
             const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
             COUNT>& motors,
+            const Vector& max_current,
+            const Vector& max_velocity,
+            const Vector& min_joint_angle,
+            const Vector& max_joint_angle,
             const Vector& motor_constants,
             const Vector& gear_ratios,
             const Vector& zero_positions)
     {
-      set_motor_array(motors, motor_constants, gear_ratios, zero_positions);
+      set_motor_array(motors, max_current, max_velocity, min_joint_angle,
+              max_joint_angle, motor_constants, gear_ratios, zero_positions);
     }
 
     BlmcJointModules()
@@ -132,7 +186,12 @@ public:
     }
 
     void set_motor_array(
-        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>& motors,
+        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
+                COUNT>& motors,
+        const Vector& max_current,
+        const Vector& max_velocity,
+        const Vector& min_joint_angle,
+        const Vector& max_joint_angle,
         const Vector& motor_constants,
         const Vector& gear_ratios,
         const Vector& zero_positions)
@@ -140,9 +199,13 @@ public:
       for(size_t i = 0; i < COUNT; i++)
       {
           modules_[i] = std::make_shared<BlmcJointModule>(motors[i],
-                                                     motor_constants[i],
-                                                     gear_ratios[i],
-                                                     zero_positions[i]);
+                  max_current[i],
+                  max_velocity[i],
+                  min_joint_angle[i],
+                  max_joint_angle[i],
+                  motor_constants[i],
+                  gear_ratios[i],
+                  zero_positions[i]);
       }
     }
 
