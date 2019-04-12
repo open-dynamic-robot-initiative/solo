@@ -1,11 +1,11 @@
 #pragma once
 
 #include <array>
-
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 #include <math.h>
 #include <blmc_drivers/devices/motor.hpp>
+#include <stdexcept>
 
 
 namespace blmc_robots
@@ -19,21 +19,71 @@ public:
 
 
     BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
-               const double& motor_constant = 1.0,
-               const double& gear_ratio = 1.0,
-               const double& zero_position = 0.0)
+               const double& max_current,
+               const double& max_velocity,
+               const double& min_joint_angle,
+               const double& max_joint_angle,
+               const double& motor_constant,
+               const double& gear_ratio,
+               const double& zero_position)
     {
         motor_ = motor;
-
         motor_constant_ = motor_constant;
         gear_ratio_ = gear_ratio;
-        zero_angle_ = zero_position;
+        set_max_current(max_current);
+        set_max_velocity(max_velocity);
+        set_joint_limits(min_joint_angle, max_joint_angle);
+        set_zero_angle(zero_position);
+    }
+
+    void set_max_current(const double& max_current)
+    {
+        if (max_current < 0)
+            throw std::invalid_argument("the current limit must be a positive "
+                    "number.");
+        max_current_ = max_current;
+    }
+
+    void set_max_velocity(const double& max_velocity)
+    {
+        if (!std::isnan(max_velocity) && max_velocity < 0)
+            throw std::invalid_argument("the velocity limit must be a positive"
+                    " number or NaN.");
+        max_velocity_ = max_velocity;
+    }
+
+    void set_joint_limits(const double& min_joint_angle,
+            const double& max_joint_angle)
+    {
+        if (!std::isnan(min_joint_angle) && !std::isnan(max_joint_angle) && (
+                    min_joint_angle > max_joint_angle ||
+                    max_joint_angle - min_joint_angle > 2*M_PI))
+            throw std::invalid_argument("Invalid joint limits. Make sure the "
+                    "interval denoted by the joint limits is a valid one.");
+        min_joint_angle_ = min_joint_angle;
+        max_joint_angle_ = max_joint_angle;
     }
 
     void set_torque(const double& desired_torque)
     {
-        motor_->set_current_target(desired_torque
-                                   / gear_ratio_ / motor_constant_);
+        double current_target = desired_torque / gear_ratio_ / motor_constant_;
+
+        // Current safety feature to avoid overheating.
+        current_target = std::min(current_target, max_current_);
+        current_target = std::max(current_target, -max_current_);
+
+        // Velocity safety feature.
+        if (!std::isnan(max_velocity_) && std::fabs(
+                get_angular_velocity()) > max_velocity_)
+            current_target = 0;
+
+        // Joint limits safety feature.
+        if (!std::isnan(max_joint_angle_) && get_angle() > max_joint_angle_)
+            current_target = -max_current_;
+        if (!std::isnan(min_joint_angle_) && get_angle() < min_joint_angle_)
+            current_target = max_current_;
+
+        motor_->set_current_target(current_target);
     }
 
     void set_zero_angle(const double& zero_position)
@@ -76,6 +126,22 @@ public:
 
     }
 
+    double get_max_current_limit() const {
+        return max_current_;
+    }
+
+    double get_max_velocity_limit() const {
+        return max_velocity_;
+    }
+
+    double get_min_joint_angle_limit() const {
+        return min_joint_angle_;
+    }
+
+    double get_max_joint_angle_limit() const {
+        return max_joint_angle_;
+    }
+
 private:
     double get_index_angle() const
     {
@@ -101,8 +167,11 @@ private:
 
     std::shared_ptr<blmc_drivers::MotorInterface> motor_;
 
+    double max_current_;
+    double max_velocity_;
+    double min_joint_angle_;
+    double max_joint_angle_;
     double motor_constant_;
-
     double gear_ratio_;
     double zero_angle_;
 };
@@ -120,11 +189,16 @@ public:
     BlmcJointModules(
             const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
             COUNT>& motors,
+            const Vector& max_currents,
+            const Vector& max_velocities,
+            const Vector& min_joint_angles,
+            const Vector& max_joint_angles,
             const Vector& motor_constants,
             const Vector& gear_ratios,
             const Vector& zero_positions)
     {
-      set_motor_array(motors, motor_constants, gear_ratios, zero_positions);
+      set_motor_array(motors, max_currents, max_velocities, min_joint_angles,
+              max_joint_angles, motor_constants, gear_ratios, zero_positions);
     }
 
     BlmcJointModules()
@@ -132,7 +206,12 @@ public:
     }
 
     void set_motor_array(
-        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>& motors,
+        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
+                COUNT>& motors,
+        const Vector& max_currents,
+        const Vector& max_velocities,
+        const Vector& min_joint_angles,
+        const Vector& max_joint_angles,
         const Vector& motor_constants,
         const Vector& gear_ratios,
         const Vector& zero_positions)
@@ -140,9 +219,13 @@ public:
       for(size_t i = 0; i < COUNT; i++)
       {
           modules_[i] = std::make_shared<BlmcJointModule>(motors[i],
-                                                     motor_constants[i],
-                                                     gear_ratios[i],
-                                                     zero_positions[i]);
+                  max_currents[i],
+                  max_velocities[i],
+                  min_joint_angles[i],
+                  max_joint_angles[i],
+                  motor_constants[i],
+                  gear_ratios[i],
+                  zero_positions[i]);
       }
     }
 
@@ -151,6 +234,30 @@ public:
         for(size_t i = 0; i < COUNT; i++)
         {
             modules_[i]->set_torque(desired_torques(i));
+        }
+    }
+
+    void set_current_limits(const Vector& current_limits)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_current_limit(current_limits(i));
+        }
+    }
+
+    void set_velocity_limits(const Vector& velocity_limits)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_velocity_limit(velocity_limits(i));
+        }
+    }
+
+    void set_joint_limits(const Vector& min_limit, const Vector& max_limit)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_joint_limits(min_limit(i), max_limit(i));
         }
     }
 
@@ -206,7 +313,50 @@ public:
         return velocities;
     }
 
-protected:
+    Vector get_current_limits() const
+    {
+        Vector current_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            current_limits(i) = modules_[i]->get_current_limit();
+        }
+        return current_limits;
+    }
+
+    Vector get_velocity_limits() const
+    {
+        Vector velocity_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            velocity_limits(i) = modules_[i]->get_velocity_limit();
+        }
+        return velocity_limits;
+    }
+
+    Vector get_min_joint_angle_limits() const
+    {
+        Vector min_joint_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            min_joint_limits(i) = modules_[i]->get_min_joint_angle_limit();
+        }
+        return min_joint_limits;
+    }
+
+    Vector get_max_joint_angle_limits() const
+    {
+        Vector max_angle_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            max_angle_limits(i) = modules_[i]->get_max_joint_angle_limit();
+        }
+        return max_angle_limits;
+    }
+
     void set_zero_angles(const Vector& zero_positions)
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -226,6 +376,7 @@ protected:
         return positions;
     }
 
+protected:
     Vector get_index_angles() const
     {
         Vector index_angles;

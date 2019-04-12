@@ -62,12 +62,15 @@ public:
         Finger(std::get<0>(motors_and_analog_sensors),
                std::get<1>(motors_and_analog_sensors)) {}
 
-
     Finger(const Motors& motors, const AnalogSensors& analog_sensors):
         BlmcJointModules<3>(motors,
-                            0.02 * Eigen::Vector3d::Ones(),
-                            9.0 * Eigen::Vector3d::Ones(),
-                            Eigen::Vector3d::Zero()),
+                2.0 * Eigen::Vector3d::Ones(),
+                2.0 * Eigen::Vector3d::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
+                0.02 * Eigen::Vector3d::Ones(),
+                9.0 * Eigen::Vector3d::Ones(),
+                Eigen::Vector3d::Zero()),
         sliders_(analog_sensors,
                  Eigen::Vector3d::Zero(),
                  Eigen::Vector3d::Ones()) {}
@@ -149,13 +152,12 @@ private:
     {
         // set up motors -------------------------------------------------------
         Motors motors;
-        double max_motor_velocity = 20;
-        motors[0]  = std::make_shared<blmc_drivers::SafeMotor>(motor_boards[0],
-                0, 2.0, 1000, max_motor_velocity);
-        motors[1]  = std::make_shared<blmc_drivers::SafeMotor>(motor_boards[0],
-                1, 2.0, 1000, max_motor_velocity);
-        motors[2]  = std::make_shared<blmc_drivers::SafeMotor>(motor_boards[1],
-                0, 2.0, 1000, max_motor_velocity);
+        motors[0]  = std::make_shared<blmc_drivers::Motor>(motor_boards[0],
+                0);
+        motors[1]  = std::make_shared<blmc_drivers::Motor>(motor_boards[0],
+                1);
+        motors[2]  = std::make_shared<blmc_drivers::Motor>(motor_boards[1],
+                0);
 
         // set up sliders ------------------------------------------------------
         AnalogSensors analog_sensors;
