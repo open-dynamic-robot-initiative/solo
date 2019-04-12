@@ -66,7 +66,7 @@ public:
 
     void set_torque(const double& desired_torque)
     {
-        double current_target = desired_torque / gear_ratio_ / motor_constant_;
+        double current_target = get_current_from_torque(desired_torque);
 
         // Current safety feature to avoid overheating.
         current_target = std::min(current_target, max_current_);
@@ -105,14 +105,12 @@ public:
         {
             return std::numeric_limits<double>::quiet_NaN();
         }
-        return measurement_history->newest_element()
-                * gear_ratio_ * motor_constant_;
+        return get_torque_from_current(measurement_history->newest_element());
     }
 
     double get_measured_torque() const
     {
-        return get_motor_measurement(mi::current)
-                * gear_ratio_ * motor_constant_;
+        return get_torque_from_current(get_motor_measurement(mi::current));
     }
 
     double get_angle() const
@@ -123,23 +121,41 @@ public:
     double get_angular_velocity() const
     {
         return get_motor_measurement(mi::velocity) / gear_ratio_;
-
     }
 
-    double get_max_current_limit() const {
+    double get_max_current_limit() const
+    {
         return max_current_;
     }
 
-    double get_max_velocity_limit() const {
+    double get_max_velocity_limit() const
+    {
         return max_velocity_;
     }
 
-    double get_min_joint_angle_limit() const {
+    double get_min_joint_angle_limit() const
+    {
         return min_joint_angle_;
     }
 
-    double get_max_joint_angle_limit() const {
+    double get_max_joint_angle_limit() const
+    {
         return max_joint_angle_;
+    }
+
+    double get_max_torque_limit() const
+    {
+        return get_torque_from_current(max_current_);
+    }
+
+    double get_current_from_torque(double torque) const
+    {
+        return torque / gear_ratio_ / motor_constant_;
+    }
+
+    double get_torque_from_current(double current) const
+    {
+        return current *  gear_ratio_ * motor_constant_;
     }
 
 private:
@@ -322,6 +338,17 @@ public:
             current_limits(i) = modules_[i]->get_current_limit();
         }
         return current_limits;
+    }
+
+    Vector get_max_torque_limits() const
+    {
+        Vector torque_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            torque_limits(i) = modules_[i]->get_max_torque_limit();
+        }
+        return torque_limits;
     }
 
     Vector get_velocity_limits() const

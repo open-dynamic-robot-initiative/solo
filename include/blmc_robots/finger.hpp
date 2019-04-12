@@ -16,7 +16,6 @@
 #include <math.h>
 #include <tuple>
 
-
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 #include "real_time_tools/spinner.hpp"
@@ -197,7 +196,7 @@ private:
         Eigen::Vector3d sum = Eigen::Vector3d::Zero();
         while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
         {
-            Eigen::Vector3d torques = Eigen::Vector3d::Ones() * -10;
+            Eigen::Vector3d torques = -1 * get_max_torque_limits();
             set_torques(torques);
             send_torques();
             Eigen::Vector3d velocities = get_angular_velocities();
@@ -208,10 +207,31 @@ private:
             running_index++;
             spinner.spin();
         }
+        int count = 0;
+        int linearly_decrease_time_steps = 1000;
+        int zero_torque_time_steps = 500;
+        while(count < linearly_decrease_time_steps)
+        {
+            Eigen::Vector3d torques = ((linearly_decrease_time_steps -
+                    count + 0.0) / linearly_decrease_time_steps) *
+                    get_max_torque_limits() * -1;
+            set_torques(torques);
+            send_torques();
+            count++;
+            spinner.spin();
+        }
+        count = 0;
+        while(count < zero_torque_time_steps)
+        {
+            Eigen::Vector3d torques = Eigen::Vector3d::Zero();
+            set_torques(torques);
+            send_torques();
+            count++;
+            spinner.spin();
+        }
         Eigen::Vector3d angle_offsets = get_angles();
         set_zero_angles(angle_offsets);
     }
-
 };
 
 } // namespace blmc_robots
