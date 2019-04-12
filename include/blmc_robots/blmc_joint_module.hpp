@@ -126,6 +126,22 @@ public:
 
     }
 
+    double get_max_current_limit() const {
+        return max_current_;
+    }
+
+    double get_max_velocity_limit() const {
+        return max_velocity_;
+    }
+
+    double get_min_joint_angle_limit() const {
+        return min_joint_angle_;
+    }
+
+    double get_max_joint_angle_limit() const {
+        return max_joint_angle_;
+    }
+
 private:
     double get_index_angle() const
     {
@@ -173,16 +189,16 @@ public:
     BlmcJointModules(
             const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
             COUNT>& motors,
-            const Vector& max_current,
-            const Vector& max_velocity,
-            const Vector& min_joint_angle,
-            const Vector& max_joint_angle,
+            const Vector& max_currents,
+            const Vector& max_velocities,
+            const Vector& min_joint_angles,
+            const Vector& max_joint_angles,
             const Vector& motor_constants,
             const Vector& gear_ratios,
             const Vector& zero_positions)
     {
-      set_motor_array(motors, max_current, max_velocity, min_joint_angle,
-              max_joint_angle, motor_constants, gear_ratios, zero_positions);
+      set_motor_array(motors, max_currents, max_velocities, min_joint_angles,
+              max_joint_angles, motor_constants, gear_ratios, zero_positions);
     }
 
     BlmcJointModules()
@@ -192,10 +208,10 @@ public:
     void set_motor_array(
         const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
                 COUNT>& motors,
-        const Vector& max_current,
-        const Vector& max_velocity,
-        const Vector& min_joint_angle,
-        const Vector& max_joint_angle,
+        const Vector& max_currents,
+        const Vector& max_velocities,
+        const Vector& min_joint_angles,
+        const Vector& max_joint_angles,
         const Vector& motor_constants,
         const Vector& gear_ratios,
         const Vector& zero_positions)
@@ -203,10 +219,10 @@ public:
       for(size_t i = 0; i < COUNT; i++)
       {
           modules_[i] = std::make_shared<BlmcJointModule>(motors[i],
-                  max_current[i],
-                  max_velocity[i],
-                  min_joint_angle[i],
-                  max_joint_angle[i],
+                  max_currents[i],
+                  max_velocities[i],
+                  min_joint_angles[i],
+                  max_joint_angles[i],
                   motor_constants[i],
                   gear_ratios[i],
                   zero_positions[i]);
@@ -218,6 +234,30 @@ public:
         for(size_t i = 0; i < COUNT; i++)
         {
             modules_[i]->set_torque(desired_torques(i));
+        }
+    }
+
+    void set_current_limits(const Vector& current_limits)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_current_limit(current_limits(i));
+        }
+    }
+
+    void set_velocity_limits(const Vector& velocity_limits)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_velocity_limit(velocity_limits(i));
+        }
+    }
+
+    void set_joint_limits(const Vector& min_limit, const Vector& max_limit)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_joint_limits(min_limit(i), max_limit(i));
         }
     }
 
@@ -273,7 +313,50 @@ public:
         return velocities;
     }
 
-protected:
+    Vector get_current_limits() const
+    {
+        Vector current_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            current_limits(i) = modules_[i]->get_current_limit();
+        }
+        return current_limits;
+    }
+
+    Vector get_velocity_limits() const
+    {
+        Vector velocity_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            velocity_limits(i) = modules_[i]->get_velocity_limit();
+        }
+        return velocity_limits;
+    }
+
+    Vector get_min_joint_angle_limits() const
+    {
+        Vector min_joint_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            min_joint_limits(i) = modules_[i]->get_min_joint_angle_limit();
+        }
+        return min_joint_limits;
+    }
+
+    Vector get_max_joint_angle_limits() const
+    {
+        Vector max_angle_limits;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            max_angle_limits(i) = modules_[i]->get_max_joint_angle_limit();
+        }
+        return max_angle_limits;
+    }
+
     void set_zero_angles(const Vector& zero_positions)
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -293,6 +376,7 @@ protected:
         return positions;
     }
 
+protected:
     Vector get_index_angles() const
     {
         Vector index_angles;
