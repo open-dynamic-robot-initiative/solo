@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 #include <math.h>
@@ -23,9 +22,9 @@ public:
                const double& max_velocity,
                const double& min_joint_angle,
                const double& max_joint_angle,
-               const double& motor_constant = 1.0,
-               const double& gear_ratio = 1.0,
-               const double& zero_position = 0.0)
+               const double& motor_constant,
+               const double& gear_ratio,
+               const double& zero_position)
     {
         motor_ = motor;
         motor_constant_ = motor_constant;
@@ -60,7 +59,7 @@ public:
 
     void set_torque(const double& desired_torque)
     {
-        double current_target = desired_torque;
+        double current_target = desired_torque / gear_ratio_ / motor_constant_;
 
         // Current safety feature to avoid overheating.
         current_target = std::min(current_target, max_current_);
@@ -77,8 +76,7 @@ public:
         if (!std::isnan(min_joint_angle_) && get_angle() < min_joint_angle_)
             current_target = max_current_;
 
-        motor_->set_current_target(current_target
-                                   / gear_ratio_ / motor_constant_);
+        motor_->set_current_target(current_target);
     }
 
     void set_zero_angle(const double& zero_position)
