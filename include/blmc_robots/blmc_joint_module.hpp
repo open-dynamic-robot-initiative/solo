@@ -5,6 +5,7 @@
 #include <blmc_robots/common_header.hpp>
 #include <math.h>
 #include <blmc_drivers/devices/motor.hpp>
+#include <stdexcept>
 
 
 namespace blmc_robots
@@ -37,22 +38,28 @@ public:
 
     void set_max_current(const double& max_current)
     {
-        assert(max_current > 0);
+        if (max_current < 0)
+            throw std::invalid_argument("the current limit must be a positive "
+                    "number.");
         max_current_ = max_current;
     }
 
     void set_max_velocity(const double& max_velocity)
     {
-        assert(std::isnan(max_velocity) || max_velocity > 0);
+        if (!std::isnan(max_velocity) && max_velocity < 0)
+            throw std::invalid_argument("the velocity limit must be a positive"
+                    " number or NaN.");
         max_velocity_ = max_velocity;
     }
 
     void set_joint_limits(const double& min_joint_angle,
             const double& max_joint_angle)
     {
-        assert(std::isnan(min_joint_angle) || std::isnan(max_joint_angle) || (
-                    min_joint_angle < max_joint_angle &&
-                    max_joint_angle - min_joint_angle < 2*M_PI));
+        if (!std::isnan(min_joint_angle) && !std::isnan(max_joint_angle) && (
+                    min_joint_angle > max_joint_angle ||
+                    max_joint_angle - min_joint_angle > 2*M_PI))
+            throw std::invalid_argument("Invalid joint limits. Make sure the "
+                    "interval denoted by the joint limits is a valid one.");
         min_joint_angle_ = min_joint_angle;
         max_joint_angle_ = max_joint_angle;
     }
@@ -81,7 +88,6 @@ public:
 
     void set_zero_angle(const double& zero_position)
     {
-        assert(-M_PI < zero_position && zero_position < M_PI);
         zero_angle_ = zero_position;
     }
 
