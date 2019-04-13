@@ -31,7 +31,7 @@ namespace blmc_robots
  * @brief The RealFinger class implements the control of the test bench
  * containing 8 motors and 8 sliders using the blmc drivers.
  */
-class RealFinger: public BlmcJointModules<3>, public Finger
+class RealFinger: public BlmcJointModules<3>, public robot_interfaces::Finger
 {
 public:
     enum JointIndexing {base, center, tip, joint_count};
