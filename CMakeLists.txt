@@ -23,6 +23,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   blmc_drivers
   real_time_tools
   mpi_cmake_modules
+  robot_interfaces
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
