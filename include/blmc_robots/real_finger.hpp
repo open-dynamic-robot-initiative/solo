@@ -17,7 +17,6 @@
 #include <tuple>
 
 #include <blmc_robots/blmc_joint_module.hpp>
-#include <blmc_robots/slider.hpp>
 #include "real_time_tools/spinner.hpp"
 
 #include <robot_interfaces/finger.hpp>
@@ -27,23 +26,17 @@
 namespace blmc_robots
 {
 
-/**
- * @brief The RealFinger class implements the control of the test bench
- * containing 8 motors and 8 sliders using the blmc drivers.
- */
 class RealFinger: public BlmcJointModules<3>, public robot_interfaces::Finger
 {
 public:
     enum JointIndexing {base, center, tip, joint_count};
 
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> Motors;
-    typedef std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, 3>
-    AnalogSensors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
     MotorBoards;
 
     RealFinger(const MotorBoards& motor_boards):
-        RealFinger(create_motors_and_analog_sensors(motor_boards))
+        RealFinger(create_motors(motor_boards))
     {
         motor_boards_ = motor_boards;
 
@@ -53,11 +46,7 @@ public:
     }
 
 private:
-    RealFinger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
-        RealFinger(std::get<0>(motors_and_analog_sensors),
-               std::get<1>(motors_and_analog_sensors)) {}
-
-    RealFinger(const Motors& motors, const AnalogSensors& analog_sensors):
+    RealFinger(const Motors& motors):
         BlmcJointModules<3>(motors,
                 2.0 * Eigen::Vector3d::Ones(),
                 2.0 * Eigen::Vector3d::Ones(),
@@ -65,10 +54,7 @@ private:
                 std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
                 0.02 * Eigen::Vector3d::Ones(),
                 9.0 * Eigen::Vector3d::Ones(),
-                Eigen::Vector3d::Zero()),
-        sliders_(analog_sensors,
-                 Eigen::Vector3d::Zero(),
-                 Eigen::Vector3d::Ones()) {}
+                Eigen::Vector3d::Zero()) {}
 
 public:
     void set_torques(const Eigen::Vector3d& desired_torques)
@@ -99,12 +85,6 @@ public:
     Eigen::Vector3d get_angular_velocities() const
     {
         return BlmcJointModules<3>::get_angular_velocities();
-    }
-
-    /// \todo: this should probably not be in this class!!
-    const Eigen::Vector3d get_slider_positions()
-    {
-        return sliders_.get_positions();
     }
 
     void pause_motors()
@@ -143,10 +123,9 @@ public:
 
 private:
     MotorBoards motor_boards_;
-    Sliders<3> sliders_;
 
-    static std::tuple<Motors, AnalogSensors>
-    create_motors_and_analog_sensors(const MotorBoards& motor_boards)
+    static Motors
+    create_motors(const MotorBoards& motor_boards)
     {
         // set up motors -------------------------------------------------------
         Motors motors;
@@ -157,16 +136,7 @@ private:
         motors[2]  = std::make_shared<blmc_drivers::Motor>(motor_boards[1],
                 0);
 
-        // set up sliders ------------------------------------------------------
-        AnalogSensors analog_sensors;
-        analog_sensors[0] = std::make_shared<blmc_drivers::AnalogSensor>(
-                    motor_boards[0], 0);
-        analog_sensors[1] = std::make_shared<blmc_drivers::AnalogSensor>(
-                    motor_boards[0], 1);
-        analog_sensors[2] = std::make_shared<blmc_drivers::AnalogSensor>(
-                    motor_boards[1], 0);
-
-        return std::make_tuple(motors, analog_sensors);
+        return motors;
     }
 
     /**
