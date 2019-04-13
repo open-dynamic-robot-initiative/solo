@@ -9,6 +9,7 @@
 
 #include "real_time_tools/spinner.hpp"
 #include "blmc_robots/real_finger.hpp"
+#include <iostream>
 
 using namespace blmc_robots;
 
@@ -42,22 +43,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     // print -------------------------------------------------------------------
     if ((count % 1000) == 0)
     {
-      rt_printf("sending currents: [");
-      for(int i=0 ; i<desired_torque.size() ; ++i)
-      {
-        rt_printf("%f, ", desired_torque(i));
-      }
-      rt_printf("]\n");
-
-
-      Eigen::Vector3d angles = robot.get_angles();
-
-      rt_printf("positions: [");
-      for(int i=0 ; i < angles.size() ; ++i)
-      {
-        rt_printf("%f, ", angles(i));
-      }
-      rt_printf("]\n");
+        std::cout << "desired_torque: " << desired_torque.transpose() << std::endl;
+        std::cout << "angles: " << robot.get_angles().transpose() << std::endl;
     }
     ++count;
   }//endwhile
