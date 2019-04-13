@@ -22,6 +22,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   ati_ft_sensor
   blmc_drivers
   real_time_tools
+  mpi_cmake_modules
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
