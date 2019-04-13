@@ -42,11 +42,6 @@ public:
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
     MotorBoards;
 
-    RealFinger(std::string can_0, std::string can_1):
-        RealFinger(create_motor_boards(can_0, can_1))
-    {
-    }
-
     RealFinger(const MotorBoards& motor_boards):
         RealFinger(create_motors_and_analog_sensors(motor_boards))
     {
@@ -57,6 +52,7 @@ public:
         pause_motors();
     }
 
+private:
     RealFinger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
         RealFinger(std::get<0>(motors_and_analog_sensors),
                std::get<1>(motors_and_analog_sensors)) {}
@@ -74,6 +70,7 @@ public:
                  Eigen::Vector3d::Zero(),
                  Eigen::Vector3d::Ones()) {}
 
+public:
     void set_torques(const Eigen::Vector3d& desired_torques)
     {
         BlmcJointModules<3>::set_torques(desired_torques);
@@ -121,12 +118,8 @@ public:
         /// \todo: this needs to be filled in
     }
 
-private:
-    MotorBoards motor_boards_;
-    Sliders<3> sliders_;
 
-
-    MotorBoards
+    static MotorBoards
     create_motor_boards(const std::string& can_0, const std::string& can_1)
     {
         // setup can buses -----------------------------------------------------
@@ -135,18 +128,24 @@ private:
         can_buses[1] = std::make_shared<blmc_drivers::CanBus>(can_1);
 
         // set up motor boards -------------------------------------------------
-        MotorBoards
-                motor_boards;
+        MotorBoards motor_boards;
         motor_boards[0] =
                 std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses[0]);
         motor_boards[1] =
                 std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses[1]);
 
+        motor_boards[0]->wait_until_ready();
+        motor_boards[1]->wait_until_ready();
+
         return motor_boards;
     }
 
 
-    std::tuple<Motors, AnalogSensors>
+private:
+    MotorBoards motor_boards_;
+    Sliders<3> sliders_;
+
+    static std::tuple<Motors, AnalogSensors>
     create_motors_and_analog_sensors(const MotorBoards& motor_boards)
     {
         // set up motors -------------------------------------------------------
@@ -166,9 +165,6 @@ private:
                     motor_boards[0], 1);
         analog_sensors[2] = std::make_shared<blmc_drivers::AnalogSensor>(
                     motor_boards[1], 0);
-
-        motor_boards[0]->wait_until_ready();
-        motor_boards[1]->wait_until_ready();
 
         return std::make_tuple(motors, analog_sensors);
     }

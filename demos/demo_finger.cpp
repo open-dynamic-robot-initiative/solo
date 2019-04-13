@@ -54,7 +54,11 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* finger_void_ptr)
 
 int main(int argc, char **argv)
 {
-    auto finger = std::make_shared<RealFinger>(RealFinger("can0", "can1"));
+    // set up motor boards -----------------------------------------------------
+    auto motor_boards = RealFinger::create_motor_boards("can0", "can1");
+
+    // set up finger -----------------------------------------------------------
+    auto finger = std::make_shared<RealFinger>(RealFinger(motor_boards));
     rt_printf("done creating finger \n");
 
     real_time_tools::block_memory();
