@@ -4,18 +4,18 @@
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Finger class in a small demo.
+ * This file uses the RealFinger class in a small demo.
  */
 
 #include "real_time_tools/spinner.hpp"
-#include "blmc_robots/finger.hpp"
+#include "blmc_robots/real_finger.hpp"
 
 using namespace blmc_robots;
 
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-  Finger& robot = *(static_cast<Finger*>(robot_void_ptr));
+  RealFinger& robot = *(static_cast<RealFinger*>(robot_void_ptr));
 
   double kp = 0.2;
   double kd = 0.0025;
@@ -65,7 +65,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char **argv)
 {
-    Finger finger("can0", "can1");
+    RealFinger finger("can0", "can1");
     rt_printf("done creating finger \n");
 
     real_time_tools::block_memory();

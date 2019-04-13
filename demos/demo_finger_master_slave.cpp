@@ -4,11 +4,11 @@
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Finger class in a small demo.
+ * This file uses the RealFinger class in a small demo.
  */
 
 #include "real_time_tools/spinner.hpp"
-#include "blmc_robots/finger.hpp"
+#include "blmc_robots/real_finger.hpp"
 
 using namespace blmc_robots;
 
@@ -21,8 +21,8 @@ public:
    *
    * @param motor_slider_pairs
    */
-  Controller(std::shared_ptr<Finger> slave_finger,
-             std::shared_ptr<Finger> master_finger):
+  Controller(std::shared_ptr<RealFinger> slave_finger,
+             std::shared_ptr<RealFinger> master_finger):
       slave_finger_(slave_finger),
       master_finger_(master_finger)
   {
@@ -49,8 +49,8 @@ public:
 
 private:
 
-  std::shared_ptr<Finger> slave_finger_;
-  std::shared_ptr<Finger> master_finger_;
+  std::shared_ptr<RealFinger> slave_finger_;
+  std::shared_ptr<RealFinger> master_finger_;
 
 
   /**
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     osi::initialize_realtime_printing();
 
     // slave finger ------------------------------------------------------------
-    std::shared_ptr<Finger> slave_finger;
+    std::shared_ptr<RealFinger> slave_finger;
     {
         // initialize the communication with the can cards
         auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can0");
@@ -182,12 +182,12 @@ int main(int argc, char **argv)
         sliders[1] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 1);
         sliders[2] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
 
-        slave_finger = std::make_shared<Finger>(motors, sliders);
+        slave_finger = std::make_shared<RealFinger>(motors, sliders);
     }
 
 
     // master finger ------------------------------------------------------------
-    std::shared_ptr<Finger> master_finger;
+    std::shared_ptr<RealFinger> master_finger;
     {
         // initialize the communication with the can cards
         auto can_bus_0 = std::make_shared<blmc_drivers::CanBus>("can2");
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
         sliders[1] = std::make_shared<blmc_drivers::AnalogSensor>(board_0, 1);
         sliders[2] = std::make_shared<blmc_drivers::AnalogSensor>(board_1, 0);
 
-        master_finger = std::make_shared<Finger>(motors, sliders);
+        master_finger = std::make_shared<RealFinger>(motors, sliders);
     }
 
     Controller controller(slave_finger, master_finger);

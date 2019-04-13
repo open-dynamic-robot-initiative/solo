@@ -4,10 +4,10 @@
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file defines the Finger class.
+ * This file defines the RealFinger class.
  */
 
-#include "blmc_robots/finger.hpp"
+#include "blmc_robots/real_finger.hpp"
 
 #include <limits>
 

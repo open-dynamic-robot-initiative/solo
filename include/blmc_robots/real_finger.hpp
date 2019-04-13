@@ -1,10 +1,10 @@
 /**
  * \file test_bench_8_motors.hh
- * \brief The hardware wrapper of the Finger
+ * \brief The hardware wrapper of the RealFinger
  * \author Manuel Wuthrich
  * \date 2018
  *
- * This file declares the Finger class which defines the test
+ * This file declares the RealFinger class which defines the test
  * bench with 8 motors.
  */
 
@@ -20,7 +20,7 @@
 #include <blmc_robots/slider.hpp>
 #include "real_time_tools/spinner.hpp"
 
-#include <blmc_robots/finger_interface.hpp>
+#include <robot_interfaces/finger.hpp>
 
 
 
@@ -28,10 +28,10 @@ namespace blmc_robots
 {
 
 /**
- * @brief The Finger class implements the control of the test bench
+ * @brief The RealFinger class implements the control of the test bench
  * containing 8 motors and 8 sliders using the blmc drivers.
  */
-class Finger: public BlmcJointModules<3>, public FingerInterface
+class RealFinger: public BlmcJointModules<3>, public Finger
 {
 public:
     enum JointIndexing {base, center, tip, joint_count};
@@ -42,13 +42,13 @@ public:
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
     MotorBoards;
 
-    Finger(std::string can_0, std::string can_1):
-        Finger(create_motor_boards(can_0, can_1))
+    RealFinger(std::string can_0, std::string can_1):
+        RealFinger(create_motor_boards(can_0, can_1))
     {
     }
 
-    Finger(const MotorBoards& motor_boards):
-        Finger(create_motors_and_analog_sensors(motor_boards))
+    RealFinger(const MotorBoards& motor_boards):
+        RealFinger(create_motors_and_analog_sensors(motor_boards))
     {
         motor_boards_ = motor_boards;
 
@@ -57,11 +57,11 @@ public:
         pause_motors();
     }
 
-    Finger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
-        Finger(std::get<0>(motors_and_analog_sensors),
+    RealFinger(const std::tuple<Motors, AnalogSensors>& motors_and_analog_sensors):
+        RealFinger(std::get<0>(motors_and_analog_sensors),
                std::get<1>(motors_and_analog_sensors)) {}
 
-    Finger(const Motors& motors, const AnalogSensors& analog_sensors):
+    RealFinger(const Motors& motors, const AnalogSensors& analog_sensors):
         BlmcJointModules<3>(motors,
                 2.0 * Eigen::Vector3d::Ones(),
                 2.0 * Eigen::Vector3d::Ones(),

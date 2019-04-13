@@ -4,11 +4,11 @@
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Finger class in a small demo.
+ * This file uses the RealFinger class in a small demo.
  */
 
 #include "real_time_tools/spinner.hpp"
-#include "blmc_robots/finger.hpp"
+#include "blmc_robots/real_finger.hpp"
 
 #include "blmc_robots/disentanglement_platform.hpp"
 
