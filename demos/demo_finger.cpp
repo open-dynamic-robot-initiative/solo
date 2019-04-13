@@ -12,15 +12,26 @@
 #include <blmc_robots/slider.hpp>
 #include "robot_interfaces/finger.hpp"
 #include <iostream>
+#include <tuple>
 
 using namespace blmc_robots;
 using namespace robot_interfaces;
 
+typedef std::tuple<std::shared_ptr<RealFinger>,
+std::shared_ptr<Sliders<3>>> FingerAndSliders;
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* finger_void_ptr)
+
+static THREAD_FUNCTION_RETURN_TYPE control_loop(
+        void* finger_and_sliders_void_ptr)
 {
-    RealFinger& finger = *(static_cast<RealFinger*>(finger_void_ptr));
+    // cast input arguments to the right format --------------------------------
+    FingerAndSliders& finger_and_sliders =
+            *(static_cast<FingerAndSliders*>(finger_and_sliders_void_ptr));
 
+    auto finger = std::get<0>(finger_and_sliders);
+    auto sliders = std::get<1>(finger_and_sliders);
+
+    // controller --------------------------------------------------------------
     double kp = 0.2;
     double kd = 0.0025;
 
@@ -29,25 +40,23 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* finger_void_ptr)
     size_t count = 0;
     while(true)
     {
-        // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
-        Eigen::Vector3d desired_angles  =
-                (finger.get_slider_positions().array() - 0.5) * 2 * M_PI;
+        Eigen::Vector3d desired_torque =
+                kp * (sliders->get_positions() - finger->get_angles()) -
+                kd * finger->get_angular_velocities();
 
-        // we implement here a small pd control at the current level
-        Eigen::Vector3d desired_torque = kp * (desired_angles - finger.get_angles()) -
-                kd * finger.get_angular_velocities();
-
-        // Send the current to the motor
-        finger.set_torques(desired_torque);
-        finger.send_torques();
+        // Send the torque to the motor
+        finger->set_torques(desired_torque);
+        finger->send_torques();
 
         spinner.spin();
 
-        // print -------------------------------------------------------------------
+        // print ---------------------------------------------------------------
         if ((count % 1000) == 0)
         {
-            std::cout << "desired_torque: " << desired_torque.transpose() << std::endl;
-            std::cout << "angles: " << finger.get_angles().transpose() << std::endl;
+            std::cout << "desired_torque: "
+                      << desired_torque.transpose() << std::endl;
+            std::cout << "angles: "
+                      << finger->get_angles().transpose() << std::endl;
         }
         ++count;
     }//endwhile
@@ -60,20 +69,23 @@ int main(int argc, char **argv)
 
     // set up finger -----------------------------------------------------------
     auto finger = std::make_shared<RealFinger>(RealFinger(motor_boards));
-    rt_printf("done creating finger \n");
 
-    // set up sliders -----------------------------------------------------------
-    auto sliders = std::make_shared<Sliders<3>>(Sliders<3>(motor_boards,
-                                                           Eigen::Vector3d::Zero(),
-                                                           Eigen::Vector3d::Ones()));
+    // set up sliders ----------------------------------------------------------
+    auto sliders =
+            std::make_shared<Sliders<3>>(Sliders<3>(
+                                             motor_boards,
+                                             -M_PI * Eigen::Vector3d::Ones(),
+                                             M_PI * Eigen::Vector3d::Ones()));
 
-
+    // start real-time control loop --------------------------------------------
     real_time_tools::block_memory();
     real_time_tools::RealTimeThread thread;
-    real_time_tools::create_realtime_thread(thread, &control_loop, finger.get());
+    FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
+    real_time_tools::create_realtime_thread(thread,
+                                            &control_loop,
+                                            &finger_and_sliders);
 
     rt_printf("control loop started \n");
-
     while(true)
     {
         real_time_tools::Timer::sleep_sec(0.01);
