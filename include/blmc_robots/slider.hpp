@@ -5,7 +5,7 @@
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 #include <math.h>
-#include <blmc_drivers/devices/motor.hpp>
+#include <blmc_drivers/devices/analog_sensor.hpp>
 
 
 namespace blmc_robots
@@ -14,10 +14,6 @@ namespace blmc_robots
 class Slider
 {
 public:
-
-    typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
-
-
     Slider(std::shared_ptr<blmc_drivers::AnalogSensorInterface> analog_sensor,
            const double& min_position = 0,
            const double& max_position = 1.0)
@@ -58,9 +54,14 @@ class Sliders
 public:
     typedef Eigen::Matrix<double, COUNT, 1> Vector;
 
+    typedef std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, COUNT>
+    AnalogSensors;
 
-    Sliders(
-            const std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, COUNT>& analog_sensors,
+    typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, (COUNT+1)/2>
+    MotorBoards;
+
+
+    Sliders(const AnalogSensors& analog_sensors,
             const Vector& min_positions,
             const Vector& max_positions)
     {
@@ -71,6 +72,12 @@ public:
                                                    max_positions[i]);
         }
     }
+
+    Sliders(const MotorBoards& motor_boards,
+            const Vector& min_positions,
+            const Vector& max_positions):
+        Sliders(create_analog_sensors(motor_boards), min_positions, max_positions)
+    { }
 
     Vector get_positions() const
     {
@@ -85,6 +92,19 @@ public:
 
 private:
     std::array<std::shared_ptr<Slider>, COUNT> sliders_;
+
+    static AnalogSensors create_analog_sensors(const MotorBoards& motor_boards)
+    {
+        AnalogSensors analog_sensors;
+
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            analog_sensors[i] = std::make_shared<blmc_drivers::AnalogSensor>(
+                        motor_boards[i/2], i%2);
+        }
+
+        return analog_sensors;
+    }
 
 };
 

@@ -9,6 +9,7 @@
 
 #include "real_time_tools/spinner.hpp"
 #include "blmc_robots/real_finger.hpp"
+#include <blmc_robots/slider.hpp>
 #include "robot_interfaces/finger.hpp"
 #include <iostream>
 
@@ -60,6 +61,12 @@ int main(int argc, char **argv)
     // set up finger -----------------------------------------------------------
     auto finger = std::make_shared<RealFinger>(RealFinger(motor_boards));
     rt_printf("done creating finger \n");
+
+    // set up sliders -----------------------------------------------------------
+    auto sliders = std::make_shared<Sliders<3>>(Sliders<3>(motor_boards,
+                                                           Eigen::Vector3d::Zero(),
+                                                           Eigen::Vector3d::Ones()));
+
 
     real_time_tools::block_memory();
     real_time_tools::RealTimeThread thread;
