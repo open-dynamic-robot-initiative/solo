@@ -66,24 +66,25 @@ public:
 
     void set_torque(const double& desired_torque)
     {
-        double current_target = get_current_from_torque(desired_torque);
+        double torque = desired_torque;
+        double max_torque = current_to_torque(max_current_);
 
         // Current safety feature to avoid overheating.
-        current_target = std::min(current_target, max_current_);
-        current_target = std::max(current_target, -max_current_);
+        torque = std::min(torque, max_torque);
+        torque = std::max(torque, -max_torque);
 
         // Velocity safety feature.
         if (!std::isnan(max_velocity_) && std::fabs(
                 get_angular_velocity()) > max_velocity_)
-            current_target = 0;
+            torque = 0;
 
         // Joint limits safety feature.
         if (!std::isnan(max_joint_angle_) && get_angle() > max_joint_angle_)
-            current_target = -max_current_;
+            torque = -max_torque;
         if (!std::isnan(min_joint_angle_) && get_angle() < min_joint_angle_)
-            current_target = max_current_;
+            torque = max_torque;
 
-        motor_->set_current_target(current_target);
+        motor_->set_current_target(torque_to_current(torque));
     }
 
     void set_zero_angle(const double& zero_position)
@@ -105,12 +106,12 @@ public:
         {
             return std::numeric_limits<double>::quiet_NaN();
         }
-        return get_torque_from_current(measurement_history->newest_element());
+        return current_to_torque(measurement_history->newest_element());
     }
 
     double get_measured_torque() const
     {
-        return get_torque_from_current(get_motor_measurement(mi::current));
+        return current_to_torque(get_motor_measurement(mi::current));
     }
 
     double get_angle() const
@@ -145,15 +146,15 @@ public:
 
     double get_max_torque_limit() const
     {
-        return get_torque_from_current(max_current_);
+        return current_to_torque(max_current_);
     }
 
-    double get_current_from_torque(double torque) const
+    double torque_to_current(double torque) const
     {
         return torque / gear_ratio_ / motor_constant_;
     }
 
-    double get_torque_from_current(double current) const
+    double current_to_torque(double current) const
     {
         return current *  gear_ratio_ * motor_constant_;
     }
