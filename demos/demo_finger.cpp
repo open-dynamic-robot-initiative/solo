@@ -1,23 +1,25 @@
 /**
- * \file demo_test_bench_8_motors.cpp
- * \brief The use of the wrapper implementing a small pid controller.
- * \author Maximilien Naveau
- * \date 2018
+ * \file demo_finger.cpp
+ * \brief a demo illustrating how to use the RealFinger class
+ * \author Manuel Wuthrich
+ * \date 2019
  *
  * This file uses the RealFinger class in a small demo.
  */
 
-#include "real_time_tools/spinner.hpp"
-#include "blmc_robots/real_finger.hpp"
-#include <blmc_robots/slider.hpp>
-#include "robot_interfaces/finger.hpp"
 #include <iostream>
 #include <tuple>
+
+#include "real_time_tools/spinner.hpp"
+#include "robot_interfaces/finger.hpp"
+#include "blmc_robots/real_finger.hpp"
+#include "blmc_robots/slider.hpp"
+
 
 using namespace blmc_robots;
 using namespace robot_interfaces;
 
-typedef std::tuple<std::shared_ptr<RealFinger>,
+typedef std::tuple<std::shared_ptr<Finger>,
 std::shared_ptr<Sliders<3>>> FingerAndSliders;
 
 
@@ -31,7 +33,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     auto finger = std::get<0>(finger_and_sliders);
     auto sliders = std::get<1>(finger_and_sliders);
 
-    // controller --------------------------------------------------------------
+    // position controller -----------------------------------------------------
     double kp = 0.2;
     double kd = 0.0025;
 
@@ -59,8 +61,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
                       << finger->get_angles().transpose() << std::endl;
         }
         ++count;
-    }//endwhile
-}// end control_loop
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -84,12 +86,7 @@ int main(int argc, char **argv)
     real_time_tools::create_realtime_thread(thread,
                                             &control_loop,
                                             &finger_and_sliders);
-
     rt_printf("control loop started \n");
-    while(true)
-    {
-        real_time_tools::Timer::sleep_sec(0.01);
-    }
-
+    real_time_tools::join_thread(thread);
     return 0;
 }
