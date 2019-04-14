@@ -14,6 +14,7 @@
 #include "robot_interfaces/finger.hpp"
 #include "blmc_robots/real_finger.hpp"
 #include "blmc_robots/slider.hpp"
+#include "real_time_tools/realtime_thread_creation.hpp"
 
 
 using namespace blmc_robots;
@@ -80,7 +81,6 @@ int main(int argc, char **argv)
                                              M_PI * Eigen::Vector3d::Ones()));
 
     // start real-time control loop --------------------------------------------
-    real_time_tools::block_memory();
     real_time_tools::RealTimeThread thread;
     FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
     real_time_tools::create_realtime_thread(thread,
