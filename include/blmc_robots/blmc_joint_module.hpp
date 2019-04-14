@@ -32,7 +32,7 @@ public:
         gear_ratio_ = gear_ratio;
         set_max_current(max_current);
         set_max_velocity(max_velocity);
-        set_joint_limits(min_joint_angle, max_joint_angle);
+        set_angle_limits(min_joint_angle, max_joint_angle);
         set_zero_angle(zero_position);
     }
 
@@ -52,7 +52,7 @@ public:
         max_velocity_ = max_velocity;
     }
 
-    void set_joint_limits(const double& min_joint_angle,
+    void set_angle_limits(const double& min_joint_angle,
             const double& max_joint_angle)
     {
         if (!std::isnan(min_joint_angle) && !std::isnan(max_joint_angle) && (
@@ -60,8 +60,8 @@ public:
                     max_joint_angle - min_joint_angle > 2*M_PI))
             throw std::invalid_argument("Invalid joint limits. Make sure the "
                     "interval denoted by the joint limits is a valid one.");
-        min_joint_angle_ = min_joint_angle;
-        max_joint_angle_ = max_joint_angle;
+        min_angle_ = min_joint_angle;
+        max_angle_ = max_joint_angle;
     }
 
     void set_torque(const double& desired_torque)
@@ -79,9 +79,9 @@ public:
             torque = 0;
 
         // Joint limits safety feature.
-        if (!std::isnan(max_joint_angle_) && get_angle() > max_joint_angle_)
+        if (!std::isnan(max_angle_) && get_angle() > max_angle_)
             torque = -max_torque;
-        if (!std::isnan(min_joint_angle_) && get_angle() < min_joint_angle_)
+        if (!std::isnan(min_angle_) && get_angle() < min_angle_)
             torque = max_torque;
 
         motor_->set_current_target(torque_to_current(torque));
@@ -134,14 +134,14 @@ public:
         return max_velocity_;
     }
 
-    double get_min_joint_angle_limit() const
+    double get_min_angle() const
     {
-        return min_joint_angle_;
+        return min_angle_;
     }
 
-    double get_max_joint_angle_limit() const
+    double get_max_angle() const
     {
-        return max_joint_angle_;
+        return max_angle_;
     }
 
     double get_max_torque_limit() const
@@ -186,8 +186,8 @@ private:
 
     double max_current_;
     double max_velocity_;
-    double min_joint_angle_;
-    double max_joint_angle_;
+    double min_angle_;
+    double max_angle_;
     double motor_constant_;
     double gear_ratio_;
     double zero_angle_;
@@ -270,11 +270,11 @@ public:
         }
     }
 
-    void set_joint_limits(const Vector& min_limit, const Vector& max_limit)
+    void set_angle_limits(const Vector& min_limit, const Vector& max_limit)
     {
         for(size_t i = 0; i < COUNT; i++)
         {
-            modules_[i]->set_joint_limits(min_limit(i), max_limit(i));
+            modules_[i]->set_angle_limits(min_limit(i), max_limit(i));
         }
     }
 
@@ -363,24 +363,24 @@ public:
         return velocity_limits;
     }
 
-    Vector get_min_joint_angle_limits() const
+    Vector get_min_angles() const
     {
         Vector min_joint_limits;
 
         for(size_t i = 0; i < COUNT; i++)
         {
-            min_joint_limits(i) = modules_[i]->get_min_joint_angle_limit();
+            min_joint_limits(i) = modules_[i]->get_min_angle();
         }
         return min_joint_limits;
     }
 
-    Vector get_max_joint_angle_limits() const
+    Vector get_max_angles() const
     {
         Vector max_angle_limits;
 
         for(size_t i = 0; i < COUNT; i++)
         {
-            max_angle_limits(i) = modules_[i]->get_max_joint_angle_limit();
+            max_angle_limits(i) = modules_[i]->get_max_angle();
         }
         return max_angle_limits;
     }
