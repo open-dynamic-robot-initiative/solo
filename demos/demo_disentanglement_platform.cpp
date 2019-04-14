@@ -106,8 +106,8 @@ private:
 
 
         // we implement here a small pd control at the current level
-        Eigen::Vector2d desired_torque = kp * (desired_angles - disentanglement_platform_->get_angles()) -
-                          kd * disentanglement_platform_->get_angular_velocities();
+        Eigen::Vector2d desired_torque = kp * (desired_angles - disentanglement_platform_->get_measured_angles()) -
+                          kd * disentanglement_platform_->get_measured_velocities();
 
 
         // Send the current to the motor
@@ -136,7 +136,7 @@ private:
 
 
 
-          Eigen::Vector2d angles = disentanglement_platform_->get_angles();
+          Eigen::Vector2d angles = disentanglement_platform_->get_measured_angles();
 
           rt_printf("positions: [");
           for(int i=0 ; i < angles.size() ; ++i)

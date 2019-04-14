@@ -44,13 +44,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     while(true)
     {
         Eigen::Vector3d desired_torque =
-                kp * (sliders->get_positions() - finger->get_angles()) -
-                kd * finger->get_angular_velocities();
+                kp * (sliders->get_positions()-finger->get_measured_angles()) -
+                kd * finger->get_measured_velocities();
 
-        // Send the torque to the motor
-        finger->set_torques(desired_torque);
-        finger->send_torques();
-
+        finger->constrain_and_apply_torques(desired_torque);
         spinner.spin();
 
         // print ---------------------------------------------------------------
@@ -59,7 +56,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
             std::cout << "desired_torque: "
                       << desired_torque.transpose() << std::endl;
             std::cout << "angles: "
-                      << finger->get_angles().transpose() << std::endl;
+                      << finger->get_measured_angles().transpose() << std::endl;
         }
         ++count;
     }
@@ -77,8 +74,8 @@ int main(int argc, char **argv)
     auto sliders =
             std::make_shared<Sliders<3>>(Sliders<3>(
                                              motor_boards,
-                                             -M_PI * Eigen::Vector3d::Ones(),
-                                             M_PI * Eigen::Vector3d::Ones()));
+                                             -0.5 * M_PI * Eigen::Vector3d::Ones(),
+                                             1.5 * M_PI * Eigen::Vector3d::Ones()));
 
     // start real-time control loop --------------------------------------------
     real_time_tools::RealTimeThread thread;

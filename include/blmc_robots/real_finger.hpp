@@ -29,7 +29,8 @@ namespace blmc_robots
 class RealFinger: public BlmcJointModules<3>, public robot_interfaces::Finger
 {
 public:
-    enum JointIndexing {base, center, tip, joint_count};
+    typedef robot_interfaces::Finger::Vector Vector;
+
 
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
@@ -48,43 +49,37 @@ public:
 private:
     RealFinger(const Motors& motors):
         BlmcJointModules<3>(motors,
-                2.0 * Eigen::Vector3d::Ones(),
-                2.0 * Eigen::Vector3d::Ones(),
-                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
-                std::numeric_limits<double>::quiet_NaN()*Eigen::Vector3d::Ones(),
-                0.02 * Eigen::Vector3d::Ones(),
-                9.0 * Eigen::Vector3d::Ones(),
-                Eigen::Vector3d::Zero()) {}
+                2.0 * Vector::Ones(),
+                2.0 * Vector::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Vector::Ones(),
+                std::numeric_limits<double>::quiet_NaN()*Vector::Ones(),
+                0.02 * Vector::Ones(),
+                9.0 * Vector::Ones(),
+                Vector::Zero()) {}
 
 public:
-    void set_torques(const Eigen::Vector3d& desired_torques)
+    void apply_torques(const Vector& desired_torques)
     {
+        /// \todo: the safety checks are now being done in here, but should
+        /// come outside
         BlmcJointModules<3>::set_torques(desired_torques);
-    }
-
-    void send_torques()
-    {
         BlmcJointModules<3>::send_torques();
     }
 
-    Eigen::Vector3d get_sent_torques() const
-    {
-        return BlmcJointModules<3>::get_sent_torques();
-    }
 
-    Eigen::Vector3d get_measured_torques() const
+    Vector get_measured_torques() const
     {
         return BlmcJointModules<3>::get_measured_torques();
     }
 
-    Eigen::Vector3d get_angles() const
+    Vector get_measured_angles() const
     {
-        return BlmcJointModules<3>::get_angles();
+        return BlmcJointModules<3>::get_measured_angles();
     }
 
-    Eigen::Vector3d get_angular_velocities() const
+    Vector get_measured_velocities() const
     {
-        return BlmcJointModules<3>::get_angular_velocities();
+        return BlmcJointModules<3>::get_measured_velocities();
     }
 
     void pause_motors()
@@ -93,7 +88,7 @@ public:
         motor_boards_[1]->pause_motors();
     }
 
-    void wait_since_last_send(const double& time_s)
+    void wait_for_execution() const
     {
         /// \todo: this needs to be filled in
     }
@@ -129,12 +124,9 @@ private:
     {
         // set up motors -------------------------------------------------------
         Motors motors;
-        motors[0]  = std::make_shared<blmc_drivers::Motor>(motor_boards[0],
-                0);
-        motors[1]  = std::make_shared<blmc_drivers::Motor>(motor_boards[0],
-                1);
-        motors[2]  = std::make_shared<blmc_drivers::Motor>(motor_boards[1],
-                0);
+        motors[0]  = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
+        motors[1]  = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
+        motors[2]  = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
 
         return motors;
     }
@@ -157,15 +149,14 @@ private:
         /// torque limitation in the motor this would be very unsafe
         real_time_tools::Spinner spinner;
         spinner.set_period(0.001);
-        std::vector<Eigen::Vector3d> running_velocities(1000);
+        std::vector<Vector> running_velocities(1000);
         int running_index = 0;
-        Eigen::Vector3d sum = Eigen::Vector3d::Zero();
+        Vector sum = Vector::Zero();
         while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
         {
-            Eigen::Vector3d torques = -1 * get_max_torque_limits();
-            set_torques(torques);
-            send_torques();
-            Eigen::Vector3d velocities = get_angular_velocities();
+            Vector torques = -1 * get_max_torque_limits();
+            constrain_and_apply_torques(torques);
+            Vector velocities = get_measured_velocities();
             if (running_index >= 1000)
                 sum = sum - running_velocities[running_index % 1000];
             running_velocities[running_index % 1000] = velocities;
@@ -178,24 +169,22 @@ private:
         int zero_torque_time_steps = 500;
         while(count < linearly_decrease_time_steps)
         {
-            Eigen::Vector3d torques = ((linearly_decrease_time_steps -
+            Vector torques = ((linearly_decrease_time_steps -
                     count + 0.0) / linearly_decrease_time_steps) *
                     get_max_torque_limits() * -1;
-            set_torques(torques);
-            send_torques();
+            constrain_and_apply_torques(torques);
             count++;
             spinner.spin();
         }
         count = 0;
         while(count < zero_torque_time_steps)
         {
-            Eigen::Vector3d torques = Eigen::Vector3d::Zero();
-            set_torques(torques);
-            send_torques();
+            Vector torques = Vector::Zero();
+            constrain_and_apply_torques(torques);
             count++;
             spinner.spin();
         }
-        Eigen::Vector3d angle_offsets = get_angles();
+        Vector angle_offsets = get_measured_angles();
         set_zero_angles(angle_offsets);
     }
 };

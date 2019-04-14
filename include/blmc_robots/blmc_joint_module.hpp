@@ -307,7 +307,7 @@ public:
         return torques;
     }
 
-    Vector get_angles() const
+    Vector get_measured_angles() const
     {
         Vector positions;
 
@@ -318,7 +318,7 @@ public:
         return positions;
     }
 
-    Vector get_angular_velocities() const
+    Vector get_measured_velocities() const
     {
         Vector velocities;
 
