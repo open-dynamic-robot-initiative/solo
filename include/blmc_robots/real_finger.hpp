@@ -49,10 +49,6 @@ public:
 private:
     RealFinger(const Motors& motors):
         BlmcJointModules<3>(motors,
-                2.0 * Vector::Ones(),
-                2.0 * Vector::Ones(),
-                std::numeric_limits<double>::quiet_NaN()*Vector::Ones(),
-                std::numeric_limits<double>::quiet_NaN()*Vector::Ones(),
                 0.02 * Vector::Ones(),
                 9.0 * Vector::Ones(),
                 Vector::Zero()) {}
@@ -154,7 +150,7 @@ private:
         Vector sum = Vector::Zero();
         while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
         {
-            Vector torques = -1 * get_max_torque_limits();
+            Vector torques = -1 * get_max_torques();
             constrain_and_apply_torques(torques);
             Vector velocities = get_measured_velocities();
             if (running_index >= 1000)
@@ -171,7 +167,7 @@ private:
         {
             Vector torques = ((linearly_decrease_time_steps -
                     count + 0.0) / linearly_decrease_time_steps) *
-                    get_max_torque_limits() * -1;
+                    get_max_torques() * -1;
             constrain_and_apply_torques(torques);
             count++;
             spinner.spin();
