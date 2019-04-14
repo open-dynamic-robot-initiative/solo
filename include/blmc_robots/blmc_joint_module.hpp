@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <array>
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
@@ -66,25 +67,16 @@ public:
 
     void set_torque(const double& desired_torque)
     {
-        double torque = desired_torque;
-        double max_torque = current_to_torque(max_current_);
+        double desired_current = torque_to_current(desired_torque);
 
-        // Current safety feature to avoid overheating.
-        torque = std::min(torque, max_torque);
-        torque = std::max(torque, -max_torque);
-
-        // Velocity safety feature.
-        if (!std::isnan(max_velocity_) && std::fabs(
-                get_angular_velocity()) > max_velocity_)
-            torque = 0;
-
-        // Joint limits safety feature.
-        if (!std::isnan(max_angle_) && get_angle() > max_angle_)
-            torque = -max_torque;
-        if (!std::isnan(min_angle_) && get_angle() < min_angle_)
-            torque = max_torque;
-
-        motor_->set_current_target(torque_to_current(torque));
+        if(desired_current > 2.1)
+        {
+            std::cout << "something went wrong, it should never happen"
+                         "that desired_current > 2.1. desired_current: "
+                      << desired_current;
+            exit(-1);
+        }
+        motor_->set_current_target(desired_current);
     }
 
     void set_zero_angle(const double& zero_position)
