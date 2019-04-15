@@ -44,6 +44,10 @@ public:
         /// \todo: is this the right place to calibrate?
         calibrate();
         pause_motors();
+
+        set_angle_limits(Vector::Zero(),
+                         Vector(176, 170, 326) / 180.0 * M_PI);
+        set_max_velocities(Vector::Ones() * std::numeric_limits<double>::quiet_NaN());
     }
 
 private:
