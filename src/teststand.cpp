@@ -66,13 +66,13 @@ void Teststand::initialize()
   }
 
   sliders_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
-  sliders_[1] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
-  contact_sensors_[0] =
       std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
-  height_sensors_[0] =
+  sliders_[1] =
       std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 1);
+  contact_sensors_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
+  height_sensors_[0] =
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
 
   // can 0
   // MOTOR_HFE
