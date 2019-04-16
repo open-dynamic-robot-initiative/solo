@@ -33,10 +33,23 @@ endmacro(create_demo demo_name)
 ###############
 
 create_demo(test_bench_8_motors)
-create_demo(finger)
 create_demo(quadruped)
 create_demo(teststand)
 create_demo(stuggihop)
+
+ add_executable(demo_finger_position_control
+   demo_finger_position_control.cpp
+ )
+ target_link_libraries(demo_finger_position_control
+   ${catkin_LIBRARIES}
+ )
+
+ add_executable(demo_finger_torque_control
+   demo_finger_torque_control.cpp
+ )
+ target_link_libraries(demo_finger_torque_control
+   ${catkin_LIBRARIES}
+ )
 
  add_executable(demo_disentanglement_platform
    demo_disentanglement_platform.cpp
@@ -44,3 +57,6 @@ create_demo(stuggihop)
  target_link_libraries(demo_disentanglement_platform
    ${catkin_LIBRARIES}
  )
+
+
+
