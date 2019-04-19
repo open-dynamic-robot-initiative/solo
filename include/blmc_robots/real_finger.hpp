@@ -45,8 +45,8 @@ public:
         calibrate();
         pause_motors();
 
-        set_angle_limits(Vector::Zero(),
-                         Vector(176, 160, 326) / 180.0 * M_PI);
+//        set_angle_limits(Vector::Zero(),
+//                         Vector(176, 160, 326) / 180.0 * M_PI);
 //        set_max_velocities(Vector::Ones() * std::numeric_limits<double>::quiet_NaN());
     }
 
@@ -58,15 +58,6 @@ private:
                 Vector::Zero()) {}
 
 public:
-    void apply_torques(const Vector& desired_torques)
-    {
-        /// \todo: the safety checks are now being done in here, but should
-        /// come outside
-        BlmcJointModules<3>::set_torques(desired_torques);
-        BlmcJointModules<3>::send_torques();
-    }
-
-
     Vector get_measured_torques() const
     {
         return BlmcJointModules<3>::get_measured_torques();
@@ -116,7 +107,16 @@ public:
     }
 
 
-private:
+protected:
+
+    void apply_torques(const Vector& desired_torques)
+    {
+        /// \todo: the safety checks are now being done in here, but should
+        /// come outside
+        BlmcJointModules<3>::set_torques(desired_torques);
+        BlmcJointModules<3>::send_torques();
+    }
+
     MotorBoards motor_boards_;
 
     static Motors
