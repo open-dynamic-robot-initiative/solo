@@ -196,6 +196,8 @@ private:
         {
             Vector torques = -1 * get_max_torques();
             torques(table) = 0; // we do not calibrate the table since it has no stop
+            torques(tip) = -torques(tip);
+
             constrain_and_apply_torques(torques);
             Vector velocities = get_measured_velocities();
             if (running_index >= 1000)
@@ -214,6 +216,9 @@ private:
                     count + 0.0) / linearly_decrease_time_steps) *
                     get_max_torques() * -1;
             torques(table) = 0; // we do not calibrate the table since it has no stop
+            torques(tip) = -torques(tip);
+
+
             constrain_and_apply_torques(torques);
             count++;
             spinner.spin();
