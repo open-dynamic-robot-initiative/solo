@@ -27,16 +27,12 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_ptr)
             *(static_cast<std::shared_ptr<RealDisentanglementPlatform>*>(robot_ptr));
 
     // position controller -----------------------------------------------------
-    double kp = 0.2;
-    double kd = 0.0025;
-
     real_time_tools::Spinner spinner;
     spinner.set_period(0.001);
     size_t count = 0;
     while(true)
     {
-        Eigen::Vector3d desired_torque = 0* 0.5 * 0.02 * 9.0 *
-                Eigen::Vector3d(9.79*0, 1*0, 1);
+        Eigen::Vector3d desired_torque = 0 * robot->get_max_torques();
 
         robot->constrain_and_apply_torques(desired_torque);
         spinner.spin();

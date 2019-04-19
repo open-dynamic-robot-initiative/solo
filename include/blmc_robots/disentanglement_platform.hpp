@@ -233,7 +233,9 @@ private:
         }
         Vector angle_offsets = get_measured_angles();
         angle_offsets(table) = 0;
-        set_zero_angles(angle_offsets);
+
+        Vector zero_angles_relative_to_joint_stops(0.0, 0.0, -0.506);
+        set_zero_angles(angle_offsets + zero_angles_relative_to_joint_stops);
     }
 };
 
