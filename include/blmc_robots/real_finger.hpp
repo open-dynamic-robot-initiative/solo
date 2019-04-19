@@ -131,6 +131,11 @@ protected:
         return motors;
     }
 
+    /// \todo: calibrate needs to be cleaned and should probably not be here
+    /// there are two identical copies in disentanglement_platform and finger,
+    /// which is disgusting.
+
+
     /**
      * @brief this is an initial calibration procedure executed before the actual
      * control loop to have angle readings in an absolute coordinate frame.

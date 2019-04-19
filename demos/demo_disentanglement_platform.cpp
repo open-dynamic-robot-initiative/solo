@@ -38,7 +38,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_ptr)
         Eigen::Vector3d desired_torque = 0.5 * 0.02 * 9.0 *
                 Eigen::Vector3d(9.79*0, 1*0, 1);
 
-        robot->apply_torques(desired_torque);
+        robot->constrain_and_apply_torques(desired_torque);
         spinner.spin();
 
         // print ---------------------------------------------------------------

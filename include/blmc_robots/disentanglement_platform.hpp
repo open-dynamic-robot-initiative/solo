@@ -18,6 +18,8 @@
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 
+#include <robot_interfaces/finger.hpp>
+
 
 
 namespace blmc_robots
@@ -56,7 +58,9 @@ private:
 
 
 
-class RealDisentanglementPlatform: public BlmcJointModules<3>
+class RealDisentanglementPlatform:
+        public BlmcJointModules<3>,
+        public robot_interfaces::DisentanglementPlatform
 {
 public:
     typedef Eigen::Vector3d Vector;
@@ -71,17 +75,8 @@ public:
     {
         motor_boards_ = motor_boards;
 
-
+        calibrate();
         pause_motors();
-
-
-
-
-        /// \todo calibrate etc
-//        calibrate();
-//        set_angle_limits(Vector::Zero(),
-//                         Vector(176, 170, 326) / 180.0 * M_PI);
-//        set_max_velocities(Vector::Ones() * std::numeric_limits<double>::quiet_NaN());
     }
 
 private:
@@ -89,16 +84,13 @@ private:
         BlmcJointModules<3>(motors,
                 0.02 * Vector::Ones(),
                 Vector(9.79 * 9, 9, 9),
-                Vector::Zero()) {}
-
-public:
-    void apply_torques(const Vector& desired_torques)
+                Vector::Zero())
     {
-        BlmcJointModules<3>::set_torques(desired_torques);
-        BlmcJointModules<3>::send_torques();
+
+
     }
 
-
+public:
     Vector get_measured_torques() const
     {
         return BlmcJointModules<3>::get_measured_torques();
@@ -151,6 +143,13 @@ public:
 
 
 private:
+    void apply_torques(const Vector& desired_torques)
+    {
+        BlmcJointModules<3>::set_torques(desired_torques);
+        BlmcJointModules<3>::send_torques();
+    }
+
+
     MotorBoards motor_boards_;
 
     /// \todo: this is identical to the finger robot and could be taken out of
@@ -167,6 +166,11 @@ private:
         return motors;
     }
 
+
+    /// \todo: calibrate needs to be cleaned and should probably not be here
+    /// there are two identical copies in disentanglement_platform and finger,
+    /// which is disgusting.
+
     /**
      * @brief this is an initial calibration procedure executed before the actual
      * control loop to have angle readings in an absolute coordinate frame.
@@ -178,51 +182,54 @@ private:
      * The calibration procedure is finished once the joint velocities are zero
      * according to a moving average estimation of them.
      */
-//    void calibrate()
-//    {
-//        /// \todo: this relies on the safety check in the motor right now,
-//        /// which is maybe not the greatest idea. without the velocity and
-//        /// torque limitation in the motor this would be very unsafe
-//        real_time_tools::Spinner spinner;
-//        spinner.set_period(0.001);
-//        std::vector<Vector> running_velocities(1000);
-//        int running_index = 0;
-//        Vector sum = Vector::Zero();
-//        while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
-//        {
-//            Vector torques = -1 * get_max_torques();
-//            constrain_and_apply_torques(torques);
-//            Vector velocities = get_measured_velocities();
-//            if (running_index >= 1000)
-//                sum = sum - running_velocities[running_index % 1000];
-//            running_velocities[running_index % 1000] = velocities;
-//            sum = sum + velocities;
-//            running_index++;
-//            spinner.spin();
-//        }
-//        int count = 0;
-//        int linearly_decrease_time_steps = 1000;
-//        int zero_torque_time_steps = 500;
-//        while(count < linearly_decrease_time_steps)
-//        {
-//            Vector torques = ((linearly_decrease_time_steps -
-//                    count + 0.0) / linearly_decrease_time_steps) *
-//                    get_max_torques() * -1;
-//            constrain_and_apply_torques(torques);
-//            count++;
-//            spinner.spin();
-//        }
-//        count = 0;
-//        while(count < zero_torque_time_steps)
-//        {
-//            Vector torques = Vector::Zero();
-//            constrain_and_apply_torques(torques);
-//            count++;
-//            spinner.spin();
-//        }
-//        Vector angle_offsets = get_measured_angles();
-//        set_zero_angles(angle_offsets);
-//    }
+    void calibrate()
+    {
+        /// \todo: this relies on the safety check in the motor right now,
+        /// which is maybe not the greatest idea. without the velocity and
+        /// torque limitation in the motor this would be very unsafe
+        real_time_tools::Spinner spinner;
+        spinner.set_period(0.001);
+        std::vector<Vector> running_velocities(1000);
+        int running_index = 0;
+        Vector sum = Vector::Zero();
+        while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
+        {
+            Vector torques = -1 * get_max_torques();
+            torques(table) = 0; // we do not calibrate the table since it has no stop
+            constrain_and_apply_torques(torques);
+            Vector velocities = get_measured_velocities();
+            if (running_index >= 1000)
+                sum = sum - running_velocities[running_index % 1000];
+            running_velocities[running_index % 1000] = velocities;
+            sum = sum + velocities;
+            running_index++;
+            spinner.spin();
+        }
+        int count = 0;
+        int linearly_decrease_time_steps = 1000;
+        int zero_torque_time_steps = 500;
+        while(count < linearly_decrease_time_steps)
+        {
+            Vector torques = ((linearly_decrease_time_steps -
+                    count + 0.0) / linearly_decrease_time_steps) *
+                    get_max_torques() * -1;
+            torques(table) = 0; // we do not calibrate the table since it has no stop
+            constrain_and_apply_torques(torques);
+            count++;
+            spinner.spin();
+        }
+        count = 0;
+        while(count < zero_torque_time_steps)
+        {
+            Vector torques = Vector::Zero();
+            constrain_and_apply_torques(torques);
+            count++;
+            spinner.spin();
+        }
+        Vector angle_offsets = get_measured_angles();
+        angle_offsets(table) = 0;
+        set_zero_angles(angle_offsets);
+    }
 };
 
 } // namespace blmc_robots
