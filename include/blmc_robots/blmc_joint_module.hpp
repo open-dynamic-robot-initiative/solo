@@ -34,7 +34,7 @@ public:
     {
         double desired_current = torque_to_current(desired_torque);
 
-        if(desired_current > 2.1)
+        if(std::fabs(desired_current) > 2.1)
         {
             std::cout << "something went wrong, it should never happen"
                          "that desired_current > 2.1. desired_current: "
