@@ -44,17 +44,17 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
         finger->constrain_and_apply_torques(desired_torques);
         spinner.spin();
 
-        // print ---------------------------------------------------------------
-        if ((count % 1000) == 0)
-        {
-            std::cout << "desired_torque: "
-                      << desired_torques.transpose() << std::endl;
-            std::cout << "angles: "
-                      << finger->get_measured_angles().transpose() << std::endl;
-            std::cout << "velocities: "
-                      << finger->get_measured_velocities().transpose() << std::endl;
-        }
-        ++count;
+//        // print ---------------------------------------------------------------
+//        if ((count % 1000) == 0)
+//        {
+//            std::cout << "desired_torque: "
+//                      << desired_torques.transpose() << std::endl;
+//            std::cout << "angles: "
+//                      << finger->get_measured_angles().transpose() << std::endl;
+//            std::cout << "velocities: "
+//                      << finger->get_measured_velocities().transpose() << std::endl;
+//        }
+//        ++count;
     }
 }
 
