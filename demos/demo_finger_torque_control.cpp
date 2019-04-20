@@ -24,15 +24,18 @@ typedef std::tuple<std::shared_ptr<Finger>,
 std::shared_ptr<Sliders<3>>> FingerAndSliders;
 
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(
-        void* finger_and_sliders_void_ptr)
+struct Hardware
+{
+    std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2> motor_boards;
+    std::shared_ptr<Finger> finger;
+    std::shared_ptr<Sliders<3>> sliders;
+};
+
+
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* hardware_ptr)
 {
     // cast input arguments to the right format --------------------------------
-    FingerAndSliders& finger_and_sliders =
-            *(static_cast<FingerAndSliders*>(finger_and_sliders_void_ptr));
-
-    auto finger = std::get<0>(finger_and_sliders);
-    auto sliders = std::get<1>(finger_and_sliders);
+    Hardware& hardware = *(static_cast<Hardware*>(hardware_ptr));
 
     // position controller -----------------------------------------------------
     real_time_tools::Spinner spinner;
@@ -40,8 +43,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     size_t count = 0;
     while(true)
     {
-        Eigen::Vector3d desired_torques = sliders->get_positions();
-        finger->constrain_and_apply_torques(desired_torques);
+        Eigen::Vector3d desired_torques = hardware.sliders->get_positions();
+        hardware.finger->constrain_and_apply_torques(desired_torques);
         spinner.spin();
 
 //        // print ---------------------------------------------------------------
@@ -59,26 +62,28 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     return THREAD_FUNCTION_RETURN_VALUE;
 }
 
+
 int main(int argc, char **argv)
 {
+    Hardware hardware;
+
     // set up motor boards -----------------------------------------------------
-    auto motor_boards = RealFinger::create_motor_boards("can0", "can1");
+    hardware.motor_boards = RealFinger::create_motor_boards("can0", "can1");
 
     // set up finger -----------------------------------------------------------
-    auto finger = std::make_shared<RealFinger>(RealFinger(motor_boards));
+    hardware.finger = std::make_shared<RealFinger>(hardware.motor_boards);
 
     // set up sliders ----------------------------------------------------------
-    auto sliders = std::make_shared<Sliders<3>>(Sliders<3>(
-                                                    motor_boards,
-                                                    -finger->get_max_torques(),
-                                                    finger->get_max_torques()));
+    hardware.sliders =
+            std::make_shared<Sliders<3>>(hardware.motor_boards,
+                                         -hardware.finger->get_max_torques(),
+                                         hardware.finger->get_max_torques());
 
     // start real-time control loop --------------------------------------------
     real_time_tools::RealTimeThread thread;
-    FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
     real_time_tools::create_realtime_thread(thread,
                                             &control_loop,
-                                            &finger_and_sliders);
+                                            &hardware);
     rt_printf("control loop started \n");
     real_time_tools::join_thread(thread);
     return 0;
