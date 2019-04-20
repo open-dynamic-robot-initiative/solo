@@ -56,6 +56,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
 //        }
 //        ++count;
     }
+    return THREAD_FUNCTION_RETURN_VALUE;
 }
 
 int main(int argc, char **argv)
