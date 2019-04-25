@@ -41,21 +41,70 @@ public:
     {
         motor_boards_ = motor_boards;
 
+        max_torque_ = 2.0 * 0.02 * 9.0;
+        double delta_time = 0.01;
+
+        safety_constraints_[base].min_velocity_ = -3.0;
+        safety_constraints_[base].min_position_ = std::numeric_limits<double>::infinity();
+        safety_constraints_[base].max_velocity_ = 3.0;
+        safety_constraints_[base].max_position_ = -std::numeric_limits<double>::infinity();
+        safety_constraints_[base].max_torque_ = max_torque_;
+        safety_constraints_[base].inertia_ = 0.003;
+        safety_constraints_[base].max_jerk_ =
+                2 * max_torque_ / safety_constraints_[base].inertia_ / delta_time;
+
+        safety_constraints_[center].min_velocity_ = -3.0;
+        safety_constraints_[center].min_position_ = std::numeric_limits<double>::infinity();
+        safety_constraints_[center].max_velocity_ = 3.0;
+        safety_constraints_[center].max_position_ = -std::numeric_limits<double>::infinity();
+        safety_constraints_[center].max_torque_ = max_torque_;
+        safety_constraints_[center].inertia_ = 0.0025; // 0.0025 determined experimentally
+        safety_constraints_[center].max_jerk_ =
+                2 * max_torque_ / safety_constraints_[center].inertia_ / delta_time;
+
+        safety_constraints_[tip].min_velocity_ = -6.0;
+        safety_constraints_[tip].min_position_ = std::numeric_limits<double>::infinity();
+        safety_constraints_[tip].max_velocity_ = 6.0;
+        safety_constraints_[tip].max_position_ = -std::numeric_limits<double>::infinity();
+        safety_constraints_[tip].max_torque_ = max_torque_;
+        safety_constraints_[tip].inertia_ = 0.001;
+        safety_constraints_[tip].max_jerk_ =
+                2 * max_torque_ / safety_constraints_[tip].inertia_ / delta_time;
+
         /// \todo: is this the right place to calibrate?
+
         calibrate();
         pause_motors();
 
-//        set_angle_limits(Vector::Zero(),
-//                         Vector(176, 160, 326) / 180.0 * M_PI);
-//        set_max_velocities(Vector::Ones() * std::numeric_limits<double>::quiet_NaN());
+        if(max_angles_[base] < 170 / 180.0 * M_PI ||
+                max_angles_[center] < 330 / 180.0 * M_PI ||
+                max_angles_[tip] < 320 / 180.0 * M_PI)
+        {
+            std::cout << "something went wrong with calibration!! angles: "
+                      <<  max_angles_.transpose() / M_PI * 180 << std::endl;
+            exit(-1);
+        }
+
+        // we want to limit the freedom of this joint
+        max_angles_[center] = 160.0 / 180.0 * M_PI;
+        std::cout << "done calibrating, max_angles: "
+                  << max_angles_.transpose() / M_PI * 180 << std::endl;
+
+        for(size_t i = 0; i < 3; i++)
+        {
+            safety_constraints_[i].min_position_ = 0.0;
+            safety_constraints_[i].max_position_ = max_angles_[i];
+        }
+        safety_constraints_[center].max_velocity_ = -std::numeric_limits<double>::infinity();
+
     }
 
 private:
     RealFinger(const Motors& motors):
         BlmcJointModules<3>(motors,
-                0.02 * Vector::Ones(),
-                9.0 * Vector::Ones(),
-                Vector::Zero()) {}
+                            0.02 * Vector::Ones(),
+                            9.0 * Vector::Ones(),
+                            Vector::Zero()) {}
 
 public:
     Vector get_measured_torques() const
@@ -73,6 +122,7 @@ public:
         return BlmcJointModules<3>::get_measured_velocities();
     }
 
+    /// \todo: this should go away. we could handle these issues in the motor_board.
     void pause_motors()
     {
         motor_boards_[0]->pause_motors();
@@ -108,6 +158,7 @@ public:
 
 
 protected:
+    Eigen::Vector3d max_angles_;
 
     void apply_torques(const Vector& desired_torques)
     {
@@ -152,45 +203,89 @@ protected:
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. without the velocity and
         /// torque limitation in the motor this would be very unsafe
-        real_time_tools::Spinner spinner;
-        spinner.set_period(0.001);
-        std::vector<Vector> running_velocities(1000);
-        int running_index = 0;
-        Vector sum = Vector::Zero();
-        while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
         {
-            Vector torques = -1 * get_max_torques();
-            constrain_and_apply_torques(torques);
-            Vector velocities = get_measured_velocities();
-            if (running_index >= 1000)
-                sum = sum - running_velocities[running_index % 1000];
-            running_velocities[running_index % 1000] = velocities;
-            sum = sum + velocities;
-            running_index++;
-            spinner.spin();
+            real_time_tools::Spinner spinner;
+            spinner.set_period(0.001);
+            std::vector<Vector> running_velocities(1000);
+            int running_index = 0;
+            Vector sum = Vector::Zero();
+            while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
+            {
+                Vector torques = get_max_torques();
+                constrain_and_apply_torques(torques);
+                Vector velocities = get_measured_velocities();
+                if (running_index >= 1000)
+                    sum = sum - running_velocities[running_index % 1000];
+                running_velocities[running_index % 1000] = velocities;
+                sum = sum + velocities;
+                running_index++;
+                spinner.spin();
+            }
+            int count = 0;
+            int linearly_decrease_time_steps = 1000;
+            int zero_torque_time_steps = 500;
+            while(count < linearly_decrease_time_steps)
+            {
+                Vector torques = ((linearly_decrease_time_steps -
+                                   count + 0.0) / linearly_decrease_time_steps) *
+                        get_max_torques();
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            count = 0;
+            while(count < zero_torque_time_steps)
+            {
+                Vector torques = Vector::Zero();
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            max_angles_ = get_measured_angles();
         }
-        int count = 0;
-        int linearly_decrease_time_steps = 1000;
-        int zero_torque_time_steps = 500;
-        while(count < linearly_decrease_time_steps)
         {
-            Vector torques = ((linearly_decrease_time_steps -
-                    count + 0.0) / linearly_decrease_time_steps) *
-                    get_max_torques() * -1;
-            constrain_and_apply_torques(torques);
-            count++;
-            spinner.spin();
+            real_time_tools::Spinner spinner;
+            spinner.set_period(0.001);
+            std::vector<Vector> running_velocities(1000);
+            int running_index = 0;
+            Vector sum = Vector::Zero();
+            while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
+            {
+                Vector torques = -1 * get_max_torques();
+                constrain_and_apply_torques(torques);
+                Vector velocities = get_measured_velocities();
+                if (running_index >= 1000)
+                    sum = sum - running_velocities[running_index % 1000];
+                running_velocities[running_index % 1000] = velocities;
+                sum = sum + velocities;
+                running_index++;
+                spinner.spin();
+            }
+            int count = 0;
+            int linearly_decrease_time_steps = 1000;
+            int zero_torque_time_steps = 500;
+            while(count < linearly_decrease_time_steps)
+            {
+                Vector torques = ((linearly_decrease_time_steps -
+                                   count + 0.0) / linearly_decrease_time_steps) *
+                        get_max_torques() * -1;
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            count = 0;
+            while(count < zero_torque_time_steps)
+            {
+                Vector torques = Vector::Zero();
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            Vector angle_offsets = get_measured_angles();
+            set_zero_angles(angle_offsets);
+            max_angles_ = max_angles_ - angle_offsets;
         }
-        count = 0;
-        while(count < zero_torque_time_steps)
-        {
-            Vector torques = Vector::Zero();
-            constrain_and_apply_torques(torques);
-            count++;
-            spinner.spin();
-        }
-        Vector angle_offsets = get_measured_angles();
-        set_zero_angles(angle_offsets);
+
     }
 };
 
