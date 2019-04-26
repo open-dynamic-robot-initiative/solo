@@ -26,7 +26,7 @@
 namespace blmc_robots
 {
 
-class RealFinger: public BlmcJointModules<3>, public robot_interfaces::Finger
+class RealFinger: public robot_interfaces::Finger
 {
 public:
     typedef robot_interfaces::Finger::Vector Vector;
@@ -101,7 +101,7 @@ public:
 
 private:
     RealFinger(const Motors& motors):
-        BlmcJointModules<3>(motors,
+        joint_modules_(motors,
                             0.02 * Vector::Ones(),
                             9.0 * Vector::Ones(),
                             Vector::Zero()) {}
@@ -109,17 +109,17 @@ private:
 public:
     Vector get_measured_torques() const
     {
-        return BlmcJointModules<3>::get_measured_torques();
+        return joint_modules_.get_measured_torques();
     }
 
     Vector get_measured_angles() const
     {
-        return BlmcJointModules<3>::get_measured_angles();
+        return joint_modules_.get_measured_angles();
     }
 
     Vector get_measured_velocities() const
     {
-        return BlmcJointModules<3>::get_measured_velocities();
+        return joint_modules_.get_measured_velocities();
     }
 
     /// \todo: this should go away. we could handle these issues in the motor_board.
@@ -164,11 +164,10 @@ protected:
     {
         /// \todo: the safety checks are now being done in here, but should
         /// come outside
-        BlmcJointModules<3>::set_torques(desired_torques);
-        BlmcJointModules<3>::send_torques();
+        joint_modules_.set_torques(desired_torques);
+        joint_modules_.send_torques();
     }
 
-    MotorBoards motor_boards_;
 
     static Motors
     create_motors(const MotorBoards& motor_boards)
@@ -203,6 +202,48 @@ protected:
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. without the velocity and
         /// torque limitation in the motor this would be very unsafe
+        Vector angle_offsets;
+        {
+            real_time_tools::Spinner spinner;
+            spinner.set_period(0.001);
+            std::vector<Vector> running_velocities(1000);
+            int running_index = 0;
+            Vector sum = Vector::Zero();
+            while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
+            {
+                Vector torques = -1 * get_max_torques();
+                constrain_and_apply_torques(torques);
+                Vector velocities = get_measured_velocities();
+                if (running_index >= 1000)
+                    sum = sum - running_velocities[running_index % 1000];
+                running_velocities[running_index % 1000] = velocities;
+                sum = sum + velocities;
+                running_index++;
+                spinner.spin();
+            }
+            int count = 0;
+            int linearly_decrease_time_steps = 1000;
+            int zero_torque_time_steps = 500;
+            while(count < linearly_decrease_time_steps)
+            {
+                Vector torques = ((linearly_decrease_time_steps -
+                                   count + 0.0) / linearly_decrease_time_steps) *
+                        get_max_torques() * -1;
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            count = 0;
+            while(count < zero_torque_time_steps)
+            {
+                Vector torques = Vector::Zero();
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            angle_offsets = get_measured_angles();
+        }
+
         {
             real_time_tools::Spinner spinner;
             spinner.set_period(0.001);
@@ -243,50 +284,14 @@ protected:
             }
             max_angles_ = get_measured_angles();
         }
-        {
-            real_time_tools::Spinner spinner;
-            spinner.set_period(0.001);
-            std::vector<Vector> running_velocities(1000);
-            int running_index = 0;
-            Vector sum = Vector::Zero();
-            while(running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
-            {
-                Vector torques = -1 * get_max_torques();
-                constrain_and_apply_torques(torques);
-                Vector velocities = get_measured_velocities();
-                if (running_index >= 1000)
-                    sum = sum - running_velocities[running_index % 1000];
-                running_velocities[running_index % 1000] = velocities;
-                sum = sum + velocities;
-                running_index++;
-                spinner.spin();
-            }
-            int count = 0;
-            int linearly_decrease_time_steps = 1000;
-            int zero_torque_time_steps = 500;
-            while(count < linearly_decrease_time_steps)
-            {
-                Vector torques = ((linearly_decrease_time_steps -
-                                   count + 0.0) / linearly_decrease_time_steps) *
-                        get_max_torques() * -1;
-                constrain_and_apply_torques(torques);
-                count++;
-                spinner.spin();
-            }
-            count = 0;
-            while(count < zero_torque_time_steps)
-            {
-                Vector torques = Vector::Zero();
-                constrain_and_apply_torques(torques);
-                count++;
-                spinner.spin();
-            }
-            Vector angle_offsets = get_measured_angles();
-            set_zero_angles(angle_offsets);
-            max_angles_ = max_angles_ - angle_offsets;
-        }
-
+        max_angles_ = max_angles_ - angle_offsets;
+        joint_modules_.set_zero_angles(angle_offsets);
     }
+
+private:
+    BlmcJointModules<3> joint_modules_;
+    MotorBoards motor_boards_;
+
 };
 
 } // namespace blmc_robots
