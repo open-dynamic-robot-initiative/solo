@@ -102,9 +102,9 @@ public:
 private:
     RealFinger(const Motors& motors):
         joint_modules_(motors,
-                            0.02 * Vector::Ones(),
-                            9.0 * Vector::Ones(),
-                            Vector::Zero()) {}
+                       0.02 * Vector::Ones(),
+                       9.0 * Vector::Ones(),
+                       Vector::Zero()) {}
 
 public:
     Vector get_measured_torques() const
@@ -242,7 +242,45 @@ protected:
                 spinner.spin();
             }
             angle_offsets = get_measured_angles();
+            joint_modules_.set_zero_angles(angle_offsets);
+
         }
+
+        {
+
+            Eigen::Vector3d starting_position;
+            starting_position << 1.5, 1.5, 0.2;
+
+            double kp = 0.4;
+            double kd = 0.0025;
+            real_time_tools::Spinner spinner;
+            spinner.set_period(0.001);
+            int count = 0;
+            Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
+                                      std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+            while (true) {
+                Eigen::Vector3d diff = starting_position - get_measured_angles();
+
+                // we implement here a small pd control at the current level
+                Eigen::Vector3d desired_torque = kp * diff -
+                        kd * get_measured_velocities();
+
+                // Send the current to the motor
+                constrain_and_apply_torques(desired_torque);
+                spinner.spin();
+                if (count % 100 == 0)
+                {
+                    Eigen::Vector3d diff_difference = last_diff - diff;
+                    if (std::abs(diff_difference.norm()) < 1e-5)
+                        break;
+                    last_diff = diff;
+                }
+                count++;
+            }
+            pause_motors();
+        }
+
+
 
         {
             real_time_tools::Spinner spinner;
@@ -284,8 +322,41 @@ protected:
             }
             max_angles_ = get_measured_angles();
         }
-        max_angles_ = max_angles_ - angle_offsets;
-        joint_modules_.set_zero_angles(angle_offsets);
+
+
+        {
+
+            Eigen::Vector3d starting_position;
+            starting_position << 1.5, 1.5, 3.0;
+
+            double kp = 0.4;
+            double kd = 0.0025;
+            real_time_tools::Spinner spinner;
+            spinner.set_period(0.001);
+            int count = 0;
+            Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
+                                      std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+            while (true) {
+                Eigen::Vector3d diff = starting_position - get_measured_angles();
+
+                // we implement here a small pd control at the current level
+                Eigen::Vector3d desired_torque = kp * diff -
+                        kd * get_measured_velocities();
+
+                // Send the current to the motor
+                constrain_and_apply_torques(desired_torque);
+                spinner.spin();
+                if (count % 100 == 0)
+                {
+                    Eigen::Vector3d diff_difference = last_diff - diff;
+                    if (std::abs(diff_difference.norm()) < 1e-5)
+                        break;
+                    last_diff = diff;
+                }
+                count++;
+            }
+            pause_motors();
+        }
     }
 
 private:
