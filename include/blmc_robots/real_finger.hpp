@@ -224,11 +224,41 @@ protected:
             int count = 0;
             int linearly_decrease_time_steps = 1000;
             int zero_torque_time_steps = 500;
+
+
+
+	    /// \todo: this is yet another hack. we release the tip
+	    /// joint before the others such that the tip joint and the center joint
+            /// dont fight each other
+            count = 0;
+            Vector torques;
+            while(count < linearly_decrease_time_steps)
+            {
+                torques = -get_max_torques();
+
+		torques[2] = ((linearly_decrease_time_steps -
+                                   count + 0.0) / linearly_decrease_time_steps) * torques[2];
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            count = 0;
+            while(count < zero_torque_time_steps)
+            {
+                constrain_and_apply_torques(torques);
+                count++;
+                spinner.spin();
+            }
+            /// ---------------------------------------------------------------------
+
+
+            count = 0;
             while(count < linearly_decrease_time_steps)
             {
                 Vector torques = ((linearly_decrease_time_steps -
                                    count + 0.0) / linearly_decrease_time_steps) *
                         get_max_torques() * -1;
+                torques[2] = 0;
                 constrain_and_apply_torques(torques);
                 count++;
                 spinner.spin();
