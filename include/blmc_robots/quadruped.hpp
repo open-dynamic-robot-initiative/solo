@@ -472,12 +472,16 @@ private:
    */
   std::array<MotorInterface_ptr, 8> motors_;
 
+  /**
+   * @brief Address the rotation direction of the motor
+   */
   std::array<double, 8> polarity_;
 
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
    */
   std::array<Slider_ptr, 4> sliders_;
+  
   /**
    * @brief contact_sensors_ is the contact sensors at each foot tips. They also
    * are analogue inputs.

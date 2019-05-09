@@ -33,20 +33,20 @@ public:
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
-  void send_target_motor_current(
+  bool send_target_motor_current(
       const Eigen::Ref<Vector2d> target_motor_current);
 
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
-  void send_target_joint_torque(
+  bool send_target_joint_torque(
       const Eigen::Ref<Vector2d> target_joint_torque);
 
   /**
    * @brief acquire_sensors acquire all available sensors, WARNING !!!!
    * this method has to be called prior to any getter to have up to date data.
    */
-  void acquire_sensors();
+  bool acquire_sensors();
 
   /**
    * @brief get_motor_positions
@@ -307,11 +307,18 @@ public:
 
 private:
   /**
-   * ATI sensor.
+   * @brief ATI sensor.
    */
   ati_ft_sensor::AtiFTSensor ati_sensor_;
 
+  /**
+   * @brief 3D linear force from the ATI FT sensor
+   */
   VectorAtiForce ati_force_;
+
+  /**
+   * @brief 3D torque measured from the ATI FT sensor
+   */
   VectorAtiTorque ati_torque_;
 
   /**
@@ -424,6 +431,28 @@ private:
    * this a safe guard for development
    */
   Vector2d motor_max_current_;
+
+  /**
+   * @brief This gives the status (enabled/disabled) of each motors using the
+   * joint ordering convention.
+   */
+  std::array<bool, 4> motor_enabled_;
+
+  /**
+   * @brief This gives the status (enabled/disabled) of each motors using the
+   * joint ordering convention.
+   */
+  std::array<bool, 4> motor_ready_;
+
+  /**
+   * @brief This gives the status (enabled/disabled of the onboard control cards)
+   */
+  std::array<bool, 2> motor_board_enabled_;
+
+  /**
+   * @brief This gives the status (enabled/disabled of the onboard control cards)
+   */
+  std::array<int, 2> motor_board_errors_;
 
   /**
     * Drivers communication objects

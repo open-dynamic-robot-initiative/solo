@@ -133,6 +133,7 @@ void Quadruped::initialize()
   polarity_[6] =  1.0; // HR_HFE
   polarity_[7] =  1.0; // HR_KFE
 
+  // Create the motors object.
   for(unsigned i=0; i<motors_.size() ; ++i)
   {
     motors_[i] = std::make_shared<blmc_drivers::SafeMotor> (
@@ -141,7 +142,7 @@ void Quadruped::initialize()
       motor_max_current_[6]
     );
   }
-  // TODO: Add the method to wait until the motors are ready.
+  // wait until all board are ready and connected
   for(unsigned i=0 ; i<can_buses_.size() ; ++i)
   {
     can_motor_boards_[i]->wait_until_ready();

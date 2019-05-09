@@ -12,6 +12,7 @@
 #include <numeric>
 #include <cmath>
 #include "blmc_robots/teststand.hpp"
+#include <ros/ros.h>
 #include "real_time_tools/timer.hpp"
 
 using namespace blmc_robots;
@@ -31,6 +32,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
   Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
 
+  rt_printf("control loop started \n");
+
   double kp = 5.0 ;
   double kd = 0.1 ;
   double max_range = 0.75 * M_PI;
@@ -48,10 +51,16 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     sliders_filt_buffer[i].clear();
   }
   size_t count = 0;
-  while(true)
+  bool success_acquiring_sensor = true;
+  bool success_sending_torques = true;
+  while(ros::ok() && success_acquiring_sensor && success_sending_torques)
   {
     // acquire the sensors
-    robot.acquire_sensors();
+    success_acquiring_sensor = robot.acquire_sensors();
+    if(!success_acquiring_sensor)
+    {
+      rt_printf("cannot access sensor\n");
+    }
 
     // aquire the slider signal
     sliders = robot.get_slider_positions();
@@ -81,7 +90,11 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                      - kd * robot.get_joint_velocities();
 
     // // Send the current to the motor
-    robot.send_target_joint_torque(desired_torque);
+    success_sending_torques = robot.send_target_joint_torque(desired_torque);
+    if(!success_sending_torques)
+    {
+      rt_printf("cannot send control\n");
+    }
 
     // print -----------------------------------------------------------
     real_time_tools::Timer::sleep_sec(0.001);
@@ -91,17 +104,24 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
       print_vector("des_joint_tau  ", desired_torque);
       print_vector("    joint_pos  ", robot.get_joint_positions());
       print_vector("des_joint_pos  ", desired_joint_position);
+      print_vector("sliders        ", sliders);
       print_vector("ati_force      ", robot.get_ati_force());
       print_vector("ati_torque     ", robot.get_ati_torque());
       print_vector("contact_sensors", robot.get_contact_sensors_states());
       print_vector("height_sensors ", robot.get_height_sensors());
+      rt_printf("\n");
     }
     ++count;
   }//endwhile
+  ros::shutdown();
 }// end control_loop
 
 int main(int argc, char **argv)
 {
+  ros::init(argc, argv, "demo_teststand");
+  ros::NodeHandle n;
+  ros::Rate ros_timer (1000);
+
   real_time_tools::RealTimeThread thread;
 
   Teststand robot;
@@ -112,12 +132,14 @@ int main(int argc, char **argv)
 
   real_time_tools::create_realtime_thread(thread, &control_loop, &robot);
 
-  rt_printf("control loop started \n");
-
-  while(true)
+  while(ros::ok())
   {
-      real_time_tools::Timer::sleep_sec(0.01);
+    ros_timer.sleep();
   }
+
+  real_time_tools::join_thread(thread);
+
+  rt_printf("Exit cleanly \n");
 
   return 0;
 }
