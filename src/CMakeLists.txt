@@ -21,7 +21,7 @@ endmacro()
 ####################
 
 create_robots_library(test_bench_8_motors)
-create_robots_library(finger)
+create_robots_library(real_finger)
 create_robots_library(quadruped)
 create_robots_library(teststand)
 create_robots_library(stuggihop)
