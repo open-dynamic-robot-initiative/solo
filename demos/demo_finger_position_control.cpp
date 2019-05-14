@@ -14,7 +14,7 @@
 #include "robot_interfaces/finger.hpp"
 #include "blmc_robots/real_finger.hpp"
 #include "blmc_robots/slider.hpp"
-#include "real_time_tools/realtime_thread_creation.hpp"
+#include "real_time_tools/thread.hpp"
 
 
 using namespace blmc_robots;
@@ -80,10 +80,9 @@ int main(int argc, char **argv)
     // start real-time control loop --------------------------------------------
     real_time_tools::RealTimeThread thread;
     FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
-    real_time_tools::create_realtime_thread(thread,
-                                            &control_loop,
+    thread.create_realtime_thread(&control_loop,
                                             &finger_and_sliders);
     rt_printf("control loop started \n");
-    real_time_tools::join_thread(thread);
+    thread.join();
     return 0;
 }

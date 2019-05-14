@@ -13,7 +13,7 @@
 
 #include "real_time_tools/spinner.hpp"
 #include "blmc_robots/disentanglement_platform.hpp"
-#include "real_time_tools/realtime_thread_creation.hpp"
+#include "real_time_tools/thread.hpp"
 
 
 using namespace blmc_robots;
@@ -60,10 +60,8 @@ int main(int argc, char **argv)
 
     // start real-time control loop --------------------------------------------
     real_time_tools::RealTimeThread thread;
-    real_time_tools::create_realtime_thread(thread,
-                                            &control_loop,
-                                            &robot);
+    thread.create_realtime_thread(&control_loop, &robot);
     rt_printf("control loop started \n");
-    real_time_tools::join_thread(thread);
+    thread.join();
     return 0;
 }

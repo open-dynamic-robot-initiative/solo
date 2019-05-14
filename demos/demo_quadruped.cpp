@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
   rt_printf("controller is set up \n");
 
-  real_time_tools::create_realtime_thread(thread, &control_loop, &robot);
+  thread.create_realtime_thread(&control_loop, &robot);
 
   rt_printf("control loop started \n");
 

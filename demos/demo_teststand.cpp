@@ -130,14 +130,14 @@ int main(int argc, char **argv)
 
   rt_printf("controller is set up \n");
 
-  real_time_tools::create_realtime_thread(thread, &control_loop, &robot);
+  thread.create_realtime_thread(&control_loop, &robot);
 
   while(ros::ok())
   {
     ros_timer.sleep();
   }
 
-  real_time_tools::join_thread(thread);
+  thread.join();
 
   rt_printf("Exit cleanly \n");
 

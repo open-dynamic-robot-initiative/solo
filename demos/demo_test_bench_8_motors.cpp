@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <atomic>
 #include "real_time_tools/spinner.hpp"
-#include "real_time_tools/realtime_thread_creation.hpp"
+#include "real_time_tools/thread.hpp"
 #include "blmc_robots/test_bench_8_motors.hpp"
 
 using namespace blmc_robots;
@@ -99,17 +99,16 @@ int main(int argc, char **argv)
 
   real_time_tools::RealTimeThread rt_thread;
   
-  real_time_tools::create_realtime_thread(
-          rt_thread, &control_loop, &robot);
+  rt_thread.create_realtime_thread(&control_loop, &robot);
 
   rt_printf("control loop started \n");
 
   // Wait until the application is killed.
   while(!StopDemos)
   {
-      real_time_tools::Timer::sleep_sec(0.01);
+    real_time_tools::Timer::sleep_sec(0.01);
   }
-  real_time_tools::join_thread(rt_thread);
+  rt_thread.join();
 
   return 0;
 }
