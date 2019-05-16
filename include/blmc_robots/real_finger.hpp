@@ -85,17 +85,31 @@ public:
             exit(-1);
         }
 
-        // we want to limit the freedom of this joint
-        max_angles_[center] = 160.0 / 180.0 * M_PI;
-        std::cout << "done calibrating, max_angles: "
-                  << max_angles_.transpose() / M_PI * 180 << std::endl;
+//        // we want to limit the freedom of this joint
+//        max_angles_[center] = 160.0 / 180.0 * M_PI;
+//        std::cout << "done calibrating, max_angles: "
+//                  << max_angles_.transpose() / M_PI * 180 << std::endl;
+
+//        for(size_t i = 0; i < 3; i++)
+//        {
+//            safety_constraints_[i].min_position_ = 0.0;
+//            safety_constraints_[i].max_position_ = max_angles_[i];
+//        }
+//        safety_constraints_[center].max_velocity_ = -std::numeric_limits<double>::infinity();
+
+
+        Vector min_angles(0.06, 0.84, 1.37);
+        Vector max_angles(2.8, 1.95, 3.8);
 
         for(size_t i = 0; i < 3; i++)
         {
-            safety_constraints_[i].min_position_ = 0.0;
-            safety_constraints_[i].max_position_ = max_angles_[i];
+            safety_constraints_[i].min_position_ = min_angles[i];
+            safety_constraints_[i].max_position_ = max_angles[i];
+            safety_constraints_[i].min_velocity_ =
+                    std::numeric_limits<double>::infinity();
+            safety_constraints_[i].max_velocity_ =
+                    -std::numeric_limits<double>::infinity();
         }
-        safety_constraints_[center].max_velocity_ = -std::numeric_limits<double>::infinity();
 
     }
 
