@@ -25,6 +25,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   real_time_tools
   mpi_cmake_modules
   robot_interfaces
+  pybind11_catkin
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
@@ -63,6 +64,21 @@ add_subdirectory(tests)
 # manage the demos #
 ####################
 add_subdirectory(demos)
+
+###################
+# python bindings #
+###################
+
+set(py_blmc_single_leg_SRC_FILES 
+  src/single_leg.cpp
+  srcpy/py_single_leg.cpp
+)
+
+pybind11_add_module(py_blmc_single_leg ${py_blmc_single_leg_SRC_FILES})
+target_link_libraries(py_blmc_single_leg PRIVATE single_leg)
+set_target_properties(py_blmc_single_leg PROPERTIES
+         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+install(TARGETS py_blmc_single_leg DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
 
 ##########################
 # building documentation #

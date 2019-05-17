@@ -26,6 +26,7 @@ create_robots_library(quadruped)
 create_robots_library(teststand)
 create_robots_library(stuggihop)
 create_robots_library(single_motor)
+create_robots_library(single_leg)
 
 ######################################################
 # Export the libraries in the devel folder of catkin #
