@@ -74,11 +74,11 @@ set(py_blmc_single_leg_SRC_FILES
   srcpy/py_single_leg.cpp
 )
 
-pybind11_add_module(py_blmc_single_leg ${py_blmc_single_leg_SRC_FILES})
-target_link_libraries(py_blmc_single_leg PRIVATE single_leg)
-set_target_properties(py_blmc_single_leg PROPERTIES
+pybind11_add_module(blmc_single_leg ${py_blmc_single_leg_SRC_FILES})
+target_link_libraries(blmc_single_leg PRIVATE single_leg)
+set_target_properties(blmc_single_leg PROPERTIES
          LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
-install(TARGETS py_blmc_single_leg DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
+install(TARGETS blmc_single_leg DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
 
 ##########################
 # building documentation #

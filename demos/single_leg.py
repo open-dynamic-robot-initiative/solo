@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from py_blmc_single_leg import SingleLeg
+from blmc_single_leg import SingleLeg
 
 np.set_printoptions(suppress=True, precision=3)
 

@@ -147,14 +147,10 @@ void SingleLeg::acquire_sensors()
   joint_target_torques_ = motor_target_torques_.array() *
                           joint_gear_ratios_.array();
   joint_encoder_index_ = motor_encoder_indexes_.array() /
-                          joint_gear_ratios_.arra
-    .def("get_joint_velocities", &SingleLeg::get_joint_velocities)y();
+                          joint_gear_ratios_.array();
 
-    .def("get_joint_velocities", &SingleLeg::get_joint_velocities)
 
-    .def("get_joint_velocities", &SingleLeg::get_joint_velocities)
   /**
-    .def("get_joint_velocities", &SingleLeg::get_joint_velocities)
     * Additional data
     */
   // acquire the slider positions

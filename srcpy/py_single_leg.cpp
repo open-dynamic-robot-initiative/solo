@@ -24,7 +24,7 @@
 namespace py = pybind11;
 using namespace blmc_robots;
 
-PYBIND11_MODULE(py_blmc_single_leg, m) {
+PYBIND11_MODULE(blmc_single_leg, m) {
   // binding of stl containers
   // py::bind_vector<std::vector<Eigen::Vector3d>>(m, "ArrayVector3d");
   // py::bind_vector<std::vector<KinematicsState>>(m, "KinStateVector");
