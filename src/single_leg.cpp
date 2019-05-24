@@ -83,10 +83,13 @@ void SingleLeg::initialize()
   
   // Wait to make sure there is a first package when acquire_sensors() later.
   real_time_tools::Timer::sleep_sec(0.1);
+
+  rt_printf("SingleLeg::initialize done\n");
 }
 
 void SingleLeg::disable_can_recv_timeout()
 {
+  rt_printf("SingleLeg::disable_can_recv_timeout\n");
   for(unsigned i=0 ; i< 1; ++i) {
     can_motor_boards_[i]->disable_can_recv_timeout();
   }
@@ -95,7 +98,11 @@ void SingleLeg::disable_can_recv_timeout()
 
 void SingleLeg::zero_joint_positions()
 {
-  joint_zero_positions_ = motor_positions_;
+  rt_printf("SingleLeg::zero_joint_positions\n");
+  for (unsigned i = 0; i < motors_.size(); i++) {
+    joint_zero_positions_[i] = motors_[i]->get_measurement(mi::position)->newest_element() / joint_gear_ratios_(i);
+    rt_printf("joint_zero_positions_[%d]=%0.3f\n", i, joint_zero_positions_[i]);
+  }
 }
 
 void SingleLeg::acquire_sensors()
@@ -105,14 +112,6 @@ void SingleLeg::acquire_sensors()
     */
   for (unsigned i=0 ; i<motors_.size() ; ++i)
   {
-    // acquire the encoder indexes
-    if (motors_[i]->get_measurement(mi::encoder_index)->length() == 1) {
-      motor_encoder_indexes_(i) = motors_[i]->get_measurement(mi::encoder_index)->newest_element();
-
-      // Automatically use the encoder position to ofset the joint zero position.
-      joint_zero_positions_(i) = motor_encoder_indexes_(i);
-    }
-
     // acquire the motors positions
     motor_positions_(i) =
         motors_[i]->get_measurement(mi::position)->newest_element()
