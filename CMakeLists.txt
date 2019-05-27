@@ -83,36 +83,4 @@ install(TARGETS blmc_single_leg DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
 ##########################
 # building documentation #
 ##########################
-set(BUILD_DOCUMENTATION OFF CACHE BOOL
-    "Set to ON if you want to build the documentation")
-if(BUILD_DOCUMENTATION)
-  message(STATUS "building doxygen documentation for ${PROJECT_NAME}")
-  FIND_PACKAGE(Doxygen)
-  if (NOT DOXYGEN_FOUND)
-    message(FATAL_ERROR
-        "Doxygen is needed to build the documentation. "
-        "Please install it correctly")
-  endif()
-  configure_file(Doxyfile.in ${PROJECT_BINARY_DIR}/Doxyfile  @ONLY IMMEDIATE)
-  # the doxygen target is generated
-  add_custom_target (${PROJECT_NAME}_doc ALL
-    COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxyfile
-    SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
-endif()
-
-###############################################
-# Add custom (non compiling) targets          #
-# so non cpp files show up in QT_CREATOR IDE. #
-###############################################
-set(USE_QTCREATOR OFF CACHE BOOL
-    "Set to ON if you want QtCreator to display all files in the project tree")
-if(USE_QTCREATOR)
-    file(GLOB_RECURSE EXTRA_FILES
-        ../*.h ../*.hh ../*.hpp ../*.py
-        ../*.cf  ../*.yaml ../*.txt ../*.xml
-        ../start ../*.launch ../*.urdf ../CATKIN_IGNORE ../*.in
-    )
-    #list(FILTER EXTRA_FILES EXCLUDE REGEX "build")
-    add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY
-        ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})
-endif()
+build_doxygen_documentation()
