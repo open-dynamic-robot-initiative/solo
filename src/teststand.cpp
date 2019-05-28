@@ -180,8 +180,9 @@ bool Teststand::acquire_sensors()
       // acquire the height sensor.
       // Transforms the measurement into a rough height measurement of the hip
       // mounting point above the table.
-      height_sensors_states_(i) =
-          1.075 - height_sensors_[i]->get_measurement()->newest_element();
+      height_sensors_states_(i) = 
+          1.0701053378814493 - 1.0275690598232334 *
+          height_sensors_[i]->get_measurement()->newest_element();
     }
 
     /**
