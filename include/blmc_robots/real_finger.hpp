@@ -136,6 +136,11 @@ public:
         return joint_modules_.get_measured_velocities();
     }
 
+    Position get_object_qpos() const
+    {
+        /// \todo: return Cartesian position and rotation quaternion of the object
+    }
+
     /// \todo: this should go away. we could handle these issues in the motor_board.
     void pause_motors()
     {
