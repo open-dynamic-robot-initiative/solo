@@ -136,9 +136,9 @@ public:
         return joint_modules_.get_measured_velocities();
     }
 
-    Position get_object_qpos() const
+    Placement get_body_placement(std::string body_name) const
     {
-        /// \todo: return Cartesian position and rotation quaternion of the object
+        // \todo return Cartesian position and rotation quaternion for requested body
     }
 
     /// \todo: this should go away. we could handle these issues in the motor_board.
