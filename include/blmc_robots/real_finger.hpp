@@ -136,9 +136,29 @@ public:
         return joint_modules_.get_measured_velocities();
     }
 
-    Placement get_body_placement(std::string body_name) const
+    Vector get_body_pos(std::string body_name) const
     {
-        // \todo return Cartesian position and rotation quaternion for requested body
+        // \todo return Cartesian position for requested body
+    }
+
+    void set_body_pos(std::string body_name, const Vector& pos)
+    {
+        // \todo set new body position to specified body
+    }
+
+    Quaternion get_body_quat(std::string body_name) const
+    {
+        // \todo retrieve quaternion orientation for requested body
+    }
+
+    void set_body_quat(std::string body_name, const Quaternion& quat)
+    {
+        // \todo set quaternion orientation for specified body
+    }
+
+    void reset_joints()
+    {
+        // \todo reset finger joints to intial properties
     }
 
     /// \todo: this should go away. we could handle these issues in the motor_board.
