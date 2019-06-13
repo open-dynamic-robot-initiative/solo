@@ -10,9 +10,6 @@
   <license>TODO</license>
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend> roscpp </build_depend>
-  <run_depend>   roscpp </run_depend>
-
   <build_depend> ati_ft_sensor </build_depend>
   <run_depend>   ati_ft_sensor </run_depend>
 

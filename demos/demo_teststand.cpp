@@ -7,15 +7,32 @@
  * This file uses the Teststand class in a small demo.
  */
 
+// Exiting on ctrl+c
+#include <signal.h>
+#include <atomic>
+
 #include <Eigen/Eigen>
 #include <deque>
 #include <numeric>
 #include <cmath>
 #include "blmc_robots/teststand.hpp"
-#include <ros/ros.h>
 #include "real_time_tools/timer.hpp"
 
 using namespace blmc_robots;
+
+/**
+ * @brief This boolean is here to kill cleanly the application upon ctrl+c
+ */
+std::atomic_bool StopDemos (false);
+
+/**
+ * @brief This function is the callback upon a ctrl+c call from the terminal.
+ * 
+ * @param s 
+ */
+void my_handler(int s){
+  StopDemos = true;
+}
 
 void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
 {
@@ -53,7 +70,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   size_t count = 0;
   bool success_acquiring_sensor = true;
   bool success_sending_torques = true;
-  while(ros::ok() && success_acquiring_sensor && success_sending_torques)
+  while(!StopDemos && success_acquiring_sensor && success_sending_torques)
   {
     // acquire the sensors
     success_acquiring_sensor = robot.acquire_sensors();
@@ -113,14 +130,18 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     }
     ++count;
   }//endwhile
-  ros::shutdown();
+  StopDemos = true;
 }// end control_loop
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "demo_teststand");
-  ros::NodeHandle n;
-  ros::Rate ros_timer (1000);
+  // make sure we catch the ctrl+c signal to kill the application properly.
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = my_handler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
+  StopDemos = false;
 
   real_time_tools::RealTimeThread thread;
 
@@ -132,11 +153,11 @@ int main(int argc, char **argv)
 
   thread.create_realtime_thread(&control_loop, &robot);
 
-  while(ros::ok())
+  // Wait until the application is killed.
+  while(!StopDemos)
   {
-    ros_timer.sleep();
+    real_time_tools::Timer::sleep_sec(0.01);
   }
-
   thread.join();
 
   rt_printf("Exit cleanly \n");
