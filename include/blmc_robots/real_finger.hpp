@@ -139,25 +139,38 @@ public:
     Vector get_body_pos(std::string body_name) const
     {
         // \todo return Cartesian position for requested body
+
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
+        return Vector::Zero();
     }
 
     void set_body_pos(std::string body_name, const Vector& pos)
     {
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
         // \todo set new body position to specified body
     }
 
     Quaternion get_body_quat(std::string body_name) const
     {
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
         // \todo retrieve quaternion orientation for requested body
+        return Quaternion::Zero();
     }
 
     void set_body_quat(std::string body_name, const Quaternion& quat)
     {
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
         // \todo set quaternion orientation for specified body
     }
 
     void reset_joints()
     {
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
         // \todo reset finger joints to intial properties
     }
 
