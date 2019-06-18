@@ -136,35 +136,44 @@ public:
         return joint_modules_.get_measured_velocities();
     }
 
-    Vector get_body_pos(std::string body_name) const
+    Vector get_tip_pos() const
     {
-        // \todo return Cartesian position for requested body
-
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
         return Vector::Zero();
     }
 
-    void set_body_pos(std::string body_name, const Vector& pos)
+    Vector get_object_pos() const
     {
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
-        // \todo set new body position to specified body
+        return Vector::Zero();
     }
 
-    Quaternion get_body_quat(std::string body_name) const
+    void set_object_pos(const Vector& pos)
     {
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
-        // \todo retrieve quaternion orientation for requested body
+    }
+
+    Quaternion get_object_quat() const
+    {
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
         return Quaternion::Zero();
     }
 
-    void set_body_quat(std::string body_name, const Quaternion& quat)
+    Vector get_target_pos() const
     {
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
-        // \todo set quaternion orientation for specified body
+        return Vector::Zero();
+    }
+
+    void set_target_pos(const Vector& pos) const
+    {
+        std::cout << "not yet implemented " << std::endl;
+        exit(-1);
     }
 
     void reset_joints()
@@ -184,6 +193,12 @@ public:
     void wait_for_execution() const
     {
         /// \todo: this needs to be filled in
+    }
+
+    void render()
+    {
+        std::cout << "real finger cannot render " << std::endl;
+        exit(-1);
     }
 
 
