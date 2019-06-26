@@ -195,7 +195,7 @@ public:
         /// \todo: this needs to be filled in
     }
 
-    void render()
+    unsigned char* render(std::string mode)
     {
         std::cout << "real finger cannot render " << std::endl;
         exit(-1);
