@@ -1,6 +1,7 @@
 /**
  * @file blmc_joint_module.hpp
  * @author Manuel Wuthrich
+ * @author Maximilien Naveau (maximilien.naveau@gmail.com)
  * @license License BSD-3-Clause
  * @copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
  * @date 2019-07-11
@@ -110,6 +111,24 @@ public:
      */
     double get_zero_angle() const;
 
+    /**
+     * @brief This method calibrate the joint position knowing the angle between
+     * the closest (in positive torque) motor index and the theoretical zero
+     * pose. Warning, this method should be called in a real time thread!
+     * 
+     * @param[in][out] angle_zero_to_index this is the angle between the closest (in 
+     * positive torque) motor index and the theoretical zero pose. 
+     * @param[out] index_angle is the angle where we met the index. This angle
+     * is relative to the configuration when the robot booted.
+     * @param[in] mechanical_calibration defines if the leg started in the zero
+     * configuration or not
+     * @return true if success.
+     * @return false if problem arose.
+     */
+    bool calibrate(double& angle_zero_to_index,
+                   double& index_angle,
+                   bool mechanical_calibration = false);
+
 private:
     /**
      * @brief Convert from joint torque to motor current.
@@ -130,11 +149,21 @@ private:
     /**
      * @brief Get motor measurements and check if there are data or not.
      * 
-     * @param measurement_index is the id of the measurement you want to get.
+     * @param measurement_id is the id of the measurement you want to get.
      * check: blmc_drivers::MotorInterface::MeasurementIndex
      * @return double the measurement.
      */
-    double get_motor_measurement(const mi& measurement_index) const;
+    double get_motor_measurement(const mi& measurement_id) const;
+
+    /**
+     * @brief Get the last motor measurement index for a specific data. If there
+     * was no data yet, return NaN
+     * 
+     * @param measurement_id is the id of the measurement you want to get.
+     * check: blmc_drivers::MotorInterface::MeasurementIndex
+     * @return double the measurement.
+     */
+    long int get_motor_measurement_index(const mi& measurement_id) const;
 
     /**
      * @brief This is the pointer to the motor interface.

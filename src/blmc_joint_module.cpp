@@ -1,11 +1,11 @@
-///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
-//
-// Copyright (C) 2017-2019, New York University and Max Planck Gesellshaft
-// Copyright note valid unless otherwise stated in individual files.
-// All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
-
+/**
+ * @file blmc_joint_module.cpp
+ * @author Maximilien Naveau (maximilien.naveau@gmail.com)
+ * @author Manuel Wuthrich
+ * @license License BSD-3-Clause
+ * @copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+ * @date 2019-07-11
+ */
 
 #include "blmc_robots/blmc_joint_module.hpp"
 
@@ -95,16 +95,99 @@ double BlmcJointModule::get_zero_angle() const
     return zero_angle_;
 }
 
-double BlmcJointModule::get_motor_measurement(const mi& measurement_index) const
+double BlmcJointModule::get_motor_measurement(const mi& measurement_id) const
 {
     auto measurement_history =
-            motor_->get_measurement(measurement_index);
+            motor_->get_measurement(measurement_id);
 
     if(measurement_history->length() == 0)
     {
         return std::numeric_limits<double>::quiet_NaN();
     }
     return measurement_history->newest_element();
+}
+
+long int BlmcJointModule::get_motor_measurement_index(const mi& measurement_id) const
+{
+    auto measurement_history =
+            motor_->get_measurement(measurement_id);
+
+    if(measurement_history->length() == 0)
+    {
+        return std::numeric_limits<long int>::quiet_NaN();
+    }
+    return measurement_history->newest_timeindex();
+}
+
+bool BlmcJointModule::calibrate(double& angle_zero_to_index,
+                                double& index_angle,
+                                bool mechanical_calibration)
+{
+    // reset the ouput
+    index_angle = 0.0;
+
+    // we reset the internal zero angle.
+    zero_angle_ = 0.0;
+    
+    long int current_index_time = get_motor_measurement_index(mi::encoder_index);
+    bool reached_next_index = false;
+    while(!reached_next_index)
+    {
+      // Small D gain
+      double k_d = 0.1;
+      // Small desired velocity
+      double joint_vel_des = 0.01;
+      // Velocity controller
+      double torque = k_d * (joint_vel_des - get_measured_velocity());
+      // Send the torque command
+      set_torque(torque);
+      send_torque();
+      // check stop
+      reached_next_index = (current_index_time >=
+                            get_motor_measurement_index(mi::encoder_index));
+      if(reached_next_index)
+      {
+          index_angle = get_motor_measurement(mi::encoder_index);
+      }
+    }
+    // reset the control to zero torque
+    set_torque(0.0);
+    send_torque();
+
+    // get the indexes and stuff
+    if(mechanical_calibration)
+    {
+        angle_zero_to_index = index_angle;
+    }
+    zero_angle_ = index_angle - angle_zero_to_index;
+
+    // Go to 0
+    double torque_int = 0.0;
+    double torque_sat = 0.2; // Nm
+    bool reached_zero_pose = 0;
+    while(!reached_zero_pose)
+    {
+      // Small P gain
+      double k_p = 0.01;
+      // small I gain
+      double k_i = 0.001;
+      // compute the error 
+      double err = - get_measured_angle();
+      // small saturation in intensity
+      torque_int += k_i * err * 0.001; // 1 ms sampling period
+      if(torque_int > torque_sat){torque_int = torque_sat;}
+      if(torque_int < -torque_sat){torque_int = -torque_sat;}
+      // Position controller
+      double torque = k_p * err + torque_int ;
+      // Send the torque command
+      set_torque(torque);
+      send_torque();
+      // check out
+      reached_zero_pose = (err <= 1e-3); // nearly 0.1 degree
+    }
+    // reset the control to zero torque
+    set_torque(0.0);
+    send_torque();
 }
 
 } // namespace

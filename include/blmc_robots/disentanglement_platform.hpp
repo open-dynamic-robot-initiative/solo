@@ -1,5 +1,5 @@
 /**
- * \file disentanglement_platform.hh
+ * \file disentanglement_platform.hpp
  * \brief The hardware wrapper of the OldRealDisentanglementPlatform
  * \author Manuel Wuthrich
  * \date 2018
