@@ -1,10 +1,10 @@
-///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
-//
-// Copyright (C) 2017-2019, New York University and Max Planck Gesellshaft
-// Copyright note valid unless otherwise stated in individual files.
-// All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
+/**
+ * @file blmc_joint_module.hpp
+ * @author Manuel Wuthrich
+ * @license License BSD-3-Clause
+ * @copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+ * @date 2019-07-11
+ */
 #pragma once
 
 #include <iostream>
@@ -360,7 +360,6 @@ private:
      * @brief These are the BLMCJointModule objects corresponding to a robot.
      */
     std::array<std::shared_ptr<BlmcJointModule>, COUNT> modules_;
-
 };
 
 

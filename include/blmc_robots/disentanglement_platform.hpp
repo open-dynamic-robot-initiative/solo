@@ -1,5 +1,5 @@
 /**
- * \file test_bench_8_motors.hh
+ * \file disentanglement_platform.hh
  * \brief The hardware wrapper of the OldRealDisentanglementPlatform
  * \author Manuel Wuthrich
  * \date 2018
