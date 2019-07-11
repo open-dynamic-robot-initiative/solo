@@ -1,157 +1,218 @@
+///////////////////////////////////////////////////////////////////////////////
+// BSD 3-Clause License
+//
+// Copyright (C) 2017-2019, New York University and Max Planck Gesellshaft
+// Copyright note valid unless otherwise stated in individual files.
+// All rights reserved.
+///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 #include <iostream>
 #include <array>
-#include <Eigen/Eigen>
-#include <blmc_robots/common_header.hpp>
-#include <math.h>
-#include <blmc_drivers/devices/motor.hpp>
 #include <stdexcept>
+#include <math.h>
+#include <Eigen/Eigen>
 
+#include "blmc_drivers/devices/motor.hpp"
+#include "blmc_robots/common_header.hpp"
 
 namespace blmc_robots
 {
 
+/**
+ * @brief The BlmcJointModule class is containing the joint information. It is
+ * here to help converting the data from the motor side to the joint side. It
+ * also allows the calibration of the joint position during initialization.
+ */
 class BlmcJointModule
 {
 public:
 
-    typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
-
-
+    /**
+     * @brief Construct a new BlmcJointModule object
+     * 
+     * @param motor is the C++ object allowing us to send commands and receive
+     * sensor data.
+     * @param motor_constant (\f$ k \f$) is the torque constant of the motor 
+     * \f$ \tau_{motor} = k * i_{motor} \f$
+     * @param gear_ratio is the gear ratio between the motor and the joint.
+     * @param zero_angle is the angle between the closest positive motor index
+     * and the zero configuration.
+     */
     BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
                     const double& motor_constant,
                     const double& gear_ratio,
-                    const double& zero_angle)
-    {
-        motor_ = motor;
-        motor_constant_ = motor_constant;
-        gear_ratio_ = gear_ratio;
-        set_zero_angle(zero_angle);
-    }
+                    const double& zero_angle);
 
-    void set_torque(const double& desired_torque)
-    {
-        double desired_current = torque_to_current(desired_torque);
+    /**
+     * @brief Set the joint torque to be sent.
+     * 
+     * @param desired_torque 
+     */
+    void set_torque(const double& desired_torque);
 
-        if(std::fabs(desired_current) > 2.1)
-        {
-            std::cout << "something went wrong, it should never happen"
-                         "that desired_current > 2.1. desired_current: "
-                      << desired_current;
-            exit(-1);
-        }
-        motor_->set_current_target(desired_current);
-    }
+    /**
+     * @brief Set the zero_angle. The zero_angle is the angle between the
+     * closest positive motor index and the zero configuration.
+     * 
+     * @param zero_angle 
+     */
+    void set_zero_angle(const double& zero_angle);
 
-    void set_zero_angle(const double& zero_angle)
-    {
-        zero_angle_ = zero_angle;
-    }
+    /**
+     * @brief send the joint torque to the motor. The conversion between joint
+     * torque and motor current is done automatically.
+     */
+    void send_torque();
 
+    /**
+     * @brief Get the sent joint torque.
+     * 
+     * @return double 
+     */
+    double get_sent_torque() const;
 
-    void send_torque()
-    {
-        motor_->send_if_input_changed();
-    }
+    /**
+     * @brief Get the measured joint torque.
+     * 
+     * @return double 
+     */
+    double get_measured_torque() const;
 
-    double get_sent_torque() const
-    {
-        auto measurement_history =
-                motor_->get_sent_current_target();
+    /**
+     * @brief Get the measured angle of the joint.
+     * 
+     * @return double 
+     */
+    double get_measured_angle() const;
 
-        if(measurement_history->length() == 0)
-        {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-        return current_to_torque(measurement_history->newest_element());
-    }
+    /**
+     * @brief Get the measured velocity of the joint. This data is computed on
+     * board of the control card.
+     * 
+     * @return double 
+     */
+    double get_measured_velocity() const;
 
-    double get_measured_torque() const
-    {
-        return current_to_torque(get_motor_measurement(mi::current));
-    }
+    /**
+     * @brief Get the index_angle_. There is one index per motor rotation so
+     * there are gear_ratio indexes per joint rotation.
+     * 
+     * @return double 
+     */
+    double get_index_angle() const;
 
-    double get_measured_angle() const
-    {
-        return get_motor_measurement(mi::position) / gear_ratio_ - zero_angle_;
-    }
-
-    double get_measured_velocity() const
-    {
-        return get_motor_measurement(mi::velocity) / gear_ratio_;
-    }
-
-    double torque_to_current(double torque) const
-    {
-        return torque / gear_ratio_ / motor_constant_;
-    }
-
-    double current_to_torque(double current) const
-    {
-        return current *  gear_ratio_ * motor_constant_;
-    }
+    /**
+     * @brief Get the zero_angle_. These are the angle between the starting pose
+     * and the theoretical zero pose.
+     * 
+     * @return double 
+     */
+    double get_zero_angle() const;
 
 private:
-    double get_index_angle() const
-    {
-        return get_motor_measurement(mi::encoder_index) / gear_ratio_;
-    }
+    /**
+     * @brief Convert from joint torque to motor current.
+     * 
+     * @param[in] torque is the input joint
+     * @return double the equivalent motor current.
+     */
+    double joint_torque_to_motor_current(double torque) const;
 
-    double get_zero_angle() const
-    {
-        return zero_angle_;
-    }
+    /**
+     * @brief Convert from motor current to joint torque.
+     * 
+     * @param current is the motor current.
+     * @return double is the equivalent joint torque.
+     */
+    double motor_current_to_joint_torque(double current) const;
 
-    double get_motor_measurement(const int& measurement_index) const
-    {
-        auto measurement_history =
-                motor_->get_measurement(measurement_index);
+    /**
+     * @brief Get motor measurements and check if there are data or not.
+     * 
+     * @param measurement_index is the id of the measurement you want to get.
+     * check: blmc_drivers::MotorInterface::MeasurementIndex
+     * @return double the measurement.
+     */
+    double get_motor_measurement(const mi& measurement_index) const;
 
-        if(measurement_history->length() == 0)
-        {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-        return measurement_history->newest_element();
-    }
-
+    /**
+     * @brief This is the pointer to the motor interface.
+     */
     std::shared_ptr<blmc_drivers::MotorInterface> motor_;
 
+    /**
+     * @brief This is the torque constant of the motor:
+     * \f$ \tau_{motor} = k * i_{motor} \f$
+     */
     double motor_constant_;
+    /**
+     * @brief This correspond to the reduction (\f$ \beta \f$) between the motor rotation and
+     * the joint. \f$ \theta_{joint} = \theta_{motor} / \beta \f$
+     */
     double gear_ratio_;
+    /**
+     * @brief This is the distance between the closest positive index and the
+     * zero configuration.
+     */
     double zero_angle_;
 };
 
 
 
-
+/**
+ * @brief This class defines an interface to a collection of BLMC joints. It
+ * creates a BLMCJointModule for every blmc_driver::MotorInterface provided.
+ * 
+ * @tparam COUNT 
+ */
 template <int COUNT>
 class BlmcJointModules
 {
 public:
+    /**
+     * @brief Defines a static Eigen vector type in order to define the
+     * interface.
+     */
     typedef Eigen::Matrix<double, COUNT, 1> Vector;
 
-
+    /**
+     * @brief Construct a new BlmcJointModules object
+     * 
+     * @param motors 
+     * @param motor_constants 
+     * @param gear_ratios 
+     * @param zero_angles 
+     */
     BlmcJointModules(
-            const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
-            COUNT>& motors,
-            const Vector& motor_constants,
-            const Vector& gear_ratios,
-            const Vector& zero_angles)
+        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>&
+          motors,
+        const Vector& motor_constants,
+        const Vector& gear_ratios,
+        const Vector& zero_angles)
     {
         set_motor_array(motors, motor_constants, gear_ratios, zero_angles);
     }
-
+    /**
+     * @brief Construct a new BlmcJointModules object
+     */
     BlmcJointModules()
     {
     }
-
+    /**
+     * @brief Set the motor array, by creating the corresponding modules.
+     * 
+     * @param motors 
+     * @param motor_constants 
+     * @param gear_ratios 
+     * @param zero_angles 
+     */
     void set_motor_array(
-            const std::array<std::shared_ptr<blmc_drivers::MotorInterface>,
-            COUNT>& motors,
-            const Vector& motor_constants,
-            const Vector& gear_ratios,
-            const Vector& zero_angles)
+        const std::array<std::shared_ptr<blmc_drivers::MotorInterface>, COUNT>&
+          motors,
+        const Vector& motor_constants,
+        const Vector& gear_ratios,
+        const Vector& zero_angles)
     {
         for(size_t i = 0; i < COUNT; i++)
         {
@@ -161,7 +222,9 @@ public:
                                                             zero_angles[i]);
         }
     }
-
+    /**
+     * @brief Send the registered torques to all modules.
+     */
     void send_torques()
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -170,6 +233,11 @@ public:
         }
     }
 
+    /**
+     * @brief Register the joint torques to be sent for all modules.
+     * 
+     * @param desired_torques 
+     */
     void set_torques(const Vector& desired_torques)
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -178,6 +246,11 @@ public:
         }
     }
 
+    /**
+     * @brief Get the previously sent torques.
+     * 
+     * @return Vector 
+     */
     Vector get_sent_torques() const
     {
         Vector torques;
@@ -189,6 +262,11 @@ public:
         return torques;
     }
 
+    /**
+     * @brief Get the measured joint torques.
+     * 
+     * @return Vector 
+     */
     Vector get_measured_torques() const
     {
         Vector torques;
@@ -200,6 +278,11 @@ public:
         return torques;
     }
 
+    /**
+     * @brief Get the measured joint angles.
+     * 
+     * @return Vector 
+     */
     Vector get_measured_angles() const
     {
         Vector positions;
@@ -210,7 +293,11 @@ public:
         }
         return positions;
     }
-
+    /**
+     * @brief Get the measured joint velocities.
+     * 
+     * @return Vector 
+     */
     Vector get_measured_velocities() const
     {
         Vector velocities;
@@ -222,6 +309,12 @@ public:
         return velocities;
     }
 
+    /**
+     * @brief Set the zero_angles. These are the joint angles between the
+     * starting pose and the zero theoretical pose of the urdf.
+     * 
+     * @param zero_angles 
+     */
     void set_zero_angles(const Vector& zero_angles)
     {
         for(size_t i = 0; i < COUNT; i++)
@@ -229,7 +322,12 @@ public:
             modules_[i]->set_zero_angle(zero_angles(i));
         }
     }
-
+    /**
+     * @brief Get the zero_angles. These are the joint angles between the
+     * starting pose and the zero theoretical pose of the urdf.
+     * 
+     * @return Vector 
+     */
     Vector get_zero_angles() const
     {
         Vector positions;
@@ -240,8 +338,12 @@ public:
         }
         return positions;
     }
-
-protected:
+    /**
+     * @brief Get the index_angles. There is one index per motor rotation so
+     * there are gear_ratio indexes per joint rotation.
+     * 
+     * @return Vector 
+     */
     Vector get_index_angles() const
     {
         Vector index_angles;
@@ -253,8 +355,10 @@ protected:
         return index_angles;
     }
 
-
 private:
+    /**
+     * @brief These are the BLMCJointModule objects corresponding to a robot.
+     */
     std::array<std::shared_ptr<BlmcJointModule>, COUNT> modules_;
 
 };

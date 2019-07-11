@@ -1,12 +1,31 @@
+###############################
+# Declare the project library #
+###############################
+
+add_library(${PROJECT_NAME} SHARED
+  blmc_joint_module.cpp
+)
+
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_libraries(${PROJECT_NAME} rt pthread)
+endif()
+
+set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${PROJECT_NAME})
+
+
 ###############################################
 # Declare a simple macro to build the library #
 ###############################################
 
 macro(create_robots_library lib_name)
 
-add_library(${lib_name} SHARED ${lib_name}.cpp)
+add_library(${lib_name} SHARED
+  ${lib_name}.cpp
+)
 
-target_link_libraries(${lib_name} ${catkin_LIBRARIES})
+target_link_libraries(${lib_name} ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   target_link_libraries(${lib_name} rt pthread)

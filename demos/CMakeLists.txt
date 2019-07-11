@@ -20,6 +20,7 @@ add_executable(demo_${demo_name}
 
 target_link_libraries(demo_${demo_name}
   ${demo_name}
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -42,6 +43,7 @@ create_demo(stuggihop)
  )
  target_link_libraries(demo_finger_position_control
    ${catkin_LIBRARIES}
+   ${PROJECT_NAME}
  )
 
  add_executable(demo_finger_torque_control
@@ -49,6 +51,7 @@ create_demo(stuggihop)
  )
  target_link_libraries(demo_finger_torque_control
    ${catkin_LIBRARIES}
+   ${PROJECT_NAME}
  )
 
  add_executable(demo_disentanglement_platform
@@ -56,6 +59,7 @@ create_demo(stuggihop)
  )
  target_link_libraries(demo_disentanglement_platform
    ${catkin_LIBRARIES}
+   ${PROJECT_NAME}
  )
 
 
