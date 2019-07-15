@@ -38,29 +38,34 @@ create_demo(quadruped)
 create_demo(teststand)
 create_demo(stuggihop)
 
- add_executable(demo_finger_position_control
-   demo_finger_position_control.cpp
- )
- target_link_libraries(demo_finger_position_control
-   ${catkin_LIBRARIES}
-   ${PROJECT_NAME}
- )
+add_executable(demo_finger_position_control
+  demo_finger_position_control.cpp
+)
+target_link_libraries(demo_finger_position_control
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
 
- add_executable(demo_finger_torque_control
-   demo_finger_torque_control.cpp
- )
- target_link_libraries(demo_finger_torque_control
-   ${catkin_LIBRARIES}
-   ${PROJECT_NAME}
- )
+add_executable(demo_finger_torque_control
+  demo_finger_torque_control.cpp
+)
+target_link_libraries(demo_finger_torque_control
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
 
- add_executable(demo_disentanglement_platform
-   demo_disentanglement_platform.cpp
- )
- target_link_libraries(demo_disentanglement_platform
-   ${catkin_LIBRARIES}
-   ${PROJECT_NAME}
- )
+add_executable(demo_disentanglement_platform
+  demo_disentanglement_platform.cpp
+)
+target_link_libraries(demo_disentanglement_platform
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
 
-
-
+add_executable(demo_calibration
+  demo_calibration.cpp
+)
+target_link_libraries(demo_calibration
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)

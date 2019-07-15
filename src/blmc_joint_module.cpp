@@ -7,6 +7,9 @@
  * @date 2019-07-11
  */
 
+#include <cmath>
+#include "real_time_tools/spinner.hpp"
+#include "real_time_tools/iostream.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 
 namespace blmc_robots{
@@ -128,31 +131,57 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
 
     // we reset the internal zero angle.
     zero_angle_ = 0.0;
+
+    // Small D gain
+    double k_d = 0.01;
+    // Small desired velocity
+    double joint_vel_des = 0.05;
+
     
-    long int current_index_time = get_motor_measurement_index(mi::encoder_index);
+    long int last_index_time = get_motor_measurement_index(mi::encoder_index);
+    if(std::isnan(last_index_time)){last_index_time = -1;}
     bool reached_next_index = false;
+    real_time_tools::Spinner spinner;
+    spinner.set_period(0.001);
+    rt_printf("Search for the index\n");
     while(!reached_next_index)
     {
-      // Small D gain
-      double k_d = 0.1;
-      // Small desired velocity
-      double joint_vel_des = 0.01;
       // Velocity controller
       double torque = k_d * (joint_vel_des - get_measured_velocity());
       // Send the torque command
       set_torque(torque);
       send_torque();
       // check stop
-      reached_next_index = (current_index_time >=
-                            get_motor_measurement_index(mi::encoder_index));
+      long int actual_index_time = get_motor_measurement_index(mi::encoder_index);
+      double actual_index_angle = get_motor_measurement(mi::encoder_index);
+
+      reached_next_index = (actual_index_time > last_index_time);
+      rt_printf("last_index_time=%ld, actual_index_time=%ld, actual_index_angle=%f\n", last_index_time, actual_index_time, actual_index_angle);
       if(reached_next_index)
       {
-          index_angle = get_motor_measurement(mi::encoder_index);
+          index_angle = actual_index_angle;
       }
+      spinner.spin();
     }
+
+    rt_printf("Stop the motion\n");
+    bool stopped = false;
+    while(!stopped)
+    {
+      // Velocity controller
+      double torque = k_d * (joint_vel_des - get_measured_velocity());
+      // Send the torque command
+      set_torque(torque);
+      send_torque();
+      // check stop
+      stopped = get_measured_velocity() < 0.001;
+      spinner.spin();
+    }
+
     // reset the control to zero torque
     set_torque(0.0);
     send_torque();
+    spinner.spin();
 
     // get the indexes and stuff
     if(mechanical_calibration)
@@ -161,33 +190,36 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
     }
     zero_angle_ = index_angle - angle_zero_to_index;
 
-    // Go to 0
-    double torque_int = 0.0;
-    double torque_sat = 0.2; // Nm
-    bool reached_zero_pose = 0;
-    while(!reached_zero_pose)
-    {
-      // Small P gain
-      double k_p = 0.01;
-      // small I gain
-      double k_i = 0.001;
-      // compute the error 
-      double err = - get_measured_angle();
-      // small saturation in intensity
-      torque_int += k_i * err * 0.001; // 1 ms sampling period
-      if(torque_int > torque_sat){torque_int = torque_sat;}
-      if(torque_int < -torque_sat){torque_int = -torque_sat;}
-      // Position controller
-      double torque = k_p * err + torque_int ;
-      // Send the torque command
-      set_torque(torque);
-      send_torque();
-      // check out
-      reached_zero_pose = (err <= 1e-3); // nearly 0.1 degree
-    }
+    // rt_printf("Position Control\n")
+    // // Go to 0
+    // double torque_int = 0.0;
+    // double torque_sat = 0.2; // Nm
+    // bool reached_zero_pose = 0;
+    // while(!reached_zero_pose)
+    // {
+    //   // Small P gain
+    //   double k_p = 0.01;
+    //   // small I gain
+    //   double k_i = 0.001;
+    //   // compute the error 
+    //   double err = - get_measured_angle();
+    //   // small saturation in intensity
+    //   torque_int += k_i * err * 0.001; // 1 ms sampling period
+    //   if(torque_int > torque_sat){torque_int = torque_sat;}
+    //   if(torque_int < -torque_sat){torque_int = -torque_sat;}
+    //   // Position controller
+    //   double torque = k_p * err + torque_int ;
+    //   // Send the torque command
+    //   set_torque(torque);
+    //   send_torque();
+    //   // check out
+    //   reached_zero_pose = (err <= 1e-3); // nearly 0.1 degree
+    //   spinner.spin();
+    // }
     // reset the control to zero torque
     set_torque(0.0);
     send_torque();
+    spinner.spin();
 }
 
 } // namespace
