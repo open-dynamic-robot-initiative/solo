@@ -17,6 +17,20 @@
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "real_time_tools/timer.hpp"
 
+/**
+ * @brief This boolean is here to kill cleanly the application upon ctrl+c
+ */
+std::atomic_bool StopDemos (false);
+
+/**
+ * @brief This function is the callback upon a ctrl+c call from the terminal.
+ * 
+ * @param s 
+ */
+void my_handler(int s){
+  StopDemos = true;
+}
+
 using namespace blmc_robots;
 
 struct Robot{
@@ -35,21 +49,38 @@ struct Robot{
   double angle_zero_to_index;
   double calibrated_index_angle;
   bool mechanical_calibration;
+  bool reverse_polarity;
 };
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
   Robot& robot = *(static_cast<Robot*>(robot_void_ptr));
-  robot.angle_zero_to_index = 0.0;
+  robot.angle_zero_to_index = 0.134252;
   robot.calibrated_index_angle = 0.0;
-  robot.mechanical_calibration = true;
+  robot.mechanical_calibration = false; // true;
   robot.joint_module->calibrate(robot.angle_zero_to_index,
                                 robot.calibrated_index_angle,
                                 robot.mechanical_calibration);
+
+  // real_time_tools::Spinner spinner;
+  // spinner.set_period(0.1);
+  // while(!StopDemos)
+  // {
+  //   rt_printf("current measurement = %f, current index = %f\n", robot.joint_module->get_measured_angle(), robot.joint_module->get_measured_index_angle());
+  //   spinner.spin();
+  // }
 }// end control_loop
 
 int main(int argc, char **argv)
 {
+  // make sure we catch the ctrl+c signal to kill the application properly.
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = my_handler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
+  StopDemos = false;
+
   real_time_tools::RealTimeThread thread;
 
   Robot robot;
@@ -61,8 +92,9 @@ int main(int argc, char **argv)
   robot.motor_constant = 0.025;
   robot.gear_ratio = 9.0;
   robot.zero_angle = 0.0;
+  robot.reverse_polarity = true;
   robot.joint_module = std::make_shared<BlmcJointModule>(
-    robot.motor, robot.motor_constant, robot.gear_ratio, robot.zero_angle);
+    robot.motor, robot.motor_constant, robot.gear_ratio, robot.zero_angle, robot.reverse_polarity);
   
   robot.can_bus_motor_board->wait_until_ready();
 

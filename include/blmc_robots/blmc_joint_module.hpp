@@ -43,7 +43,8 @@ public:
     BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
                     const double& motor_constant,
                     const double& gear_ratio,
-                    const double& zero_angle);
+                    const double& zero_angle,
+                    const bool& reverse_polarity=false);
 
     /**
      * @brief Set the joint torque to be sent.
@@ -96,12 +97,12 @@ public:
     double get_measured_velocity() const;
 
     /**
-     * @brief Get the index_angle_. There is one index per motor rotation so
+     * @brief Get the measured index angle. There is one index per motor rotation so
      * there are gear_ratio indexes per joint rotation.
      * 
      * @return double 
      */
-    double get_index_angle() const;
+    double get_measured_index_angle() const;
 
     /**
      * @brief Get the zero_angle_. These are the angle between the starting pose
@@ -185,6 +186,10 @@ private:
      * zero configuration.
      */
     double zero_angle_;
+    /**
+     * @brief This change the motor rotation direction.
+     */
+    double polarity_;
 };
 
 

@@ -18,12 +18,14 @@ namespace blmc_robots{
 BlmcJointModule::BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
                     const double& motor_constant,
                     const double& gear_ratio,
-                    const double& zero_angle)
+                    const double& zero_angle,
+                    const bool& reverse_polarity)
 {
     motor_ = motor;
     motor_constant_ = motor_constant;
     gear_ratio_ = gear_ratio;
     set_zero_angle(zero_angle);
+    polarity_ = reverse_polarity ? -1.0:1.0;
 }
 
 void BlmcJointModule::set_torque(const double& desired_torque)
@@ -34,10 +36,11 @@ void BlmcJointModule::set_torque(const double& desired_torque)
     {
         std::cout << "something went wrong, it should never happen"
                       "that desired_current > 2.1. desired_current: "
-                  << desired_current;
+                  << desired_current
+                  << std::endl;
         exit(-1);
     }
-    motor_->set_current_target(desired_current);
+    motor_->set_current_target(polarity_ * desired_current);
 }
 
 void BlmcJointModule::set_zero_angle(const double& zero_angle)
@@ -88,7 +91,7 @@ double BlmcJointModule::motor_current_to_joint_torque(double current) const
     return current *  gear_ratio_ * motor_constant_;
 }
 
-double BlmcJointModule::get_index_angle() const
+double BlmcJointModule::get_measured_index_angle() const
 {
     return get_motor_measurement(mi::encoder_index) / gear_ratio_;
 }
@@ -105,9 +108,10 @@ double BlmcJointModule::get_motor_measurement(const mi& measurement_id) const
 
     if(measurement_history->length() == 0)
     {
+        // rt_printf("get_motor_measurement returns NaN\n");
         return std::numeric_limits<double>::quiet_NaN();
     }
-    return measurement_history->newest_element();
+    return polarity_ * measurement_history->newest_element();
 }
 
 long int BlmcJointModule::get_motor_measurement_index(const mi& measurement_id) const
@@ -117,7 +121,8 @@ long int BlmcJointModule::get_motor_measurement_index(const mi& measurement_id) 
 
     if(measurement_history->length() == 0)
     {
-        return std::numeric_limits<long int>::quiet_NaN();
+        // rt_printf("get_motor_measurement_index returns NaN\n");
+        return -1;
     }
     return measurement_history->newest_timeindex();
 }
@@ -126,19 +131,18 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
                                 double& index_angle,
                                 bool mechanical_calibration)
 {
+    // save the current position
+    double starting_position = get_measured_angle();
+    rt_printf("Starting pose is=%f\n", starting_position);
+
     // reset the ouput
     index_angle = 0.0;
 
     // we reset the internal zero angle.
     zero_angle_ = 0.0;
-
-    // Small D gain
-    double k_d = 0.01;
-    // Small desired velocity
-    double joint_vel_des = 0.05;
-
     
     long int last_index_time = get_motor_measurement_index(mi::encoder_index);
+    double last_time_stamp = get_motor_measurement_index(mi::encoder_index);
     if(std::isnan(last_index_time)){last_index_time = -1;}
     bool reached_next_index = false;
     real_time_tools::Spinner spinner;
@@ -146,38 +150,29 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
     rt_printf("Search for the index\n");
     while(!reached_next_index)
     {
+      // Small D gain
+      double k_d = 0.2;
+      // Small desired velocity
+      double joint_vel_des = 0.8;
       // Velocity controller
-      double torque = k_d * (joint_vel_des - get_measured_velocity());
+      double actual_velocity = get_measured_velocity();
+      double torque = + k_d * (joint_vel_des - actual_velocity);
+      // rt_printf("error=%f, vel_des=%f, vel=%f, tau=%f\n", joint_vel_des - actual_velocity, joint_vel_des, actual_velocity, torque);
       // Send the torque command
       set_torque(torque);
       send_torque();
       // check stop
       long int actual_index_time = get_motor_measurement_index(mi::encoder_index);
-      double actual_index_angle = get_motor_measurement(mi::encoder_index);
+      double actual_index_angle = get_measured_index_angle();
 
       reached_next_index = (actual_index_time > last_index_time);
-      rt_printf("last_index_time=%ld, actual_index_time=%ld, actual_index_angle=%f\n", last_index_time, actual_index_time, actual_index_angle);
+      // rt_printf("last_index_time=%ld, actual_index_time=%ld, actual_index_angle=%f\n", last_index_time, actual_index_time, actual_index_angle);
       if(reached_next_index)
       {
           index_angle = actual_index_angle;
       }
       spinner.spin();
     }
-
-    rt_printf("Stop the motion\n");
-    bool stopped = false;
-    while(!stopped)
-    {
-      // Velocity controller
-      double torque = k_d * (joint_vel_des - get_measured_velocity());
-      // Send the torque command
-      set_torque(torque);
-      send_torque();
-      // check stop
-      stopped = get_measured_velocity() < 0.001;
-      spinner.spin();
-    }
-
     // reset the control to zero torque
     set_torque(0.0);
     send_torque();
@@ -186,36 +181,58 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
     // get the indexes and stuff
     if(mechanical_calibration)
     {
-        angle_zero_to_index = index_angle;
+        angle_zero_to_index = index_angle - starting_position;
     }
     zero_angle_ = index_angle - angle_zero_to_index;
 
-    // rt_printf("Position Control\n")
-    // // Go to 0
-    // double torque_int = 0.0;
-    // double torque_sat = 0.2; // Nm
-    // bool reached_zero_pose = 0;
-    // while(!reached_zero_pose)
-    // {
-    //   // Small P gain
-    //   double k_p = 0.01;
-    //   // small I gain
-    //   double k_i = 0.001;
-    //   // compute the error 
-    //   double err = - get_measured_angle();
-    //   // small saturation in intensity
-    //   torque_int += k_i * err * 0.001; // 1 ms sampling period
-    //   if(torque_int > torque_sat){torque_int = torque_sat;}
-    //   if(torque_int < -torque_sat){torque_int = -torque_sat;}
-    //   // Position controller
-    //   double torque = k_p * err + torque_int ;
-    //   // Send the torque command
-    //   set_torque(torque);
-    //   send_torque();
-    //   // check out
-    //   reached_zero_pose = (err <= 1e-3); // nearly 0.1 degree
-    //   spinner.spin();
-    // }
+    rt_printf("Zero angle is=%f\n", zero_angle_);
+    rt_printf("Zero angle to index angle is=%f\n", angle_zero_to_index);
+    rt_printf("Index angle is=%f\n", index_angle);
+
+
+    rt_printf("Position Control\n");
+    // Go to 0
+    double init_pose = get_measured_angle();
+    double final_pose = 0.0;
+    double final_angle = 0.0;
+    int traj_time = 2.0 / 0.001;
+    int counter = 0;
+    double torque_int = 0.0;
+    double torque_sat = 0.1; // Nm
+    bool reached_zero_pose = 0;
+    while(!reached_zero_pose)
+    {
+      // Small P gain
+      double k_p = 2.5;
+      // Integrale gain
+      double k_i = 0.5;
+      // desired pose
+      double alpha = 1.0 - (double)((double)counter/(double)traj_time);
+      double des_angle = alpha * init_pose + (1.0-alpha) * final_pose;
+      // compute the error 
+      double current_angle = get_measured_angle();
+      double err = des_angle - current_angle;
+      // small saturation in intensity
+      torque_int += k_i * err * 0.001; // 1 ms sampling period
+      if(torque_int > torque_sat){torque_int = torque_sat;}
+      if(torque_int < -torque_sat){torque_int = -torque_sat;}
+      // Position controller
+      double torque = k_p * err + torque_int ;
+      // rt_printf("error=%f, torque_int=%f, tau=%f\n", err, torque_int, torque);
+      // Send the torque command
+      set_torque(torque);
+      send_torque();
+      // check out
+      reached_zero_pose = (std::fabs(current_angle) <= 1e-2); // nearly 0.1 degree
+      if(reached_zero_pose)
+      {
+        final_angle = -err;
+      }
+      spinner.spin();
+      ++counter;
+      if(counter > traj_time){counter = traj_time;}
+    }
+    rt_printf("Final angle is=%f\n", final_angle);
     // reset the control to zero torque
     set_torque(0.0);
     send_torque();
