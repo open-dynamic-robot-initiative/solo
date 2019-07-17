@@ -3,7 +3,6 @@
 
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
-#include <blmc_robots/slider.hpp>
 #include <AtiFTSensor.h>
 
 namespace blmc_robots{
@@ -33,12 +32,6 @@ public:
   /**
    * @brief send_target_torques sends the target currents to the motors
    */
-  bool send_target_motor_current(
-      const Eigen::Ref<Vector2d> target_motor_current);
-
-  /**
-   * @brief send_target_torques sends the target currents to the motors
-   */
   bool send_target_joint_torque(
       const Eigen::Ref<Vector2d> target_joint_torque);
 
@@ -49,93 +42,12 @@ public:
   bool acquire_sensors();
 
   /**
-   * @brief get_motor_positions
-   * @return the current motors positions (rad).
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
-   */
-  const Eigen::Ref<Vector2d> get_motor_positions()
-  {
-    return motor_positions_;
-  }
-
-  /**
-   * @brief get_motor_velocities
-   * @return the current motors velocities (rad/s).
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
-   */
-  const Eigen::Ref<Vector2d> get_motor_velocities()
-  {
-    return motor_velocities_;
-  }
-
-  /**
-   * @brief get_motor_currents
-   * @return the current motors currents in (Ampere: A).
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
-   */
-  const Eigen::Ref<Vector2d> get_motor_currents()
-  {
-    return motor_currents_;
-  }
-
-  /**
-   * @brief get_motor_target_currents
-   * @return the target current motors currents in (Ampere: A).
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
-   */
-  const Eigen::Ref<Vector2d> get_motor_target_currents()
-  {
-    return motor_target_currents_;
-  }
-
-  /**
-   * @brief get_motor_torques
-   * @return the motor torques in Nm
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
-   */
-  const Eigen::Ref<Vector2d> get_motor_torques()
-  {
-    return motor_torques_;
-  }
-
-  /**
-   * @brief get_target_motor_torques
-   * @return the target motor torques in Nm
-   */
-  const Eigen::Ref<Vector2d> get_target_motor_torques()
-  {
-    return motor_target_torques_;
-  }
-
-  /**
    * @brief get_motor_inertias
    * @return the motor inertias
    */
   const Eigen::Ref<Vector2d> get_motor_inertias()
   {
     return motor_inertias_;
-  }
-
-  /**
-   * @brief get_motor_encoder_indexes
-   * @return the position of the index of the encoders a the motor level
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
-   */
-  const Eigen::Ref<Vector2d> get_motor_encoder_indexes()
-  {
-    return motor_encoder_indexes_;
   }
 
   /**
@@ -149,10 +61,11 @@ public:
 
   /**
    * @brief get_joint_positions
-   * @return  the joint angle of each module
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   *    
+   * @return  the joint angle of each module
    */
   const Eigen::Ref<Vector2d> get_joint_positions()
   {
@@ -161,10 +74,11 @@ public:
 
   /**
    * @brief get_joint_velocities
-   * @return the joint velocities
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   * 
+   * @return the joint velocities
    */
   const Eigen::Ref<Vector2d> get_joint_velocities()
   {
@@ -173,10 +87,11 @@ public:
 
   /**
    * @brief get_joint_torques
-   * @return the joint torques
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   * 
+   * @return the joint torques
    */
   const Eigen::Ref<Vector2d> get_joint_torques()
   {
@@ -203,10 +118,11 @@ public:
 
   /**
    * @brief get_joint_encoder_index
-   * @return The last observed encoder index in joint coordinates.
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   * 
+   * @return The last observed encoder index in joint coordinates.
    */
   const Eigen::Ref<Vector2d> get_joint_encoder_index()
   {
@@ -224,10 +140,11 @@ public:
 
   /**
    * @brief get_slider_positions
-   * @return the current sliders positions.
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   * 
+   * @return the current sliders positions.
    */
   const Eigen::Ref<Vector2d> get_slider_positions()
   {
@@ -236,10 +153,11 @@ public:
 
   /**
    * @brief get_contact_sensors_states
-   * @return the state of the contacts states
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   * 
+   * @return the state of the contacts states
    */
   const Eigen::Ref<Vector1d> get_contact_sensors_states()
   {
@@ -248,10 +166,11 @@ public:
 
   /**
    * @brief get_contact_sensors_states
-   * @return the state of the contacts states
    * WARNING !!!!
    * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
+   * 
+   * @return the state of the contacts states
    */
   const Eigen::Ref<Vector1d> get_height_sensors()
   {
@@ -269,37 +188,26 @@ public:
   }
 
   /**
-   * @brief get_max_torque
-   * @return the max torque that has been hardcoded in the constructor of this
-   * class. TODO: parametrize this via yaml or something else.
+   * @brief Get the ati_force_ object
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
+   * 
+   * @return const Eigen::Ref<VectorAtiForce> 
    */
-  const Eigen::Ref<Vector2d> get_max_joint_torque()
-  {
-    return joint_max_torque_;
-  }
-
-  /**
-   * @brief set_max_current sets the maximum current that the motor can
-   * to apply.
-   * @param max_current contain 1 value per each motors.
-   */
-  void set_max_current(const Eigen::Ref<Vector2d> max_current)
-  {
-    motor_max_current_ = max_current;
-    for(unsigned i=0 ; i<motors_.size() ; ++i)
-    {
-      motors_[i]->set_max_current(motor_max_current_(i));
-    }
-    joint_max_torque_ = motor_max_current_.array() *
-                        motor_torque_constants_.array() *
-                        joint_gear_ratios_.array();
-  }
-
   const Eigen::Ref<VectorAtiForce> get_ati_force()
   {
     return ati_force_;
   }
 
+  /**
+   * @brief Get the ati_torque_ object
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
+   * 
+   * @return const Eigen::Ref<VectorAtiTorque> 
+   */
   const Eigen::Ref<VectorAtiTorque> get_ati_torque()
   {
     return ati_torque_;
@@ -326,65 +234,35 @@ private:
     */
 
   /**
-   * @brief motor_positions_
-   */
-  Vector2d motor_positions_;
-  /**
-   * @brief motor_velocities_
-   */
-  Vector2d motor_velocities_;
-  /**
-   * @brief motor_currents_
-   */
-  Vector2d motor_currents_;
-  /**
-   * @brief motor_torques_
-   */
-  Vector2d motor_torques_;
-  /**
    * @brief motor_inertias_
    */
   Vector2d motor_inertias_;
   /**
-   * @brief motor_encoder_indexes_
-   */
-  Vector2d motor_encoder_indexes_;
-  /**
-   * @brief motor_target_currents_
-   */
-  Vector2d motor_target_currents_;
-  /**
-   * @brief motor_target_torques_
-   */
-  Vector2d motor_target_torques_;
-  /**
    * @brief motor_torque_constants_ are the motor torque constants
    */
   Vector2d motor_torque_constants_;
-  /**
-   * @brief target_motor_current_tmp_ is used to convert the joint torque to
-   * motor current
-   */
-  Vector2d target_motor_current_tmp_;
 
   /**
     * Joint data
     */
 
   /**
-   * @brief joint_positions_
+   * @brief joint_positions_ is the measured data from the onboard card
+   * converted at the joint level.
    */
   Vector2d joint_positions_;
   /**
-   * @brief joint_velocities_
+   * @brief joint_velocities_ is the measured data from the onboard card
+   * converted at the joint level.
    */
   Vector2d joint_velocities_;
   /**
-   * @brief joint_torques_
+   * @brief joint_torques_ is the measured data from the onboard card
+   * converted at the joint level.
    */
   Vector2d joint_torques_;
   /**
-   * @brief joint_target_torques_
+   * @brief joint_target_torques_ is the last given command to be sent.
    */
   Vector2d joint_target_torques_;
   /**
@@ -401,10 +279,6 @@ private:
    * position
    */
   Vector2d joint_zero_positions_;
-  /**
-   * @brief joint_max_torque_
-   */
-  Vector2d joint_max_torque_;
 
   /**
     * Additional data
@@ -462,22 +336,30 @@ private:
    * @brief can_buses_ are the 2 can buses on the robot.
    */
   std::array<CanBus_ptr, 2> can_buses_;
+
   /**
    * @brief can_motor_boards_ are the 2 can motor board.
    */
   std::array<CanBusMotorBoard_ptr, 2> can_motor_boards_;
+
   /**
    * @brief motors_ are the objects allowing us to send motor commands and
    * receive data
    */
-  std::array<SafeMotor_ptr, 2> motors_;
+  std::array<Motor_ptr, 2> motors_;
+
+  /**
+   * @brief joints_ are the objects allowing us to send commands and receive
+   * data at the joint level. It also ones some self calibration routines.
+   */
+  std::array<BlmcJointModule_ptr, 2> joints_;
 
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
    */
   std::array<Slider_ptr, 2> sliders_;
 
-    /**
+  /**
    * @brief contact_sensors_ is the contact sensors at each foot tips. They also
    * are analogue inputs.
    */

@@ -19,23 +19,27 @@ BlmcJointModule::BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> m
                     const double& motor_constant,
                     const double& gear_ratio,
                     const double& zero_angle,
-                    const bool& reverse_polarity)
+                    const bool& reverse_polarity,
+                    const double& max_current)
 {
     motor_ = motor;
     motor_constant_ = motor_constant;
     gear_ratio_ = gear_ratio;
     set_zero_angle(zero_angle);
     polarity_ = reverse_polarity ? -1.0:1.0;
+    max_current_ = max_current;
 }
 
 void BlmcJointModule::set_torque(const double& desired_torque)
 {
     double desired_current = joint_torque_to_motor_current(desired_torque);
 
-    if(std::fabs(desired_current) > 2.1)
+    if(std::fabs(desired_current) > max_current_)
     {
         std::cout << "something went wrong, it should never happen"
-                      "that desired_current > 2.1. desired_current: "
+                      "that desired_current > "
+                  << max_current_
+                  << ". desired_current: "
                   << desired_current
                   << std::endl;
         exit(-1);

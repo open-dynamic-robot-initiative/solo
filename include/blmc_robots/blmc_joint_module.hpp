@@ -39,12 +39,15 @@ public:
      * @param gear_ratio is the gear ratio between the motor and the joint.
      * @param zero_angle is the angle between the closest positive motor index
      * and the zero configuration.
+     * @param reverse_polarity 
+     * @param max_current 
      */
     BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> motor,
                     const double& motor_constant,
                     const double& gear_ratio,
                     const double& zero_angle,
-                    const bool& reverse_polarity=false);
+                    const bool& reverse_polarity=false,
+                    const double& max_current=2.1);
 
     /**
      * @brief Set the joint torque to be sent.
@@ -190,9 +193,17 @@ private:
      * @brief This change the motor rotation direction.
      */
     double polarity_;
+    /**
+     * @brief This is the maximum current we can apply during one experiment.
+     * The program shut down if this value is achieved.
+     */
+    double max_current_;
 };
 
-
+/**
+ * @brief BlmcJointModule_ptr shortcut for the shared pointer BlmcJointModule type
+ */
+typedef std::shared_ptr<BlmcJointModule> BlmcJointModule_ptr;
 
 /**
  * @brief This class defines an interface to a collection of BLMC joints. It
