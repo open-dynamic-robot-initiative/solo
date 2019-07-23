@@ -49,6 +49,11 @@ Teststand::Teststand()
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
+
+  // calibration data
+  zero_to_index_angle_.fill(0.0);
+  index_angle_.fill(0.0);
+  mechanical_calibration_ = false;
 }
 
 
@@ -175,5 +180,24 @@ bool Teststand::send_target_joint_torque(
   }
   return true;
 }
+
+bool Teststand::calibrate(std::array<double, 2>& zero_to_index_angle,
+                          std::array<double, 2>& index_angle,
+                          bool mechanical_calibration)
+{
+  zero_to_index_angle_ = zero_to_index_angle;
+  mechanical_calibration_ = mechanical_calibration;
+
+  calibration_threads_[0].create_realtime_thread(Teststand::calibrate_hfe, this);
+  calibration_threads_[1].create_realtime_thread(Teststand::calibrate_kfe, this);
+
+  calibration_threads_[0].join();
+  calibration_threads_[1].join();
+
+  index_angle = index_angle_;
+  return true; 
+}
+
+
 
 } // namespace blmc_robots

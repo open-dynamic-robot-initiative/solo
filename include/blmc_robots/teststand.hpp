@@ -38,8 +38,8 @@ public:
   Teststand();
 
   /**
-   * @brief initialize the robot by setting aligning the motors and calibrate the
-   * sensors to 0
+   * @brief initialize the robot by setting aligning the motors and calibrate
+   * the sensors to 0
    */
   void initialize();
 
@@ -54,6 +54,17 @@ public:
    * this method has to be called prior to any getter to have up to date data.
    */
   bool acquire_sensors();
+
+  /**
+   * @brief This function will run a small controller that will move the joints
+   * untils the next joint index and reset the joint zero with this knowledge.
+   * 
+   * @return true if success
+   * @return false if failure
+   */
+  bool calibrate(std::array<double, 2>& zero_to_index_angle,
+                 std::array<double, 2>& index_angle,
+                 bool mechanical_calibration = false);
 
   /**
    * @brief get_motor_inertias
@@ -219,6 +230,23 @@ public:
   }
 
 private:
+  bool calibrate_one_joint(int joint_index)
+  {
+    return joints_[joint_index]->calibrate(zero_to_index_angle_[joint_index],
+                                           index_angle_[joint_index],
+                                           mechanical_calibration_);
+  }
+
+  static void* calibrate_hfe(void *context)
+  {
+    static_cast<Teststand *>(context)->calibrate_one_joint(0);
+  }
+
+  static void* calibrate_kfe(void *context)
+  {
+    static_cast<Teststand *>(context)->calibrate_one_joint(1);
+  }
+
   /**
    * @brief ATI sensor.
    */
@@ -376,6 +404,25 @@ private:
    * are analogue inputs.
    */
   std::array<HeightSensor_ptr, 1> height_sensors_;
+
+  /**
+   * @brief Threads to calibrate all joints at the same time.
+   */
+  std::array<real_time_tools::RealTimeThread, 2> calibration_threads_;
+
+  /**
+   * @brief This is the distance between the next joint index and the
+   * theoretical zero.
+   */
+  std::array<double, 2> zero_to_index_angle_;
+  /**
+   * @brief 
+   */
+  std::array<double, 2> index_angle_;
+  /**
+   * @brief 
+   */
+  bool mechanical_calibration_;
 };
 
 } // namespace blmc_robots
