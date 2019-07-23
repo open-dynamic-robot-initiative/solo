@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   
   robot.can_bus_motor_board->wait_until_ready();
 
-    char str[256];
+  char str[256];
 
   rt_printf("Press enter to launch the calibration \n");
   std::cin.get (str,256);    // get c-string

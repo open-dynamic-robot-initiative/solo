@@ -130,6 +130,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     }
     ++count;
   }//endwhile
+  // send zero torques after the control loop.
+  desired_torque.fill(0.0);
+  robot.send_target_joint_torque(desired_torque);
   StopDemos = true;
 }// end control_loop
 
