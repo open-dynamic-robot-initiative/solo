@@ -7,15 +7,29 @@
 
 namespace blmc_robots{
 
+/**
+ * @brief The class Teststand is used to control the Teststand robot located
+ * at MPI-IS Tuebingen. The robot is composed of a single leg on a vertical
+ * rail.
+ */
 class Teststand
 {
 public:
-
-  typedef Eigen::Matrix<double, 1, 1> Vector1d;
+  /**
+   * @brief Data type containing the Sliders data
+   */
   typedef Eigen::Matrix<double, 2, 1> VectorSlider;
+  /**
+   * @brief This represents the contact sensor
+   */
   typedef Eigen::Matrix<double, 1, 1> VectorContact;
-
+  /**
+   * @brief This type define the forces from the ati-FT sensors
+   */
   typedef Eigen::Matrix<double, 3, 1> VectorAtiForce;
+  /**
+   * @brief This type define the torqes from the ati-FT sensors
+   */
   typedef Eigen::Matrix<double, 3, 1> VectorAtiTorque;
 
   /**
@@ -61,9 +75,8 @@ public:
 
   /**
    * @brief get_joint_positions
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    *    
    * @return  the joint angle of each module
    */
@@ -74,9 +87,8 @@ public:
 
   /**
    * @brief get_joint_velocities
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return the joint velocities
    */
@@ -87,9 +99,8 @@ public:
 
   /**
    * @brief get_joint_torques
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return the joint torques
    */
@@ -118,9 +129,8 @@ public:
 
   /**
    * @brief get_joint_encoder_index
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return The last observed encoder index in joint coordinates.
    */
@@ -140,9 +150,8 @@ public:
 
   /**
    * @brief get_slider_positions
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return the current sliders positions.
    */
@@ -153,9 +162,8 @@ public:
 
   /**
    * @brief get_contact_sensors_states
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return the state of the contacts states
    */
@@ -166,9 +174,8 @@ public:
 
   /**
    * @brief get_contact_sensors_states
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return the state of the contacts states
    */
@@ -189,9 +196,8 @@ public:
 
   /**
    * @brief Get the ati_force_ object
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return const Eigen::Ref<VectorAtiForce> 
    */
@@ -202,9 +208,8 @@ public:
 
   /**
    * @brief Get the ati_torque_ object
-   * WARNING !!!!
-   * The method <acquire_sensors>"()" has to be called
-   * prior to any getter to have up to date data.
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
    * 
    * @return const Eigen::Ref<VectorAtiTorque> 
    */

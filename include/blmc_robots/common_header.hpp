@@ -18,6 +18,11 @@
 namespace blmc_robots
 {
 /**
+ * @brief Vector2d shortcut for the eigen vector of size 1.
+ */
+typedef Eigen::Matrix<double, 1, 1> Vector1d;
+
+/**
  * @brief Vector2d shortcut for the eigen vector of size 2.
  */
 typedef Eigen::Matrix<double, 2, 1> Vector2d;

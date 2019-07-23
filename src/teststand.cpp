@@ -158,7 +158,7 @@ bool Teststand::acquire_sensors()
     ati_torque_(2) *= -1;
   }catch(std::exception ex)
   {
-    rt_printf("HARDWARE: Something went wrong during the sensor.\n");
+    rt_printf("HARDWARE: Something went wrong during the sensor reading.\n");
     rt_printf("error is: %s\n", ex.what());
     return false;
   }
