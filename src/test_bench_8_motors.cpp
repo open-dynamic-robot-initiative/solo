@@ -29,9 +29,6 @@ TestBench8Motors::TestBench8Motors()
 
 void TestBench8Motors::initialize()
 {
-  // not needed for system other than xenomai
-  osi::initialize_realtime_printing();
-
   // initialize the communication with the can cards
   can_bus0_ = std::make_shared<blmc_drivers::CanBus>("can0");
   can_bus1_ = std::make_shared<blmc_drivers::CanBus>("can1");
