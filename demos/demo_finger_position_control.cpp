@@ -43,9 +43,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     size_t count = 0;
     while(true)
     {
+        Finger::Observation observation = finger->get_latest_observation();
         Eigen::Vector3d desired_torque =
-                kp * (sliders->get_positions()-finger->get_measured_angles()) -
-                kd * finger->get_measured_velocities();
+                kp * (sliders->get_positions()- observation.angle) -
+                kd * observation.velocity;
 
         finger->constrain_and_apply_torques(desired_torque);
         spinner.spin();
