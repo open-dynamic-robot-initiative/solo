@@ -203,7 +203,7 @@ public:
 
 
     static MotorBoards
-    create_motor_boards(const std::string& can_0, const std::string& can_1)
+    create_motor_boards(const std::string &can_0, const std::string &can_1)
     {
         // setup can buses -----------------------------------------------------
         std::array<std::shared_ptr<blmc_drivers::CanBus>, 2> can_buses;
@@ -212,13 +212,17 @@ public:
 
         // set up motor boards -------------------------------------------------
         MotorBoards motor_boards;
-        motor_boards[0] =
-                std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses[0]);
-        motor_boards[1] =
-                std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses[1]);
-
-        motor_boards[0]->wait_until_ready();
-        motor_boards[1]->wait_until_ready();
+        for (size_t i = 0; i < 2; i++)
+        {
+            motor_boards[i] =
+                std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses[i],
+                                                                 1000,
+                                                                 10); /// \TODO: reduce the timeout further!!
+        }
+        for (size_t i = 0; i < 2; i++)
+        {
+            motor_boards[i]->wait_until_ready();
+        }
 
         return motor_boards;
     }
