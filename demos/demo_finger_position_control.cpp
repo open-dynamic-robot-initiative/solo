@@ -49,7 +49,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
                 kd * observation.velocity;
 
         finger->constrain_and_apply_torques(desired_torque);
-        spinner.spin();
+        // usleep(1000);
+        real_time_tools::Timer::sleep_ms(1);
+
+        // spinner.spin();
 
         // print ---------------------------------------------------------------
         if ((count % 1000) == 0)
@@ -69,7 +72,7 @@ int main(int argc, char **argv)
     auto motor_boards = RealFinger::create_motor_boards("can0", "can1");
 
     // set up finger -----------------------------------------------------------
-    auto finger = std::make_shared<RealFinger>(RealFinger(motor_boards));
+    auto finger = std::make_shared<RealFinger>(motor_boards);
 
     // set up sliders ----------------------------------------------------------
     auto sliders =
