@@ -66,6 +66,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   }
 
   StopDemos = true;
+
+  return THREAD_FUNCTION_RETURN_VALUE;
 }// end control_loop
 
 int main(int argc, char **argv)

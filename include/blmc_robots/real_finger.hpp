@@ -73,6 +73,10 @@ public:
 
         /// \todo: is this the right place to calibrate?
 
+        pause_motors();
+        return;
+
+
         calibrate();
         pause_motors();
 

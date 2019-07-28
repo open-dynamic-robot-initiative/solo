@@ -240,11 +240,13 @@ private:
   static void* calibrate_hfe(void *context)
   {
     static_cast<Teststand *>(context)->calibrate_one_joint(0);
+    return nullptr;
   }
 
   static void* calibrate_kfe(void *context)
   {
     static_cast<Teststand *>(context)->calibrate_one_joint(1);
+    return nullptr;
   }
 
   /**

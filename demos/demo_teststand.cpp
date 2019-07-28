@@ -134,6 +134,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
   desired_torque.fill(0.0);
   robot.send_target_joint_torque(desired_torque);
   StopDemos = true;
+
+  return THREAD_FUNCTION_RETURN_VALUE;
 }// end control_loop
 
 int main(int argc, char **argv)
