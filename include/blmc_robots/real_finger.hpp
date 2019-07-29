@@ -68,11 +68,11 @@ public:
 
         /// \todo: is this the right place to calibrate?
 
-        pause_motors();
-        return;
+        // pause_motors();
+        // return;
 
         calibrate();
-        pause_motors();
+        pause();
 
         if (max_angles_[base] < 170 / 180.0 * M_PI ||
             max_angles_[center] < 330 / 180.0 * M_PI ||
@@ -178,12 +178,6 @@ public:
         // \todo reset finger joints to intial properties
     }
 
-    /// \todo: this should go away. we could handle these issues in the motor_board.
-    void pause_motors()
-    {
-        motor_boards_[0]->pause_motors();
-        motor_boards_[1]->pause_motors();
-    }
 
     void wait_for_execution() const
     {
@@ -266,22 +260,19 @@ protected:
         /// torque limitation in the motor this would be very unsafe
         Vector angle_offsets;
         {
-            real_time_tools::Spinner spinner;
-            spinner.set_period(0.001);
             std::vector<Vector> running_velocities(1000);
             int running_index = 0;
             Vector sum = Vector::Zero();
             while (running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
             {
                 Vector torques = -1 * get_max_torques();
-                constrain_and_apply_torques(torques);
-                Vector velocities = get_measured_velocities();
+                TimeIndex t = append_desired_action(torques);
+                Vector velocities = get_observation(t).velocity;
                 if (running_index >= 1000)
                     sum = sum - running_velocities[running_index % 1000];
                 running_velocities[running_index % 1000] = velocities;
                 sum = sum + velocities;
                 running_index++;
-                spinner.spin();
             }
             int count = 0;
             int linearly_decrease_time_steps = 1000;
@@ -300,16 +291,17 @@ protected:
                                count + 0.0) /
                               linearly_decrease_time_steps) *
                              torques[2];
-                constrain_and_apply_torques(torques);
+
+                TimeIndex t = append_desired_action(torques);
+                wait_until_time_index(t);
                 count++;
-                spinner.spin();
             }
             count = 0;
             while (count < zero_torque_time_steps)
             {
-                constrain_and_apply_torques(torques);
+                TimeIndex t = append_desired_action(torques);
+                wait_until_time_index(t);
                 count++;
-                spinner.spin();
             }
             /// ---------------------------------------------------------------------
 
@@ -321,19 +313,19 @@ protected:
                                   linearly_decrease_time_steps) *
                                  get_max_torques() * -1;
                 torques[2] = 0;
-                constrain_and_apply_torques(torques);
+                TimeIndex t = append_desired_action(torques);
+                wait_until_time_index(t);
                 count++;
-                spinner.spin();
             }
             count = 0;
             while (count < zero_torque_time_steps)
             {
                 Vector torques = Vector::Zero();
-                constrain_and_apply_torques(torques);
+                TimeIndex t = append_desired_action(torques);
+                wait_until_time_index(t);
                 count++;
-                spinner.spin();
             }
-            angle_offsets = get_measured_angles();
+            angle_offsets = get_observation(current_time_index()).angle;
             joint_modules_.set_zero_angles(angle_offsets);
         }
 
@@ -344,22 +336,21 @@ protected:
 
             double kp = 0.4;
             double kd = 0.0025;
-            real_time_tools::Spinner spinner;
-            spinner.set_period(0.001);
             int count = 0;
             Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
                                       std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
             while (true)
             {
-                Eigen::Vector3d diff = starting_position - get_measured_angles();
+                Eigen::Vector3d diff = starting_position - get_observation(current_time_index()).angle;
 
                 // we implement here a small pd control at the current level
                 Eigen::Vector3d desired_torque = kp * diff -
                                                  kd * get_measured_velocities();
 
                 // Send the current to the motor
-                constrain_and_apply_torques(desired_torque);
-                spinner.spin();
+                TimeIndex t = append_desired_action(desired_torque);
+                wait_until_time_index(t);
+
                 if (count % 100 == 0)
                 {
                     Eigen::Vector3d diff_difference = last_diff - diff;
@@ -369,26 +360,23 @@ protected:
                 }
                 count++;
             }
-            pause_motors();
+            pause();
         }
 
         {
-            real_time_tools::Spinner spinner;
-            spinner.set_period(0.001);
             std::vector<Vector> running_velocities(1000);
             int running_index = 0;
             Vector sum = Vector::Zero();
             while (running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
             {
                 Vector torques = get_max_torques();
-                constrain_and_apply_torques(torques);
-                Vector velocities = get_measured_velocities();
+                TimeIndex t = append_desired_action(torques);
+                Vector velocities = get_observation(t).velocity;
                 if (running_index >= 1000)
                     sum = sum - running_velocities[running_index % 1000];
                 running_velocities[running_index % 1000] = velocities;
                 sum = sum + velocities;
                 running_index++;
-                spinner.spin();
             }
             int count = 0;
             int linearly_decrease_time_steps = 1000;
@@ -399,19 +387,19 @@ protected:
                                    count + 0.0) /
                                   linearly_decrease_time_steps) *
                                  get_max_torques();
-                constrain_and_apply_torques(torques);
+                TimeIndex t = append_desired_action(torques);
+                wait_until_time_index(t);
                 count++;
-                spinner.spin();
             }
             count = 0;
             while (count < zero_torque_time_steps)
             {
                 Vector torques = Vector::Zero();
-                constrain_and_apply_torques(torques);
+                TimeIndex t = append_desired_action(torques);
+                wait_until_time_index(t);
                 count++;
-                spinner.spin();
             }
-            max_angles_ = get_measured_angles();
+            max_angles_ = get_observation(current_time_index()).angle;
         }
 
         {
@@ -421,22 +409,20 @@ protected:
 
             double kp = 0.4;
             double kd = 0.0025;
-            real_time_tools::Spinner spinner;
-            spinner.set_period(0.001);
             int count = 0;
             Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
                                       std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
             while (true)
             {
-                Eigen::Vector3d diff = starting_position - get_measured_angles();
+                Eigen::Vector3d diff = starting_position - get_observation(current_time_index()).angle;
 
                 // we implement here a small pd control at the current level
                 Eigen::Vector3d desired_torque = kp * diff -
                                                  kd * get_measured_velocities();
 
                 // Send the current to the motor
-                constrain_and_apply_torques(desired_torque);
-                spinner.spin();
+                TimeIndex t = append_desired_action(desired_torque);
+                wait_until_time_index(t);
                 if (count % 100 == 0)
                 {
                     Eigen::Vector3d diff_difference = last_diff - diff;
@@ -446,7 +432,7 @@ protected:
                 }
                 count++;
             }
-            pause_motors();
+            pause();
         }
     }
 
