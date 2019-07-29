@@ -16,20 +16,19 @@
 #include "blmc_robots/slider.hpp"
 #include "real_time_tools/thread.hpp"
 
-
 using namespace blmc_robots;
 using namespace robot_interfaces;
 
 typedef std::tuple<std::shared_ptr<Finger>,
-std::shared_ptr<Sliders<3>>> FingerAndSliders;
-
+                   std::shared_ptr<Sliders<3>>>
+    FingerAndSliders;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(
-        void* finger_and_sliders_void_ptr)
+    void *finger_and_sliders_void_ptr)
 {
     // cast input arguments to the right format --------------------------------
-    FingerAndSliders& finger_and_sliders =
-            *(static_cast<FingerAndSliders*>(finger_and_sliders_void_ptr));
+    FingerAndSliders &finger_and_sliders =
+        *(static_cast<FingerAndSliders *>(finger_and_sliders_void_ptr));
 
     auto finger = std::get<0>(finger_and_sliders);
     auto sliders = std::get<1>(finger_and_sliders);
@@ -39,22 +38,20 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     double kd = 0.0025;
 
     NewFinger::Action desired_torque = NewFinger::Action::Zero();
-    NewFinger::Data data = finger->step(desired_torque);
-    for(size_t count = 0; true; count++)
+    while (true)
     {
+        NewFinger::TimeIndex t = finger->append_desired_action(desired_torque);
         desired_torque =
-                kp * (sliders->get_positions()- data.observation.angle) -
-                kd * data.observation.velocity;
-
-        data = finger->step(desired_torque);
+            kp * (sliders->get_positions() - finger->get_observation(t).angle) -
+            kd * finger->get_observation(t).velocity;
 
         // print ---------------------------------------------------------------
-        if ((count % 1000) == 0)
+        if ((t % 1000) == 0)
         {
             std::cout << "desired_torque: "
-                      << data.desired_action << std::endl;
+                      << finger->get_desired_action(t) << std::endl;
             std::cout << "angles: "
-                      << data.observation.angle << std::endl;
+                      << finger->get_observation(t).angle << std::endl;
         }
     }
 }
@@ -69,16 +66,16 @@ int main(int argc, char **argv)
 
     // set up sliders ----------------------------------------------------------
     auto sliders =
-            std::make_shared<Sliders<3>>(Sliders<3>(
-                                             motor_boards,
-                                             -0.5 * M_PI * Eigen::Vector3d::Ones(),
-                                             1.5 * M_PI * Eigen::Vector3d::Ones()));
+        std::make_shared<Sliders<3>>(Sliders<3>(
+            motor_boards,
+            -0.5 * M_PI * Eigen::Vector3d::Ones(),
+            1.5 * M_PI * Eigen::Vector3d::Ones()));
 
     // start real-time control loop --------------------------------------------
     real_time_tools::RealTimeThread thread;
     FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
     thread.create_realtime_thread(&control_loop,
-                                            &finger_and_sliders);
+                                  &finger_and_sliders);
     rt_printf("control loop started \n");
     thread.join();
     return 0;
