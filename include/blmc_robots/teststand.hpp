@@ -418,11 +418,12 @@ private:
    */
   std::array<double, 2> zero_to_index_angle_;
   /**
-   * @brief 
+   * @brief is the position of the next joint index using the raw encoder
    */
   std::array<double, 2> index_angle_;
   /**
-   * @brief 
+   * @brief is the last decision taken to calibrate the join form the last known
+   * position or using the parameters.
    */
   bool mechanical_calibration_;
 };
