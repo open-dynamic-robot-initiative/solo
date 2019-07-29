@@ -16,13 +16,12 @@
 #include "blmc_robots/slider.hpp"
 #include "real_time_tools/thread.hpp"
 
-
 using namespace blmc_robots;
 using namespace robot_interfaces;
 
 typedef std::tuple<std::shared_ptr<Finger>,
-std::shared_ptr<Sliders<3>>> FingerAndSliders;
-
+                   std::shared_ptr<Sliders<3>>>
+    FingerAndSliders;
 
 struct Hardware
 {
@@ -31,37 +30,21 @@ struct Hardware
     std::shared_ptr<Sliders<3>> sliders;
 };
 
-
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* hardware_ptr)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
 {
     // cast input arguments to the right format --------------------------------
-    Hardware& hardware = *(static_cast<Hardware*>(hardware_ptr));
+    Hardware &hardware = *(static_cast<Hardware *>(hardware_ptr));
 
     // position controller -----------------------------------------------------
-    real_time_tools::Spinner spinner;
-    spinner.set_period(0.001);
-    size_t count = 0;
-    while(true)
+    while (true)
     {
-        Eigen::Vector3d desired_torques = hardware.sliders->get_positions();
-        hardware.finger->constrain_and_apply_torques(desired_torques);
-        spinner.spin();
+        NewFinger::TimeIndex t = hardware.finger->append_desired_action(
+            hardware.sliders->get_positions());
 
-//        // print ---------------------------------------------------------------
-//        if ((count % 1000) == 0)
-//        {
-//            std::cout << "desired_torque: "
-//                      << desired_torques.transpose() << std::endl;
-//            std::cout << "angles: "
-//                      << finger->get_measured_angles().transpose() << std::endl;
-//            std::cout << "velocities: "
-//                      << finger->get_measured_velocities().transpose() << std::endl;
-//        }
-//        ++count;
+        hardware.finger->get_observation(t);
     }
     return THREAD_FUNCTION_RETURN_VALUE;
 }
-
 
 int main(int argc, char **argv)
 {
@@ -75,9 +58,9 @@ int main(int argc, char **argv)
 
     // set up sliders ----------------------------------------------------------
     hardware.sliders =
-            std::make_shared<Sliders<3>>(hardware.motor_boards,
-                                         -hardware.finger->get_max_torques(),
-                                         hardware.finger->get_max_torques());
+        std::make_shared<Sliders<3>>(hardware.motor_boards,
+                                     -hardware.finger->get_max_torques(),
+                                     hardware.finger->get_max_torques());
 
     // start real-time control loop --------------------------------------------
     real_time_tools::RealTimeThread thread;
