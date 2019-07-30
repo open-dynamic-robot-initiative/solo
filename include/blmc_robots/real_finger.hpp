@@ -48,6 +48,7 @@ public:
     {
         motor_boards_ = motor_boards;
         pause();
+        
 
         max_torque_ = 2.0 * 0.02 * 9.0;
         double delta_time = 0.01;
@@ -272,17 +273,17 @@ protected:
         /// torque limitation in the motor this would be very unsafe
         Vector angle_offsets;
         {
-            std::vector<Vector> running_velocities(1000);
+            std::vector<Vector> running_velocities(100);
             int running_index = 0;
             Vector sum = Vector::Zero();
-            while (running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
+            while (running_index < 1000 || (sum.maxCoeff() / 100.0 > 0.001))
             {
                 Vector torques = -1 * get_max_torques();
                 TimeIndex t = append_desired_action(torques);
                 Vector velocities = get_observation(t).velocity;
                 if (running_index >= 1000)
                     sum = sum - running_velocities[running_index % 1000];
-                running_velocities[running_index % 1000] = velocities;
+                running_velocities[running_index % 100] = velocities;
                 sum = sum + velocities;
                 running_index++;
             }
@@ -315,103 +316,9 @@ protected:
                 wait_until_time_index(t);
                 count++;
             }
-            /// ---------------------------------------------------------------------
 
-            count = 0;
-            while (count < linearly_decrease_time_steps)
-            {
-                Vector torques = ((linearly_decrease_time_steps -
-                                   count + 0.0) /
-                                  linearly_decrease_time_steps) *
-                                 get_max_torques() * -1;
-                torques[2] = 0;
-                TimeIndex t = append_desired_action(torques);
-                wait_until_time_index(t);
-                count++;
-            }
-            count = 0;
-            while (count < zero_torque_time_steps)
-            {
-                Vector torques = Vector::Zero();
-                TimeIndex t = append_desired_action(torques);
-                wait_until_time_index(t);
-                count++;
-            }
             angle_offsets = get_observation(current_time_index()).angle;
             joint_modules_.set_zero_angles(angle_offsets);
-        }
-
-        {
-
-            Eigen::Vector3d starting_position;
-            starting_position << 1.5, 1.5, 0.2;
-
-            double kp = 0.4;
-            double kd = 0.0025;
-            int count = 0;
-            Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
-                                      std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-            while (true)
-            {
-                Eigen::Vector3d diff = starting_position - get_observation(current_time_index()).angle;
-
-                // we implement here a small pd control at the current level
-                Eigen::Vector3d desired_torque = kp * diff -
-                                                 kd * get_measured_velocities();
-
-                // Send the current to the motor
-                TimeIndex t = append_desired_action(desired_torque);
-                wait_until_time_index(t);
-
-                if (count % 100 == 0)
-                {
-                    Eigen::Vector3d diff_difference = last_diff - diff;
-                    if (std::abs(diff_difference.norm()) < 1e-5)
-                        break;
-                    last_diff = diff;
-                }
-                count++;
-            }
-            pause();
-        }
-
-        {
-            std::vector<Vector> running_velocities(1000);
-            int running_index = 0;
-            Vector sum = Vector::Zero();
-            while (running_index < 3000 || (sum.maxCoeff() / 1000.0 > 0.001))
-            {
-                Vector torques = get_max_torques();
-                TimeIndex t = append_desired_action(torques);
-                Vector velocities = get_observation(t).velocity;
-                if (running_index >= 1000)
-                    sum = sum - running_velocities[running_index % 1000];
-                running_velocities[running_index % 1000] = velocities;
-                sum = sum + velocities;
-                running_index++;
-            }
-            int count = 0;
-            int linearly_decrease_time_steps = 1000;
-            int zero_torque_time_steps = 500;
-            while (count < linearly_decrease_time_steps)
-            {
-                Vector torques = ((linearly_decrease_time_steps -
-                                   count + 0.0) /
-                                  linearly_decrease_time_steps) *
-                                 get_max_torques();
-                TimeIndex t = append_desired_action(torques);
-                wait_until_time_index(t);
-                count++;
-            }
-            count = 0;
-            while (count < zero_torque_time_steps)
-            {
-                Vector torques = Vector::Zero();
-                TimeIndex t = append_desired_action(torques);
-                wait_until_time_index(t);
-                count++;
-            }
-            max_angles_ = get_observation(current_time_index()).angle;
         }
 
         {
