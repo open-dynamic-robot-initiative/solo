@@ -32,9 +32,22 @@ public:
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
         MotorBoards;
 
+    static std::shared_ptr<RealFinger> create(const std::string &can_0,
+                                             const std::string &can_1)
+    {
+        auto finger = std::make_shared<RealFinger>(can_0, can_1);
+        std::cout << "done creating finger " << std::endl;
+        return finger;
+    }
+
+    RealFinger(const std::string &can_0, const std::string &can_1) : RealFinger(create_motor_boards(can_0, can_1))
+    {
+    }
+
     RealFinger(const MotorBoards &motor_boards) : RealFinger(create_motors(motor_boards))
     {
         motor_boards_ = motor_boards;
+        pause();
 
         max_torque_ = 2.0 * 0.02 * 9.0;
         double delta_time = 0.01;
@@ -68,8 +81,8 @@ public:
 
         /// \todo: is this the right place to calibrate?
 
-        // pause_motors();
-        // return;
+        // pause();
+
 
         calibrate();
         pause();
@@ -177,7 +190,6 @@ public:
         exit(-1);
         // \todo reset finger joints to intial properties
     }
-
 
     void wait_for_execution() const
     {
@@ -440,5 +452,6 @@ private:
     BlmcJointModules<3> joint_modules_;
     MotorBoards motor_boards_;
 };
+
 
 } // namespace blmc_robots

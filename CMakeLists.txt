@@ -79,6 +79,19 @@ set_target_properties(blmc_single_leg PROPERTIES
          LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
 install(TARGETS blmc_single_leg DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
 
+
+
+set(py_real_finger_SRC_FILES 
+  srcpy/py_real_finger.cpp
+)
+
+pybind11_add_module(py_real_finger ${py_real_finger_SRC_FILES})
+target_link_libraries(py_real_finger ${catkin_LIBRARIES} ${PROJECT_NAME})
+
+set_target_properties(py_real_finger PROPERTIES
+         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+install(TARGETS py_real_finger DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
+
 ##########################
 # building documentation #
 ##########################
