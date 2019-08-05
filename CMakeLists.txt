@@ -86,7 +86,7 @@ set(py_real_finger_SRC_FILES
 )
 
 pybind11_add_module(py_real_finger ${py_real_finger_SRC_FILES})
-target_link_libraries(py_real_finger ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(py_real_finger PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 set_target_properties(py_real_finger PROPERTIES
          LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_PYTHON_DESTINATION})

@@ -3,10 +3,12 @@ import numpy as np
 
 import threading
 import ipdb
-from py_real_finger import RealFinger
+import py_real_finger
 
 
-finger = RealFinger.create('can0', 'can1')
+finger = py_real_finger.create('can0', 'can1')
+
+ipdb.set_trace()
 finger.current_time_index()
 
 desired_position = np.ones(3)

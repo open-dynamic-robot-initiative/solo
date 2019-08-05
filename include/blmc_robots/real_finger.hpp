@@ -16,8 +16,11 @@
 #include <math.h>
 #include <tuple>
 
+
+
 #include <blmc_robots/blmc_joint_module.hpp>
 #include "real_time_tools/spinner.hpp"
+#include "real_time_tools/timer.hpp"
 
 #include <robot_interfaces/finger.hpp>
 
@@ -33,11 +36,10 @@ public:
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
         MotorBoards;
 
-    static std::shared_ptr<RealFinger> create(const std::string &can_0,
+    static std::shared_ptr<Finger> create(const std::string &can_0,
                                              const std::string &can_1)
     {
         auto finger = std::make_shared<RealFinger>(can_0, can_1);
-        std::cout << "done creating finger " << std::endl;
         return finger;
     }
 
@@ -299,7 +301,7 @@ protected:
             int count = 0;
             Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
                                       std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-            while (true)
+            while (count < 2000)
             {
                 Eigen::Vector3d diff = starting_position - get_observation(current_time_index()).angle;
 
