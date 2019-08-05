@@ -6,8 +6,8 @@ Common interface to robots based on Brushless Motor Control (BLMC)
 
 ## Authors
 
-Manuel Wuethrich
-Maximilien Naveau
+- Manuel Wuethrich
+- Maximilien Naveau
 
 ## Copyrights
 
