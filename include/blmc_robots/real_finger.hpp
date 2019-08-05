@@ -16,8 +16,6 @@
 #include <math.h>
 #include <tuple>
 
-
-
 #include <blmc_robots/blmc_joint_module.hpp>
 #include "real_time_tools/spinner.hpp"
 #include "real_time_tools/timer.hpp"
@@ -37,7 +35,7 @@ public:
         MotorBoards;
 
     static std::shared_ptr<Finger> create(const std::string &can_0,
-                                             const std::string &can_1)
+                                          const std::string &can_1)
     {
         auto finger = std::make_shared<RealFinger>(can_0, can_1);
         return finger;
@@ -51,7 +49,6 @@ public:
     {
         motor_boards_ = motor_boards;
         pause();
-        
 
         max_torque_ = 2.0 * 0.02 * 9.0;
         double delta_time = 0.01;
@@ -87,10 +84,8 @@ public:
 
         // pause();
 
-
         calibrate();
         pause();
-
     }
 
 private:
@@ -207,6 +202,14 @@ protected:
         /// come outside
         joint_modules_.set_torques(desired_torques);
         joint_modules_.send_torques();
+    }
+
+    virtual void apply_action(const Action &action)
+    {
+        double start_time_sec = real_time_tools::Timer::get_current_time_sec();
+        joint_modules_.set_torques(action);
+        joint_modules_.send_torques();
+        real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
     }
 
     static Motors
@@ -329,6 +332,5 @@ private:
     BlmcJointModules<3> joint_modules_;
     MotorBoards motor_boards_;
 };
-
 
 } // namespace blmc_robots
