@@ -1,3 +1,11 @@
+/**
+ * \file quadruped.hpp
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+
+ */
+
 #ifndef QUADRUPED_H
 #define QUADRUPED_H
 

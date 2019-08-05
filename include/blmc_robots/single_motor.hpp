@@ -1,3 +1,12 @@
+/**
+ * \file single_motor.hpp
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+
+ */
+
+
 #ifndef SingleMotor_H
 #define SingleMotor_H
 

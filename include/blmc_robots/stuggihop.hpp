@@ -1,3 +1,12 @@
+/**
+ * \file stuggihop.hpp
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+
+ */
+
+
 #ifndef STUGGIHOP_H
 #define STUGGIHOP_H
 

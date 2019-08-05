@@ -1,3 +1,13 @@
+/**
+ * \file single_leg.hpp
+ * \brief The hardware wrapper of the RealFinger
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+
+ */
+
+
 #ifndef SingleLeg_H
 #define SingleLeg_H
 

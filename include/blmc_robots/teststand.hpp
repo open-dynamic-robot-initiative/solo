@@ -1,3 +1,11 @@
+/**
+ * \file teststand.hpp
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University and Max Planck Gesellshaft.
+
+ */
+
 #ifndef TESTSTAND_H
 #define TESTSTAND_H
 
