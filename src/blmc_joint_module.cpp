@@ -37,7 +37,7 @@ void BlmcJointModule::set_torque(const double& desired_torque)
     if(std::fabs(desired_current) > max_current_)
     {
         std::cout << "something went wrong, it should never happen"
-                      "that desired_current > "
+                     " that desired_current > "
                   << max_current_
                   << ". desired_current: "
                   << desired_current

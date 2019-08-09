@@ -338,6 +338,7 @@ public:
         }
         return positions;
     }
+
     /**
      * @brief Get the measured joint velocities.
      * 

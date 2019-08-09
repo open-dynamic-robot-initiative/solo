@@ -73,6 +73,10 @@ public:
     return motor_boards;
   }
 
+  Vector get_measured_index_angles() const {
+    return joint_modules_.get_measured_index_angles();
+  }
+
 protected:
   RealFinger(const Motors &motors)
       : joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
@@ -85,7 +89,6 @@ protected:
     observation.torque = joint_modules_.get_measured_torques();
     return observation;
   }
-
 
 
 protected:
@@ -115,105 +118,171 @@ protected:
     return motors;
   }
 
-  /// \todo: calibrate needs to be cleaned and should probably not be here
-  /// there are two identical copies in disentanglement_platform and finger,
-  /// which is disgusting.
+    /// \todo: calibrate needs to be cleaned and should probably not be here
+    /// there are two identical copies in disentanglement_platform and finger,
+    /// which is disgusting.
 
-  /**
-   * @brief this is an initial calibration procedure executed before the actual
-   * control loop to have angle readings in an absolute coordinate frame.
-   *
-   * The finger reaches its joint limits by applying a constant negative torque
-   * simultaneously in all the joints. Be aware that this procedure assumes safe
-   * motors where the maximum velocities are constrained.
-   *
-   * The calibration procedure is finished once the joint velocities are zero
-   * according to a moving average estimation of them.
-   */
-  void calibrate() {
-    /// \todo: this relies on the safety check in the motor right now,
-    /// which is maybe not the greatest idea. without the velocity and
-    /// torque limitation in the motor this would be very unsafe
-    Vector angle_offsets;
+    /**
+     * @brief Homing on negative end stop and encoder index.
+     *
+     * Procedure for finding an absolute zero position (or "home" position) when
+     * using relative encoders.
+     *
+     * All joints first move in positive direction until the index of each
+     * encoder is found.  Then all joints move in negative direction until they
+     * hit the end stop.  Home position is set to the positions of encoder
+     * indices closest to the end stop.
+     *
+     * Movement is done by simply applying a constant torque to the joints.  The
+     * amount of torque is a ratio of the configured maximum torque defined by
+     * `torque_ratio`.
+     *
+     * @param torque_ratio Ratio of max. torque that is used to move the joints.
+     */
+    void home_on_index_after_negative_end_stop(double torque_ratio)
     {
-      int averaging_length = 100;
-      std::vector<Vector> running_velocities(averaging_length);
-      int running_index = 0;
-      Vector sum = Vector::Zero();
-      while (running_index < 3000 || (sum.maxCoeff() / 100.0 > 0.001)) {
-        Vector torques = -1 * get_max_torques();
-        TimeIndex t = append_desired_action(torques);
-        Vector velocities = get_observation(t).velocity;
-        if (running_index >= averaging_length)
-          sum = sum - running_velocities[running_index % averaging_length];
-        running_velocities[running_index % averaging_length] = velocities;
-        sum = sum + velocities;
-        running_index++;
-      }
-      int count = 0;
-      int linearly_decrease_time_steps = 1000;
-      int zero_torque_time_steps = 500;
+        /// \todo: this relies on the safety check in the motor right now,
+        /// which is maybe not the greatest idea. Without the velocity and
+        /// torque limitation in the motor this would be very unsafe
 
-      /// \todo: this is yet another hack. we release the tip
-      /// joint before the others such that the tip joint and the center joint
-      /// dont fight each other
-      count = 0;
-      Vector torques;
-      while (count < linearly_decrease_time_steps) {
-        torques = -get_max_torques();
+        //! Max. number of steps when searching for the encoder indices.
+        const uint32_t MAX_STEPS_SEARCH_INDEX = 1000;
+        //! Min. number of steps when moving to the end stop.
+        const uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
+        //! Size of the window when computing average velocity.
+        const uint32_t SIZE_VELOCITY_WINDOW = 100;
+        //! Velocity limit at which the joints are considered to be stopped.
+        const double STOP_VELOCITY = 0.001;
 
-        torques[2] = ((linearly_decrease_time_steps - count + 0.0) /
-                      linearly_decrease_time_steps) *
-                     torques[2];
 
-        TimeIndex t = append_desired_action(torques);
-        wait_until_time_index(t);
-        count++;
-      }
-      count = 0;
-      while (count < zero_torque_time_steps) {
-        TimeIndex t = append_desired_action(torques);
-        wait_until_time_index(t);
-        count++;
-      }
-
-      angle_offsets = get_observation(current_time_index()).angle;
-      joint_modules_.set_zero_angles(angle_offsets);
-    }
-
-    {
-
-      Eigen::Vector3d starting_position;
-      starting_position << 1.5, 1.5, 3.0;
-
-      double kp = 0.4;
-      double kd = 0.0025;
-      int count = 0;
-      Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
-                                std::numeric_limits<double>::max(),
-                                std::numeric_limits<double>::max());
-      while (count < 2000) {
-        Eigen::Vector3d diff =
-            starting_position - get_observation(current_time_index()).angle;
-
-        // we implement here a small pd control at the current level
-        Eigen::Vector3d desired_torque =
-            kp * diff - kd * get_observation(current_time_index()).velocity;
-
-        // Send the current to the motor
-        TimeIndex t = append_desired_action(desired_torque);
-        wait_until_time_index(t);
-        if (count % 100 == 0) {
-          Eigen::Vector3d diff_difference = last_diff - diff;
-          if (std::abs(diff_difference.norm()) < 1e-5)
-            break;
-          last_diff = diff;
+        // First move a bit in positive direction until encoder indices are
+        // found or timeout triggers.
+        int count = 0;
+        while (joint_modules_.get_measured_index_angles().hasNaN()
+                && count < MAX_STEPS_SEARCH_INDEX) {
+            Vector torques = torque_ratio * get_max_torques();
+            TimeIndex t = append_desired_action(torques);
+            wait_until_time_index(t);
+            count++;
         }
-        count++;
-      }
-      pause();
+        // Note: It might be possible that one or more encoder indices are not
+        // found before the timeout triggers (e.g. when joint is already at the
+        // positive end stop).  Still continue, as in this case the index might
+        // be found while moving to the negative end stop in the following step.
+        // If index is still not found for some reason, this is caught by a
+        // check at the end.
+
+
+        // Move until velocity drops to almost zero (= joints hit the end stops)
+        // but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
+        // TODO: add timeout to this loop?
+        std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
+        Vector summed_velocities = Vector::Zero();
+        count = 0;
+        while (count < MIN_STEPS_MOVE_TO_END_STOP
+                || (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW > STOP_VELOCITY))
+        {
+            Vector torques = -1 * torque_ratio * get_max_torques();
+            TimeIndex t = append_desired_action(torques);
+            Vector abs_velocities = get_observation(t).velocity.cwiseAbs();
+
+            uint32_t running_index = count % SIZE_VELOCITY_WINDOW;
+            if (count >= SIZE_VELOCITY_WINDOW) {
+                summed_velocities -= running_velocities[running_index];
+            }
+            running_velocities[running_index] = abs_velocities;
+            summed_velocities += abs_velocities;
+            count++;
+        }
+
+
+        // At this point we assume that all encoder indices were already
+        // encountered, so the last one seen is the one closest to the end stop
+        // --> no need to move to the index, simply set home position to the
+        // position where the index was last seen.
+        Vector encoder_index_angles = joint_modules_.get_measured_index_angles();
+        if (encoder_index_angles.hasNaN()) {
+            // Make sure we do not try to home on the index when the index
+            // was not found.  This should normally not happen, so no specific
+            // error handling is done here.
+            rt_printf("Homing failed, index not found.  Exit.\n");
+            exit(-1);
+        }
+
+        joint_modules_.set_zero_angles(encoder_index_angles);
+
+        rt_printf("Home position: %f, %f, %f\n", encoder_index_angles[0],
+                  encoder_index_angles[1], encoder_index_angles[2]);
     }
-  }
+
+
+    /**
+     * @brief Move to given goal position using PD control.
+     *
+     * @param goal_pos Angular goal position for each joint.
+     * @param kp Gain K_p for the PD controller.
+     * @param kd Gain K_d for the PD controller.
+     */
+    void move_to_position(Vector goal_pos, double kp, double kd)
+    {
+        /// \todo: this relies on the safety check in the motor right now,
+        /// which is maybe not the greatest idea. Without the velocity and
+        /// torque limitation in the motor this would be very unsafe
+
+        bool reached_goal = false;
+        int count = 0;
+        Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
+                                  std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+        while (!reached_goal && count < 2000)
+        {
+            Eigen::Vector3d diff = goal_pos - get_observation(current_time_index()).angle;
+
+            // we implement here a small pd control at the current level
+            Eigen::Vector3d desired_torque = kp * diff -
+                                             kd * joint_modules_.get_measured_velocities();
+
+            // Send the current to the motor
+            TimeIndex t = append_desired_action(desired_torque);
+            wait_until_time_index(t);
+            if (count % 100 == 0)
+            {
+                Eigen::Vector3d diff_difference = last_diff - diff;
+                if (std::abs(diff_difference.norm()) < 1e-5) {
+                    reached_goal = true;
+                }
+                last_diff = diff;
+            }
+            count++;
+        }
+    }
+
+    /**
+     * @brief this is an initial calibration procedure executed before the actual
+     * control loop to have angle readings in an absolute coordinate frame.
+     *
+     * The finger reaches its joint limits by applying a constant negative torque
+     * simultaneously in all the joints. Be aware that this procedure assumes safe
+     * motors where the maximum velocities are constrained.
+     *
+     * The calibration procedure is finished once the joint velocities are zero
+     * according to a moving average estimation of them.
+     */
+    void calibrate()
+    {
+        /// \todo: this relies on the safety check in the motor right now,
+        /// which is maybe not the greatest idea. without the velocity and
+        /// torque limitation in the motor this would be very unsafe
+
+        const double TORQUE_RATIO = 0.6;
+
+        home_on_index_after_negative_end_stop(TORQUE_RATIO);
+
+        Eigen::Vector3d starting_position;
+        starting_position << 1.33, 0.96, 3.0;
+        move_to_position(starting_position, 0.4, 0.0025);
+
+        pause();
+    }
 
 private:
   BlmcJointModules<3> joint_modules_;
