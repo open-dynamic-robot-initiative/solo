@@ -133,13 +133,22 @@ protected:
      * hit the end stop.  Home position is set to the positions of encoder
      * indices closest to the end stop.
      *
+     * By default, the zero position is the same as the home position.  The
+     * optional argument home_offset provides a means to move the zero position
+     * relative to the home position.  The zero position is computed as
+     *
+     *     zero_pos = encoder_index_pos + home_offset
+     *
      * Movement is done by simply applying a constant torque to the joints.  The
      * amount of torque is a ratio of the configured maximum torque defined by
      * `torque_ratio`.
      *
      * @param torque_ratio Ratio of max. torque that is used to move the joints.
+     * @param home_offset Offset between the home position and the desired zero
+     *                    position.
      */
-    void home_on_index_after_negative_end_stop(double torque_ratio)
+    void home_on_index_after_negative_end_stop(
+            double torque_ratio, Vector home_offset=Vector::Zero())
     {
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
@@ -209,7 +218,7 @@ protected:
             exit(-1);
         }
 
-        joint_modules_.set_zero_angles(encoder_index_angles);
+        joint_modules_.set_zero_angles(encoder_index_angles + home_offset);
 
         rt_printf("Home position: %f, %f, %f\n", encoder_index_angles[0],
                   encoder_index_angles[1], encoder_index_angles[2]);
@@ -275,10 +284,17 @@ protected:
 
         const double TORQUE_RATIO = 0.6;
 
-        home_on_index_after_negative_end_stop(TORQUE_RATIO);
+        // Offset between home position and zero.  Defined such that the zero
+        // position is at the negative end stop (for compatibility with old
+        // homing method).
+        Vector home_offset;
+        home_offset << -0.17, -0.54, 0.0;
 
-        Eigen::Vector3d starting_position;
-        starting_position << 1.33, 0.96, 3.0;
+        // Start position to which the robot moves after homing.
+        Vector starting_position;
+        starting_position << 1.5, 1.5, 3.0;
+
+        home_on_index_after_negative_end_stop(TORQUE_RATIO, home_offset);
         move_to_position(starting_position, 0.4, 0.0025);
 
         pause();
