@@ -117,20 +117,20 @@ public:
         return Vector::Zero();
     }
 
-    Vector get_object_pos() const
+    Vector get_object_pos(std::string object_name = "object") const
     {
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
         return Vector::Zero();
     }
 
-    void set_object_pos(const Vector &pos)
+    void set_object_pos(const Vector &pos, std::string object_name = "object")
     {
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
     }
 
-    Quaternion get_object_quat() const
+    Quaternion get_object_quat(std::string object_name = "object") const
     {
         std::cout << "not yet implemented " << std::endl;
         exit(-1);
