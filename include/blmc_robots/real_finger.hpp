@@ -95,6 +95,17 @@ private:
                                                       Vector::Zero()) {}
 
 public:
+
+    virtual Observation get_latest_observation()
+    {
+        Observation observation;
+        observation.angle = get_measured_angles();
+        observation.velocity = get_measured_velocities();
+        observation.torque = get_measured_torques();
+        return observation;
+    }
+
+
     Vector get_measured_torques() const
     {
         return joint_modules_.get_measured_torques();
@@ -246,7 +257,8 @@ protected:
         /// torque limitation in the motor this would be very unsafe
         Vector angle_offsets;
         {
-            std::vector<Vector> running_velocities(100);
+            int averaging_length = 100;
+            std::vector<Vector> running_velocities(averaging_length);
             int running_index = 0;
             Vector sum = Vector::Zero();
             while (running_index < 3000 || (sum.maxCoeff() / 100.0 > 0.001))
@@ -254,9 +266,9 @@ protected:
                 Vector torques = -1 * get_max_torques();
                 TimeIndex t = append_desired_action(torques);
                 Vector velocities = get_observation(t).velocity;
-                if (running_index >= 1000)
-                    sum = sum - running_velocities[running_index % 1000];
-                running_velocities[running_index % 100] = velocities;
+                if (running_index >= averaging_length)
+                    sum = sum - running_velocities[running_index % averaging_length];
+                running_velocities[running_index % averaging_length] = velocities;
                 sum = sum + velocities;
                 running_index++;
             }
