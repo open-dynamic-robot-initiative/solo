@@ -1,6 +1,4 @@
 /**
- * \file disentanglement_platform.hpp
- * \brief The hardware wrapper of the OldRealDisentanglementPlatform
  * \author Manuel Wuthrich
  * \date 2018
  *
@@ -18,7 +16,7 @@
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 
-#include <robot_interfaces/finger.hpp>
+#include <robot_interfaces/disentanglement_platform.hpp>
 
 
 

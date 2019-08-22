@@ -12,7 +12,7 @@
 #include <Eigen/Core>
 
 #include "real_time_tools/spinner.hpp"
-#include "blmc_robots/disentanglement_platform.hpp"
+#include "blmc_robots/real_disentanglement_platform.hpp"
 #include "real_time_tools/thread.hpp"
 
 
