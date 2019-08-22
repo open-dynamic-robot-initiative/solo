@@ -389,13 +389,13 @@ public:
      * 
      * @return Vector 
      */
-    Vector get_index_angles() const
+    Vector get_measured_index_angles() const
     {
         Vector index_angles;
 
         for(size_t i = 0; i < COUNT; i++)
         {
-            index_angles(i) = modules_[i]->get_index_angle();
+            index_angles(i) = modules_[i]->get_measured_index_angle();
         }
         return index_angles;
     }
