@@ -51,38 +51,6 @@ public:
         pause();
 
         max_torque_ = 2.0 * 0.02 * 9.0;
-        double delta_time = 0.01;
-
-        safety_constraints_[base].min_velocity_ = -3.0;
-        safety_constraints_[base].min_position_ = std::numeric_limits<double>::infinity();
-        safety_constraints_[base].max_velocity_ = 3.0;
-        safety_constraints_[base].max_position_ = -std::numeric_limits<double>::infinity();
-        safety_constraints_[base].max_torque_ = max_torque_;
-        safety_constraints_[base].inertia_ = 0.003;
-        safety_constraints_[base].max_jerk_ =
-            2 * max_torque_ / safety_constraints_[base].inertia_ / delta_time;
-
-        safety_constraints_[center].min_velocity_ = -3.0;
-        safety_constraints_[center].min_position_ = std::numeric_limits<double>::infinity();
-        safety_constraints_[center].max_velocity_ = 3.0;
-        safety_constraints_[center].max_position_ = -std::numeric_limits<double>::infinity();
-        safety_constraints_[center].max_torque_ = max_torque_;
-        safety_constraints_[center].inertia_ = 0.0025; // 0.0025 determined experimentally
-        safety_constraints_[center].max_jerk_ =
-            2 * max_torque_ / safety_constraints_[center].inertia_ / delta_time;
-
-        safety_constraints_[tip].min_velocity_ = -6.0;
-        safety_constraints_[tip].min_position_ = std::numeric_limits<double>::infinity();
-        safety_constraints_[tip].max_velocity_ = 6.0;
-        safety_constraints_[tip].max_position_ = -std::numeric_limits<double>::infinity();
-        safety_constraints_[tip].max_torque_ = max_torque_;
-        safety_constraints_[tip].inertia_ = 0.001;
-        safety_constraints_[tip].max_jerk_ =
-            2 * max_torque_ / safety_constraints_[tip].inertia_ / delta_time;
-
-        /// \todo: is this the right place to calibrate?
-
-        // pause();
 
         calibrate();
         pause();
