@@ -52,21 +52,7 @@ public:
     pause();
   }
 
-private:
-  RealFinger(const Motors &motors)
-      : joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
-                       Vector::Zero()) {}
-
-public:
-  virtual Observation get_latest_observation() {
-    Observation observation;
-    observation.angle = joint_modules_.get_measured_angles();
-    observation.velocity = joint_modules_.get_measured_velocities();
-    observation.torque = joint_modules_.get_measured_torques();
-    return observation;
-  }
-
-  static MotorBoards create_motor_boards(const std::string &can_0,
+    static MotorBoards create_motor_boards(const std::string &can_0,
                                          const std::string &can_1) {
     // setup can buses -----------------------------------------------------
     std::array<std::shared_ptr<blmc_drivers::CanBus>, 2> can_buses;
@@ -86,6 +72,21 @@ public:
 
     return motor_boards;
   }
+
+protected:
+  RealFinger(const Motors &motors)
+      : joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
+                       Vector::Zero()) {}
+
+  virtual Observation get_latest_observation() {
+    Observation observation;
+    observation.angle = joint_modules_.get_measured_angles();
+    observation.velocity = joint_modules_.get_measured_velocities();
+    observation.torque = joint_modules_.get_measured_torques();
+    return observation;
+  }
+
+
 
 protected:
   Eigen::Vector3d max_angles_;
