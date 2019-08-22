@@ -89,63 +89,6 @@ public:
         return joint_modules_.get_measured_velocities();
     }
 
-    Vector get_tip_pos() const
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-        return Vector::Zero();
-    }
-
-    Vector get_object_pos(std::string object_name = "object") const
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-        return Vector::Zero();
-    }
-
-    void set_object_pos(const Vector &pos, std::string object_name = "object")
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-    }
-
-    Quaternion get_object_quat(std::string object_name = "object") const
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-        return Quaternion::Zero();
-    }
-
-    Vector get_target_pos() const
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-        return Vector::Zero();
-    }
-
-    void set_target_pos(const Vector &pos) const
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-    }
-
-    void reset_joints()
-    {
-        std::cout << "not yet implemented " << std::endl;
-        exit(-1);
-        // \todo reset finger joints to intial properties
-    }
-
-    void wait_for_execution() const
-    {
-        /// \todo: this needs to be filled in
-    }
-
-    unsigned char *render(std::string mode)
-    {
-        std::cout << "real finger cannot render " << std::endl;
-        exit(-1);
-    }
 
     static MotorBoards
     create_motor_boards(const std::string &can_0, const std::string &can_1)

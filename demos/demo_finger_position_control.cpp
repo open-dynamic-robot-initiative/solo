@@ -37,10 +37,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     double kp = 0.2;
     double kd = 0.0025;
 
-    NewFinger::Action desired_torque = NewFinger::Action::Zero();
+    Finger::Action desired_torque = Finger::Action::Zero();
     while (true)
     {
-        NewFinger::TimeIndex t = finger->append_desired_action(desired_torque);
+        Finger::TimeIndex t = finger->append_desired_action(desired_torque);
         desired_torque =
             kp * (sliders->get_positions() - finger->get_observation(t).angle) -
             kd * finger->get_observation(t).velocity;

@@ -38,7 +38,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
     // position controller -----------------------------------------------------
     while (true)
     {
-        NewFinger::TimeIndex t = hardware.finger->append_desired_action(
+        Finger::TimeIndex t = hardware.finger->append_desired_action(
             hardware.sliders->get_positions());
 
         hardware.finger->get_observation(t);
