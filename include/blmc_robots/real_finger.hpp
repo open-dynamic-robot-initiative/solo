@@ -63,32 +63,14 @@ private:
                                                       Vector::Zero()) {}
 
 public:
-
     virtual Observation get_latest_observation()
     {
         Observation observation;
-        observation.angle = get_measured_angles();
-        observation.velocity = get_measured_velocities();
-        observation.torque = get_measured_torques();
+        observation.angle = joint_modules_.get_measured_angles();
+        observation.velocity = joint_modules_.get_measured_velocities();
+        observation.torque = joint_modules_.get_measured_torques();
         return observation;
     }
-
-
-    Vector get_measured_torques() const
-    {
-        return joint_modules_.get_measured_torques();
-    }
-
-    Vector get_measured_angles() const
-    {
-        return joint_modules_.get_measured_angles();
-    }
-
-    Vector get_measured_velocities() const
-    {
-        return joint_modules_.get_measured_velocities();
-    }
-
 
     static MotorBoards
     create_motor_boards(const std::string &can_0, const std::string &can_1)
@@ -233,7 +215,7 @@ protected:
 
                 // we implement here a small pd control at the current level
                 Eigen::Vector3d desired_torque = kp * diff -
-                                                 kd * get_measured_velocities();
+                                                 kd * get_observation(current_time_index()).velocity;
 
                 // Send the current to the motor
                 TimeIndex t = append_desired_action(desired_torque);
