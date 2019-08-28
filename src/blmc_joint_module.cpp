@@ -20,7 +20,8 @@ BlmcJointModule::BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> m
                     const double& gear_ratio,
                     const double& zero_angle,
                     const bool& reverse_polarity,
-                    const double& max_current)
+                    const double& max_current):
+    homing_state_({0})
 {
     motor_ = motor;
     motor_constant_ = motor_constant;
@@ -28,6 +29,9 @@ BlmcJointModule::BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> m
     set_zero_angle(zero_angle);
     polarity_ = reverse_polarity ? -1.0:1.0;
     max_current_ = max_current;
+
+    position_control_gain_p_ = 0;
+    position_control_gain_d_ = 0;
 }
 
 void BlmcJointModule::set_torque(const double& desired_torque)
@@ -129,6 +133,32 @@ long int BlmcJointModule::get_motor_measurement_index(const mi& measurement_id) 
         return -1;
     }
     return measurement_history->newest_timeindex();
+}
+
+void BlmcJointModule::set_position_control_gains(double kp, double kd)
+{
+    position_control_gain_p_ = kp;
+    position_control_gain_d_ = kd;
+}
+
+double BlmcJointModule::execute_position_controller(double target_position_rad) const
+{
+    double diff = homing_state_.target_position_rad - get_measured_angle();
+
+    // simple PD control
+    double desired_torque = position_control_gain_p_ * diff
+        - position_control_gain_d_ * get_measured_velocity();
+
+    // clamp torque
+    const double max_torque =
+        motor_current_to_joint_torque(max_current_) * 0.9;
+    if (desired_torque > max_torque) {
+        desired_torque = max_torque;
+    } else if (desired_torque < -max_torque) {
+        desired_torque = -max_torque;
+    }
+
+    return desired_torque;
 }
 
 bool BlmcJointModule::calibrate(double& angle_zero_to_index,
@@ -241,6 +271,123 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
     set_torque(0.0);
     send_torque();
     spinner.spin();
+}
+
+
+void BlmcJointModule::init_homing(int joint_id, double search_distance_limit_rad,
+        double home_offset_rad, double profile_step_size_rad)
+{
+    // reset the internal zero angle.
+    set_zero_angle(0.0);
+
+    // TODO: would be nice if the joint instance had a `name` or `id` and class
+    // level instead of storing it here (to make more useful debug prints).
+    homing_state_.joint_id = joint_id;
+
+    homing_state_.search_distance_limit_rad = search_distance_limit_rad;
+    homing_state_.home_offset_rad = home_offset_rad;
+    homing_state_.profile_step_size_rad = profile_step_size_rad;
+    homing_state_.last_encoder_index_time_index = get_motor_measurement_index(
+            mi::encoder_index);
+    homing_state_.target_position_rad = get_measured_angle();
+    homing_state_.step_count = 0;
+
+    homing_state_.status = HomingReturnCode::RUNNING;
+}
+
+HomingReturnCode BlmcJointModule::update_homing()
+{
+    switch (homing_state_.status) {
+        case HomingReturnCode::NOT_INITIALIZED:
+            set_torque(0.0);
+            send_torque();
+            rt_printf("[%d] Homing is not initialized.  Abort.\n",
+                      homing_state_.joint_id);
+            break;
+
+        case HomingReturnCode::FAILED:
+            // when failed, send zero-torque commands
+            set_torque(0.0);
+            send_torque();
+            break;
+
+        case HomingReturnCode::SUCCEEDED: {
+            // when succeeded, keep the motor at the home position
+            double desired_torque = execute_position_controller(
+                    homing_state_.target_position_rad);
+
+            set_torque(desired_torque);
+            send_torque();
+            break;
+        }
+
+        case HomingReturnCode::RUNNING: {
+
+            // number of steps after which the distance limit is reached
+            const int max_steps = homing_state_.search_distance_limit_rad /
+                std::abs(homing_state_.profile_step_size_rad);
+
+            // abort if distance limit is reached
+            if (homing_state_.step_count >= max_steps) {
+                set_torque(0.0);
+                send_torque();
+
+                homing_state_.status = HomingReturnCode::FAILED;
+
+                rt_printf("[%d] ERROR: Failed to find index\n",
+                          homing_state_.joint_id);
+                break;
+            }
+
+            // -- EXECUTE ONE STEP
+
+            homing_state_.step_count++;
+            homing_state_.target_position_rad +=
+                homing_state_.profile_step_size_rad;
+            const double current_position = get_measured_angle();
+
+#ifdef VERBOSE
+            if (homing_state_.step_count % 100 == 0) {
+                rt_printf("[%d] cur: %f,\t des: %f\n", homing_state_.joint_id,
+                        current_position, homing_state_.target_position_rad);
+            }
+#endif
+
+            // FIXME: add a safety check to stop if following error gets too big.
+
+            const double desired_torque = execute_position_controller(
+                    homing_state_.target_position_rad);
+            set_torque(desired_torque);
+            send_torque();
+
+            // Check if new encoder index was observed
+            const long int actual_index_time = get_motor_measurement_index(
+                    mi::encoder_index);
+            if (actual_index_time > homing_state_.last_encoder_index_time_index) {
+                // -- FINISHED
+                const double index_angle = get_measured_index_angle();
+
+                // set the zero angle
+                set_zero_angle(index_angle + homing_state_.home_offset_rad);
+
+                // adjust target_position according to the new zero
+                homing_state_.target_position_rad -= zero_angle_;
+
+#ifdef VERBOSE
+                rt_printf("[%d] Zero angle is=%f\n", homing_state_.joint_id,
+                          zero_angle_);
+                rt_printf("[%d] Index angle is=%f\n", homing_state_.joint_id,
+                          index_angle);
+#endif
+
+                homing_state_.status = HomingReturnCode::SUCCEEDED;
+            }
+
+            break;
+        }
+    }
+
+    return homing_state_.status;
 }
 
 } // namespace

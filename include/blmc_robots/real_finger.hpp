@@ -134,34 +134,34 @@ protected:
      * indices closest to the end stop.
      *
      * By default, the zero position is the same as the home position.  The
-     * optional argument home_offset provides a means to move the zero position
+     * optional argument home_offset_rad provides a means to move the zero position
      * relative to the home position.  The zero position is computed as
      *
-     *     zero_pos = encoder_index_pos + home_offset
+     *     zero position = encoder index position + home offset
      *
      * Movement is done by simply applying a constant torque to the joints.  The
      * amount of torque is a ratio of the configured maximum torque defined by
      * `torque_ratio`.
      *
      * @param torque_ratio Ratio of max. torque that is used to move the joints.
-     * @param home_offset Offset between the home position and the desired zero
+     * @param home_offset_rad Offset between the home position and the desired zero
      *                    position.
      */
-    void home_on_index_after_negative_end_stop(
-            double torque_ratio, Vector home_offset=Vector::Zero())
+    bool home_on_index_after_negative_end_stop(
+            double torque_ratio, Vector home_offset_rad=Vector::Zero())
     {
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
         /// torque limitation in the motor this would be very unsafe
 
-        //! Max. number of steps when searching for the encoder indices.
-        constexpr uint32_t MAX_STEPS_SEARCH_INDEX = 1000;
         //! Min. number of steps when moving to the end stop.
         constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
         //! Size of the window when computing average velocity.
         constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
         //! Velocity limit at which the joints are considered to be stopped.
         constexpr double STOP_VELOCITY = 0.001;
+        //! Distance after which encoder index search is aborted.
+        constexpr double SEARCH_DISTANCE_LIMIT_RAD = 2.0;
 
         static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
                       "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
@@ -169,64 +169,39 @@ protected:
                       " of average velocity.");
 
 
-        // First move a bit in positive direction until encoder indices are
-        // found or timeout triggers.
-        int count = 0;
-        while (joint_modules_.get_measured_index_angles().hasNaN()
-                && count < MAX_STEPS_SEARCH_INDEX) {
-            Vector torques = torque_ratio * get_max_torques();
-            TimeIndex t = append_desired_action(torques);
-            wait_until_time_index(t);
-            count++;
-        }
-        // Note: It might be possible that one or more encoder indices are not
-        // found before the timeout triggers (e.g. when joint is already at the
-        // positive end stop).  Still continue, as in this case the index might
-        // be found while moving to the negative end stop in the following step.
-        // If index is still not found for some reason, this is caught by a
-        // check at the end.
-
-
         // Move until velocity drops to almost zero (= joints hit the end stops)
         // but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
         // TODO: add timeout to this loop?
         std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
         Vector summed_velocities = Vector::Zero();
-        count = 0;
-        while (count < MIN_STEPS_MOVE_TO_END_STOP
+        int step_count = 0;
+        while (step_count < MIN_STEPS_MOVE_TO_END_STOP
                 || (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW > STOP_VELOCITY))
         {
             Vector torques = -1 * torque_ratio * get_max_torques();
             TimeIndex t = append_desired_action(torques);
             Vector abs_velocities = get_observation(t).velocity.cwiseAbs();
 
-            uint32_t running_index = count % SIZE_VELOCITY_WINDOW;
-            if (count >= SIZE_VELOCITY_WINDOW) {
+            uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
+            if (step_count >= SIZE_VELOCITY_WINDOW) {
                 summed_velocities -= running_velocities[running_index];
             }
             running_velocities[running_index] = abs_velocities;
             summed_velocities += abs_velocities;
-            count++;
+            step_count++;
         }
 
+        // need to "pause" as the desired actions queue is not filled while
+        // homing is running.
+        pause();
 
-        // At this point we assume that all encoder indices were already
-        // encountered, so the last one seen is the one closest to the end stop
-        // --> no need to move to the index, simply set home position to the
-        // position where the index was last seen.
-        Vector encoder_index_angles = joint_modules_.get_measured_index_angles();
-        if (encoder_index_angles.hasNaN()) {
-            // Make sure we do not try to home on the index when the index
-            // was not found.  This should normally not happen, so no specific
-            // error handling is done here.
-            rt_printf("Homing failed, index not found.  Exit.\n");
-            exit(-1);
-        }
+        // Home on encoder index
+        HomingReturnCode homing_status = joint_modules_.execute_homing(
+                SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad);
 
-        joint_modules_.set_zero_angles(encoder_index_angles + home_offset);
+        rt_printf("Finished homing.\n");
 
-        rt_printf("Home position: %f, %f, %f\n", encoder_index_angles[0],
-                  encoder_index_angles[1], encoder_index_angles[2]);
+        return homing_status == HomingReturnCode::SUCCEEDED;
     }
 
 
@@ -305,34 +280,37 @@ protected:
      */
     void calibrate()
     {
-        /// \todo: this relies on the safety check in the motor right now,
-        /// which is maybe not the greatest idea. without the velocity and
-        /// torque limitation in the motor this would be very unsafe
-
         constexpr double TORQUE_RATIO = 0.6;
         constexpr double CONTROL_GAIN_KP = 0.4;
         constexpr double CONTROL_GAIN_KD = 0.0025;
-        constexpr double POSITION_TOLERANCE = 0.2;
+        constexpr double POSITION_TOLERANCE_RAD = 0.2;
         constexpr double MOVE_TIMEOUT = 2000;
 
         // Offset between home position and zero.  Defined such that the zero
         // position is at the negative end stop (for compatibility with old
         // homing method).
-        Vector home_offset;
-        home_offset << -0.17, -0.54, 0.0;
+        Vector home_offset_rad;
+        home_offset_rad << -0.17, -0.54, 0.0;
 
         // Start position to which the robot moves after homing.
-        Vector starting_position;
-        starting_position << 1.5, 1.5, 3.0;
+        Vector starting_position_rad;
+        starting_position_rad << 1.5, 1.5, 3.0;
 
-        home_on_index_after_negative_end_stop(TORQUE_RATIO, home_offset);
-        bool reached_goal = move_to_position(starting_position,
-                                             CONTROL_GAIN_KP,
-                                             CONTROL_GAIN_KD,
-                                             POSITION_TOLERANCE,
-                                             MOVE_TIMEOUT);
-        if (!reached_goal) {
-            rt_printf("Failed to reach goal, timeout exceeded.\n");
+        joint_modules_.set_position_control_gains(CONTROL_GAIN_KP,
+                                                  CONTROL_GAIN_KD);
+
+        bool is_homed = home_on_index_after_negative_end_stop(TORQUE_RATIO,
+                home_offset_rad);
+
+        if (is_homed) {
+            bool reached_goal = move_to_position(starting_position_rad,
+                                                 CONTROL_GAIN_KP,
+                                                 CONTROL_GAIN_KD,
+                                                 POSITION_TOLERANCE_RAD,
+                                                 MOVE_TIMEOUT);
+            if (!reached_goal) {
+                rt_printf("Failed to reach goal, timeout exceeded.\n");
+            }
         }
 
         pause();
