@@ -163,6 +163,11 @@ protected:
         //! Velocity limit at which the joints are considered to be stopped.
         const double STOP_VELOCITY = 0.001;
 
+        static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
+                      "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
+                      " SIZE_VELOCITY_WINDOW to ensure correct computation"
+                      " of average velocity.");
+
 
         // First move a bit in positive direction until encoder indices are
         // found or timeout triggers.
@@ -231,29 +236,31 @@ protected:
      * @param goal_pos Angular goal position for each joint.
      * @param kp Gain K_p for the PD controller.
      * @param kd Gain K_d for the PD controller.
+     * @param timeout_cycles Timeout.  If exceeded before goal is reached, the
+     *     procedure is aborted. Unit: Number of control loop cycles.
+     * @return True if goal position is reached, false if timeout is exceeded.
      */
-    void move_to_position(Vector goal_pos, double kp, double kd)
+    bool move_to_position(Vector goal_pos, double kp, double kd,
+                          uint32_t timeout_cycles)
     {
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
         /// torque limitation in the motor this would be very unsafe
 
         bool reached_goal = false;
-        int count = 0;
+        int cycle_count = 0;
+        Vector desired_torque = Vector::Zero();
         Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
                                   std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-        while (!reached_goal && count < 2000)
+        while (!reached_goal && cycle_count < timeout_cycles)
         {
-            Eigen::Vector3d diff = goal_pos - get_observation(current_time_index()).angle;
-
-            // we implement here a small pd control at the current level
-            Eigen::Vector3d desired_torque = kp * diff -
-                                             kd * joint_modules_.get_measured_velocities();
-
-            // Send the current to the motor
             TimeIndex t = append_desired_action(desired_torque);
-            wait_until_time_index(t);
-            if (count % 100 == 0)
+
+            // we implement here a small PD control at the current level
+            Vector diff = goal_pos - get_observation(t).angle;
+            desired_torque = kp * diff - kd * get_observation(t).velocity;
+
+            if (cycle_count % 100 == 0)
             {
                 Eigen::Vector3d diff_difference = last_diff - diff;
                 if (std::abs(diff_difference.norm()) < 1e-5) {
@@ -261,8 +268,10 @@ protected:
                 }
                 last_diff = diff;
             }
-            count++;
+            cycle_count++;
         }
+
+        return reached_goal;
     }
 
     /**
@@ -283,6 +292,9 @@ protected:
         /// torque limitation in the motor this would be very unsafe
 
         const double TORQUE_RATIO = 0.6;
+        const double CONTROL_GAIN_KP = 0.4;
+        const double CONTROL_GAIN_KD = 0.0025;
+        const double MOVE_TIMEOUT = 2000;
 
         // Offset between home position and zero.  Defined such that the zero
         // position is at the negative end stop (for compatibility with old
@@ -295,7 +307,11 @@ protected:
         starting_position << 1.5, 1.5, 3.0;
 
         home_on_index_after_negative_end_stop(TORQUE_RATIO, home_offset);
-        move_to_position(starting_position, 0.4, 0.0025);
+        bool reached_goal = move_to_position(starting_position, CONTROL_GAIN_KP,
+                                             CONTROL_GAIN_KD, MOVE_TIMEOUT);
+        if (!reached_goal) {
+            rt_printf("Failed to reach goal, timeout exceeded.\n");
+        }
 
         pause();
     }
