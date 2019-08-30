@@ -240,8 +240,8 @@ protected:
      *     procedure is aborted. Unit: Number of control loop cycles.
      * @return True if goal position is reached, false if timeout is exceeded.
      */
-    bool move_to_position(Vector goal_pos, double kp, double kd,
-                          uint32_t timeout_cycles)
+    bool move_to_position(const Vector &goal_pos, const double kp,
+                          const double kd, const uint32_t timeout_cycles)
     {
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
@@ -251,23 +251,38 @@ protected:
         int cycle_count = 0;
         Vector desired_torque = Vector::Zero();
         Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
-                                  std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+                                  std::numeric_limits<double>::max(),
+                                  std::numeric_limits<double>::max());
+
         while (!reached_goal && cycle_count < timeout_cycles)
         {
-            TimeIndex t = append_desired_action(desired_torque);
+            const TimeIndex t = append_desired_action(desired_torque);
+
+            const Vector position_error = goal_pos - get_observation(t).angle;
+            const Vector velocity = get_observation(t).velocity;
 
             // we implement here a small PD control at the current level
-            Vector diff = goal_pos - get_observation(t).angle;
-            desired_torque = kp * diff - kd * get_observation(t).velocity;
+            desired_torque = kp * position_error - kd * velocity;
 
-            if (cycle_count % 100 == 0)
-            {
-                Eigen::Vector3d diff_difference = last_diff - diff;
-                if (std::abs(diff_difference.norm()) < 1e-5) {
-                    reached_goal = true;
-                }
-                last_diff = diff;
+#ifdef VERBOSE
+            if (cycle_count % 100 == 0) {
+                rt_printf("--\n"
+                          "position error: %10.5f, %10.5f, %10.5f\n"
+                          "velocity:       %10.5f, %10.5f, %10.5f\n",
+                          position_error[0], position_error[1], position_error[2],
+                          velocity[0], velocity[1], velocity[2]);
             }
+#endif
+
+            // Check if the goal is reached (position error below tolerance and
+            // velocity close to zero).
+            constexpr double POSITION_TOLERANCE = 0.2;
+            constexpr double ZERO_VELOCITY = 1e-4;
+            reached_goal = (
+                    (position_error.array().abs() < POSITION_TOLERANCE).all() &&
+                    (velocity.array().abs() < ZERO_VELOCITY).all()
+            );
+
             cycle_count++;
         }
 
