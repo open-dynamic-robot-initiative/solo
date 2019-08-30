@@ -155,13 +155,13 @@ protected:
         /// torque limitation in the motor this would be very unsafe
 
         //! Max. number of steps when searching for the encoder indices.
-        const uint32_t MAX_STEPS_SEARCH_INDEX = 1000;
+        constexpr uint32_t MAX_STEPS_SEARCH_INDEX = 1000;
         //! Min. number of steps when moving to the end stop.
-        const uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
+        constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
         //! Size of the window when computing average velocity.
-        const uint32_t SIZE_VELOCITY_WINDOW = 100;
+        constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
         //! Velocity limit at which the joints are considered to be stopped.
-        const double STOP_VELOCITY = 0.001;
+        constexpr double STOP_VELOCITY = 0.001;
 
         static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
                       "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
@@ -291,10 +291,10 @@ protected:
         /// which is maybe not the greatest idea. without the velocity and
         /// torque limitation in the motor this would be very unsafe
 
-        const double TORQUE_RATIO = 0.6;
-        const double CONTROL_GAIN_KP = 0.4;
-        const double CONTROL_GAIN_KD = 0.0025;
-        const double MOVE_TIMEOUT = 2000;
+        constexpr double TORQUE_RATIO = 0.6;
+        constexpr double CONTROL_GAIN_KP = 0.4;
+        constexpr double CONTROL_GAIN_KD = 0.0025;
+        constexpr double MOVE_TIMEOUT = 2000;
 
         // Offset between home position and zero.  Defined such that the zero
         // position is at the negative end stop (for compatibility with old
