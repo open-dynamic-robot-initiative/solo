@@ -236,12 +236,16 @@ protected:
      * @param goal_pos Angular goal position for each joint.
      * @param kp Gain K_p for the PD controller.
      * @param kd Gain K_d for the PD controller.
+     * @param tolerance Allowed position error for reaching the goal.  This is
+     *     checked per joint, that is the maximal possible error is +/-tolerance
+     *     on each joint.
      * @param timeout_cycles Timeout.  If exceeded before goal is reached, the
      *     procedure is aborted. Unit: Number of control loop cycles.
      * @return True if goal position is reached, false if timeout is exceeded.
      */
     bool move_to_position(const Vector &goal_pos, const double kp,
-                          const double kd, const uint32_t timeout_cycles)
+                          const double kd, const double tolerance,
+                          const uint32_t timeout_cycles)
     {
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
@@ -276,10 +280,9 @@ protected:
 
             // Check if the goal is reached (position error below tolerance and
             // velocity close to zero).
-            constexpr double POSITION_TOLERANCE = 0.2;
             constexpr double ZERO_VELOCITY = 1e-4;
             reached_goal = (
-                    (position_error.array().abs() < POSITION_TOLERANCE).all() &&
+                    (position_error.array().abs() < tolerance).all() &&
                     (velocity.array().abs() < ZERO_VELOCITY).all()
             );
 
@@ -309,6 +312,7 @@ protected:
         constexpr double TORQUE_RATIO = 0.6;
         constexpr double CONTROL_GAIN_KP = 0.4;
         constexpr double CONTROL_GAIN_KD = 0.0025;
+        constexpr double POSITION_TOLERANCE = 0.2;
         constexpr double MOVE_TIMEOUT = 2000;
 
         // Offset between home position and zero.  Defined such that the zero
@@ -322,8 +326,11 @@ protected:
         starting_position << 1.5, 1.5, 3.0;
 
         home_on_index_after_negative_end_stop(TORQUE_RATIO, home_offset);
-        bool reached_goal = move_to_position(starting_position, CONTROL_GAIN_KP,
-                                             CONTROL_GAIN_KD, MOVE_TIMEOUT);
+        bool reached_goal = move_to_position(starting_position,
+                                             CONTROL_GAIN_KP,
+                                             CONTROL_GAIN_KD,
+                                             POSITION_TOLERANCE,
+                                             MOVE_TIMEOUT);
         if (!reached_goal) {
             rt_printf("Failed to reach goal, timeout exceeded.\n");
         }
