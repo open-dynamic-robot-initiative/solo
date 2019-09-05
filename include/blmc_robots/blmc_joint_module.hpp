@@ -25,7 +25,7 @@ namespace blmc_robots
 /**
  * @brief Possible return values of the homing
  */
-enum HomingReturnCode {
+enum class HomingReturnCode {
     //! Homing was not initialized and can therefore not be performed.
     NOT_INITIALIZED = 0,
     //! Homing is currently running.
