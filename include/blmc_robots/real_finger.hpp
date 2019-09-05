@@ -38,6 +38,18 @@ public:
     return finger;
   }
 
+  virtual ~RealFinger()
+  {
+    /// TODO: this is somewhat problematic that we have to call this here.
+    /// this probably indicates a design flaw. however, for now it is necessary
+    /// since otherwise the thread of the base class might still be running
+    /// and attempting to call fcts of teh child class which already have been
+    /// destroyed.
+    destructor_was_called_ = true;
+    thread_->join();
+
+  }
+
   RealFinger(const std::string &can_0, const std::string &can_1)
       : RealFinger(create_motor_boards(can_0, can_1)) {}
 
