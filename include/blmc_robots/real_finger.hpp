@@ -106,13 +106,6 @@ protected:
 protected:
   Eigen::Vector3d max_angles_;
 
-  void apply_torques(const Vector &desired_torques) {
-    /// \todo: the safety checks are now being done in here, but should
-    /// come outside
-    joint_modules_.set_torques(desired_torques);
-    joint_modules_.send_torques();
-  }
-
   virtual void apply_action(const Action &action) {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
     joint_modules_.set_torques(action);
