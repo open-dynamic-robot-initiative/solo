@@ -106,9 +106,17 @@ protected:
 protected:
   Eigen::Vector3d max_angles_;
 
-  virtual void apply_action(const Action &action) {
+  virtual void apply_action(const Action &desired_action) {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
-    joint_modules_.set_torques(action);
+
+    Observation observation = get_latest_observation();
+    Vector kd(0.08, 0.08, 0.04);
+    double max_torque = 0.36;
+    Action applied_action = mct::clamp(desired_action, -max_torque, max_torque);
+    applied_action = applied_action - kd.cwiseProduct(observation.velocity);
+    applied_action = mct::clamp(applied_action, -max_torque, max_torque);
+
+    joint_modules_.set_torques(applied_action);
     joint_modules_.send_torques();
     real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
   }
@@ -184,8 +192,8 @@ protected:
         step_count < MIN_STEPS_MOVE_TO_END_STOP ||
         (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW > STOP_VELOCITY)) {
       Vector torques = -1 * torque_ratio * get_max_torques();
-      TimeIndex t = append_desired_action(torques);
-      Vector abs_velocities = get_observation(t).velocity.cwiseAbs();
+      apply_action(torques);
+      Vector abs_velocities = get_latest_observation().velocity.cwiseAbs();
 
       uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
       if (step_count >= SIZE_VELOCITY_WINDOW) {
@@ -237,10 +245,10 @@ protected:
                               std::numeric_limits<double>::max());
 
     while (!reached_goal && cycle_count < timeout_cycles) {
-      const TimeIndex t = append_desired_action(desired_torque);
+      apply_action(desired_torque);
 
-      const Vector position_error = goal_pos - get_observation(t).angle;
-      const Vector velocity = get_observation(t).velocity;
+      const Vector position_error = goal_pos - get_latest_observation().angle;
+      const Vector velocity = get_latest_observation().velocity;
 
       // we implement here a small PD control at the current level
       desired_torque = kp * position_error - kd * velocity;
