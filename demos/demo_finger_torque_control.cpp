@@ -48,24 +48,24 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
 
 int main(int argc, char **argv)
 {
-    Hardware hardware;
+    // Hardware hardware;
 
-    // set up motor boards -----------------------------------------------------
-    hardware.motor_boards = RealFinger::create_motor_boards("can0", "can1");
+    // // set up motor boards -----------------------------------------------------
+    // hardware.motor_boards = RealFinger::create_motor_boards("can0", "can1");
 
-    // set up finger -----------------------------------------------------------
-    hardware.finger = std::make_shared<RealFinger>(hardware.motor_boards);
+    // // set up finger -----------------------------------------------------------
+    // hardware.finger = std::make_shared<RealFinger>(hardware.motor_boards);
 
-    // set up sliders ----------------------------------------------------------
-    hardware.sliders =
-        std::make_shared<Sliders<3>>(hardware.motor_boards,
-                                     -hardware.finger->get_max_torques(),
-                                     hardware.finger->get_max_torques());
+    // // set up sliders ----------------------------------------------------------
+    // hardware.sliders =
+    //     std::make_shared<Sliders<3>>(hardware.motor_boards,
+    //                                  -hardware.finger->get_max_torques(),
+    //                                  hardware.finger->get_max_torques());
 
-    // start real-time control loop --------------------------------------------
-    real_time_tools::RealTimeThread thread;
-    thread.create_realtime_thread(&control_loop, &hardware);
-    rt_printf("control loop started \n");
-    thread.join();
-    return 0;
+    // // start real-time control loop --------------------------------------------
+    // real_time_tools::RealTimeThread thread;
+    // thread.create_realtime_thread(&control_loop, &hardware);
+    // rt_printf("control loop started \n");
+    // thread.join();
+    // return 0;
 }

@@ -26,29 +26,22 @@
 namespace blmc_robots {
 
 class RealFinger
-    : public robot_interfaces::Finger,
-      robot_interfaces::Robot<robot_interfaces::Finger::Action,
-                              robot_interfaces::Finger::Observation> {
+    : public robot_interfaces::Robot<robot_interfaces::Finger::Action,
+                                     robot_interfaces::Finger::Observation> {
 public:
+  typedef robot_interfaces::Finger::Action Action;
+  typedef robot_interfaces::Finger::Observation Observation;
   typedef robot_interfaces::Finger::Vector Vector;
   typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> Motors;
   typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
       MotorBoards;
 
-  static std::shared_ptr<Finger> create(const std::string &can_0,
-                                        const std::string &can_1) {
-    auto finger = std::make_shared<RealFinger>(can_0, can_1);
+  static std::shared_ptr<robot_interfaces::Finger>
+  create(const std::string &can_0, const std::string &can_1) {
+    std::shared_ptr<robot_interfaces::Robot<Action, Observation>> real_finger =
+        std::make_shared<RealFinger>(can_0, can_1);
+    auto finger = std::make_shared<robot_interfaces::Finger>(real_finger);
     return finger;
-  }
-
-  virtual ~RealFinger() {
-    /// TODO: this is somewhat problematic that we have to call this here.
-    /// this probably indicates a design flaw. however, for now it is necessary
-    /// since otherwise the thread of the base class might still be running
-    /// and attempting to call fcts of teh child class which already have been
-    /// destroyed.
-    destructor_was_called_ = true;
-    thread_->join();
   }
 
   RealFinger(const std::string &can_0, const std::string &can_1)
@@ -57,12 +50,14 @@ public:
   RealFinger(const MotorBoards &motor_boards)
       : RealFinger(create_motors(motor_boards)) {
     motor_boards_ = motor_boards;
-    pause();
 
     max_torque_ = 2.0 * 0.02 * 9.0;
 
     calibrate();
-    pause();
+
+    for (size_t i = 0; i < motor_boards_.size(); i++) {
+      motor_boards_[i]->pause_motors();
+    }
   }
 
   static MotorBoards create_motor_boards(const std::string &can_0,
@@ -95,18 +90,8 @@ protected:
       : joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
                        Vector::Zero()) {}
 
-  virtual Observation get_latest_observation() {
-    Observation observation;
-    observation.angle = joint_modules_.get_measured_angles();
-    observation.velocity = joint_modules_.get_measured_velocities();
-    observation.torque = joint_modules_.get_measured_torques();
-    return observation;
-  }
-
-protected:
-  Eigen::Vector3d max_angles_;
-
-  virtual void apply_action(const Action &desired_action) {
+public:
+  void apply_action(const Action &desired_action) override {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
     Observation observation = get_latest_observation();
@@ -120,6 +105,17 @@ protected:
     joint_modules_.send_torques();
     real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
   }
+
+  Observation get_latest_observation() override {
+    Observation observation;
+    observation.angle = joint_modules_.get_measured_angles();
+    observation.velocity = joint_modules_.get_measured_velocities();
+    observation.torque = joint_modules_.get_measured_torques();
+    return observation;
+  }
+
+protected:
+  Eigen::Vector3d max_angles_;
 
   static Motors create_motors(const MotorBoards &motor_boards) {
     // set up motors -------------------------------------------------------
@@ -206,7 +202,6 @@ protected:
 
     // need to "pause" as the desired actions queue is not filled while
     // homing is running.
-    pause();
 
     // Home on encoder index
     HomingReturnCode homing_status = joint_modules_.execute_homing(
@@ -316,13 +311,19 @@ protected:
         rt_printf("Failed to reach goal, timeout exceeded.\n");
       }
     }
-
-    pause();
   }
 
 private:
+  /// todo: this should probably go away
+  double max_torque_;
+
   BlmcJointModules<3> joint_modules_;
   MotorBoards motor_boards_;
+
+  /// todo: this should probably go away
+
+public:
+  Vector get_max_torques() const { return max_torque_ * Vector::Ones(); }
 };
 
 } // namespace blmc_robots

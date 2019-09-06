@@ -58,25 +58,25 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
 
 int main(int argc, char **argv)
 {
-    // set up motor boards -----------------------------------------------------
-    auto motor_boards = RealFinger::create_motor_boards("can0", "can1");
+    // // set up motor boards -----------------------------------------------------
+    // auto motor_boards = RealFinger::create_motor_boards("can0", "can1");
 
-    // set up finger -----------------------------------------------------------
-    auto finger = std::make_shared<RealFinger>(motor_boards);
+    // // set up finger -----------------------------------------------------------
+    // auto finger = RealFinger::create("can0", "can1");
 
-    // set up sliders ----------------------------------------------------------
-    auto sliders =
-        std::make_shared<Sliders<3>>(Sliders<3>(
-            motor_boards,
-            -0.5 * M_PI * Eigen::Vector3d::Ones(),
-            1.5 * M_PI * Eigen::Vector3d::Ones()));
+    // // set up sliders ----------------------------------------------------------
+    // auto sliders =
+    //     std::make_shared<Sliders<3>>(Sliders<3>(
+    //         motor_boards,
+    //         -0.5 * M_PI * Eigen::Vector3d::Ones(),
+    //         1.5 * M_PI * Eigen::Vector3d::Ones()));
 
-    // start real-time control loop --------------------------------------------
-    real_time_tools::RealTimeThread thread;
-    FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
-    thread.create_realtime_thread(&control_loop,
-                                  &finger_and_sliders);
-    rt_printf("control loop started \n");
-    thread.join();
-    return 0;
+    // // start real-time control loop --------------------------------------------
+    // real_time_tools::RealTimeThread thread;
+    // FingerAndSliders finger_and_sliders = std::make_tuple(finger, sliders);
+    // thread.create_realtime_thread(&control_loop,
+    //                               &finger_and_sliders);
+    // rt_printf("control loop started \n");
+    // thread.join();
+    // return 0;
 }
