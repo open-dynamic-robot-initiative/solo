@@ -8,9 +8,6 @@ import py_real_finger
 
 finger = py_real_finger.create('can0', 'can1')
 
-ipdb.set_trace()
-finger.current_time_index()
-
 desired_position = np.ones(3)
 kp = 5
 kd = 0
