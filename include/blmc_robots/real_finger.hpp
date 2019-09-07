@@ -91,7 +91,7 @@ protected:
                        Vector::Zero()) {}
 
 public:
-  void apply_action(const Action &desired_action) override {
+  Action apply_action(const Action &desired_action) override {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
     Observation observation = get_latest_observation();
@@ -104,6 +104,8 @@ public:
     joint_modules_.set_torques(applied_action);
     joint_modules_.send_torques();
     real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
+
+    return applied_action;
   }
 
   Observation get_latest_observation() override {
