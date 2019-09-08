@@ -87,11 +87,13 @@ public:
 
 protected:
   RealFinger(const Motors &motors)
-      : Robot(0.005), joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
+      : Robot(0.003, 0.005),
+        joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
                        Vector::Zero()) {}
 
-public:
-  Action apply_action(const Action &desired_action) override {
+protected:
+  Action
+  apply_action(const Action &desired_action) override {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
     Observation observation = get_latest_observation();
@@ -108,6 +110,7 @@ public:
     return applied_action;
   }
 
+public:
   Observation get_latest_observation() override {
     Observation observation;
     observation.angle = joint_modules_.get_measured_angles();
@@ -116,9 +119,8 @@ public:
     return observation;
   }
 
-  void give_control() override {}
-
-  void take_control() override {
+protected:
+  void shutdown() override {
     for (size_t i = 0; i < motor_boards_.size(); i++) {
       motor_boards_[i]->pause_motors();
     }
