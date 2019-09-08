@@ -87,7 +87,7 @@ public:
 
 protected:
   RealFinger(const Motors &motors)
-      : joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
+      : Robot(0.005), joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
                        Vector::Zero()) {}
 
 public:
@@ -114,6 +114,14 @@ public:
     observation.velocity = joint_modules_.get_measured_velocities();
     observation.torque = joint_modules_.get_measured_torques();
     return observation;
+  }
+
+  void give_control() override {}
+
+  void take_control() override {
+    for (size_t i = 0; i < motor_boards_.size(); i++) {
+      motor_boards_[i]->pause_motors();
+    }
   }
 
 protected:
