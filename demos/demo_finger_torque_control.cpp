@@ -18,6 +18,8 @@
 
 using namespace blmc_robots;
 using namespace robot_interfaces;
+using namespace robot_interfaces::finger;
+
 
 typedef std::tuple<std::shared_ptr<Finger>,
                    std::shared_ptr<Sliders<3>>>

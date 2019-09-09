@@ -26,21 +26,29 @@
 namespace blmc_robots {
 
 class RealFinger
-    : public robot_interfaces::Robot<robot_interfaces::Finger::Action,
-                                     robot_interfaces::Finger::Observation> {
+    : public robot_interfaces::Robot<robot_interfaces::finger::Action,
+                                     robot_interfaces::finger::Observation> {
 public:
-  typedef robot_interfaces::Finger::Action Action;
-  typedef robot_interfaces::Finger::Observation Observation;
-  typedef robot_interfaces::Finger::Vector Vector;
+  typedef robot_interfaces::finger::Action Action;
+  typedef robot_interfaces::finger::Observation Observation;
+  typedef robot_interfaces::finger::Vector Vector;
   typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> Motors;
   typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
       MotorBoards;
 
-  static std::shared_ptr<robot_interfaces::Finger>
+  // todo: is this the right place to create all this?
+  static std::shared_ptr<robot_interfaces::finger::Finger>
   create(const std::string &can_0, const std::string &can_1) {
     std::shared_ptr<robot_interfaces::Robot<Action, Observation>> real_finger =
         std::make_shared<RealFinger>(can_0, can_1);
-    auto finger = std::make_shared<robot_interfaces::Finger>(real_finger);
+
+    robot_interfaces::RobotData<robot_interfaces::finger::Action,
+                                robot_interfaces::finger::Observation,
+                                robot_interfaces::finger::Status>
+        robot_data;
+
+    auto finger = std::make_shared<robot_interfaces::finger::Finger>(
+        real_finger, robot_data);
     return finger;
   }
 
@@ -92,8 +100,7 @@ protected:
                        Vector::Zero()) {}
 
 protected:
-  Action
-  apply_action(const Action &desired_action) override {
+  Action apply_action(const Action &desired_action) override {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
     Observation observation = get_latest_observation();
