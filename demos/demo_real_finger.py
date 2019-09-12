@@ -3,10 +3,14 @@ import numpy as np
 
 import threading
 import ipdb
+import py_finger
 import py_real_finger
 
 
-finger = py_real_finger.create('can0', 'can1')
+finger_data = py_finger.Data()
+finger_server = py_real_finger.create_real_finger_server("can0", "can1",
+                                                         finger_data)
+finger = py_finger.Finger(finger_data)
 
 kp = 5
 kd = 0
