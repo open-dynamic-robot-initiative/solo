@@ -311,7 +311,7 @@ protected:
     // position is at the negative end stop (for compatibility with old
     // homing method).
     Vector home_offset_rad;
-    home_offset_rad << -0.17, -0.54, 0.0;
+    home_offset_rad << -0.54, -0.17, 0.0;
 
     // Start position to which the robot moves after homing.
     Vector starting_position_rad;
