@@ -1,13 +1,10 @@
 /**
  * \file test_bench_8_motors.hh
- * \brief The hardware wrapper of the RealFinger
+ * \brief The hardware wrapper of the real Finger robot.
  * \author Manuel Wuthrich
  * \date 2018
  * \copyright Copyright (c) 2019, New York University and Max Planck
  *            Gesellschaft.
- *
- * This file declares the RealFinger class which defines the test
- * bench with 8 motors.
  */
 
 #pragma once
@@ -25,8 +22,8 @@
 
 namespace blmc_robots
 {
-class RealFinger
-    : public robot_interfaces::Robot<robot_interfaces::finger::Action,
+class RealFingerBackend
+    : public robot_interfaces::RobotDriver<robot_interfaces::finger::Action,
                                      robot_interfaces::finger::Observation>
 {
 public:
@@ -38,13 +35,13 @@ public:
         MotorBoards;
 
 
-    RealFinger(const std::string &can_0, const std::string &can_1)
-        : RealFinger(create_motor_boards(can_0, can_1))
+    RealFingerBackend(const std::string &can_0, const std::string &can_1)
+        : RealFingerBackend(create_motor_boards(can_0, can_1))
     {
     }
 
-    RealFinger(const MotorBoards &motor_boards)
-        : RealFinger(create_motors(motor_boards))
+    RealFingerBackend(const MotorBoards &motor_boards)
+        : RealFingerBackend(create_motors(motor_boards))
     {
         motor_boards_ = motor_boards;
 
@@ -88,8 +85,8 @@ public:
     }
 
 protected:
-    RealFinger(const Motors &motors)
-        : Robot(0.003, 0.005),
+    RealFingerBackend(const Motors &motors)
+        : RobotDriver(0.003, 0.005),
           joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
                          Vector::Zero())
     {
@@ -361,16 +358,16 @@ public:
     Vector get_max_torques() const { return max_torque_ * Vector::Ones(); }
 };
 
-robot_interfaces::finger::ServerPtr create_real_finger_server(
+robot_interfaces::finger::BackendPtr create_real_finger_backend(
     const std::string &can_0, const std::string &can_1,
     robot_interfaces::finger::DataPtr robot_data)
 {
     std::shared_ptr<
-        robot_interfaces::Robot<robot_interfaces::finger::Action,
+        robot_interfaces::RobotDriver<robot_interfaces::finger::Action,
                                 robot_interfaces::finger::Observation>>
-        robot = std::make_shared<RealFinger>(can_0, can_1);
+        robot = std::make_shared<RealFingerBackend>(can_0, can_1);
 
-    auto server = std::make_shared<robot_interfaces::finger::Server>(
+    auto server = std::make_shared<robot_interfaces::finger::Backend>(
         robot, robot_data);
     server->set_max_action_repetitions(-1);
 
