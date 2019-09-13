@@ -22,9 +22,9 @@
 
 namespace blmc_robots
 {
-class RealFingerBackend
-    : public robot_interfaces::RobotDriver<robot_interfaces::finger::Action,
-                                     robot_interfaces::finger::Observation>
+class RealFingerBackend : public robot_interfaces::RobotDriver<
+                              robot_interfaces::finger::Action,
+                              robot_interfaces::finger::Observation>
 {
 public:
     typedef robot_interfaces::finger::Action Action;
@@ -33,7 +33,6 @@ public:
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
         MotorBoards;
-
 
     RealFingerBackend(const std::string &can_0, const std::string &can_1)
         : RealFingerBackend(create_motor_boards(can_0, can_1))
@@ -364,15 +363,14 @@ robot_interfaces::finger::BackendPtr create_real_finger_backend(
 {
     std::shared_ptr<
         robot_interfaces::RobotDriver<robot_interfaces::finger::Action,
-                                robot_interfaces::finger::Observation>>
+                                      robot_interfaces::finger::Observation>>
         robot = std::make_shared<RealFingerBackend>(can_0, can_1);
 
-    auto server = std::make_shared<robot_interfaces::finger::Backend>(
-        robot, robot_data);
+    auto server =
+        std::make_shared<robot_interfaces::finger::Backend>(robot, robot_data);
     server->set_max_action_repetitions(-1);
 
     return server;
 }
-
 
 }  // namespace blmc_robots
