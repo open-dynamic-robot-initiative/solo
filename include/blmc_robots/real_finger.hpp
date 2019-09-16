@@ -15,38 +15,105 @@
 #include <tuple>
 
 #include <blmc_robots/blmc_joint_module.hpp>
-#include "real_time_tools/spinner.hpp"
-#include "real_time_tools/timer.hpp"
+#include <real_time_tools/spinner.hpp>
+#include <real_time_tools/timer.hpp>
 
 #include <robot_interfaces/finger.hpp>
 
 namespace blmc_robots
 {
-class RealFingerDriver : public robot_interfaces::RobotDriver<
-                              robot_interfaces::finger::Action,
-                              robot_interfaces::finger::Observation>
+/**
+ * @brief Parameters related to the motor.
+ */
+struct MotorParameters
+{
+    //! @brief Maximum current that can be sent to the motor [A].
+    double max_current_A;
+
+    //! @brief Torque constant K_t of the motor [Nm/A].
+    double torque_constant_NmpA;
+
+    /**
+     * @brief Gear ratio between motor and joint.
+     *
+     * For a `n:1` ratio (i.e. one joint revolution requires n motor
+     * revolutions) set this value to `n`.
+     */
+    double gear_ratio;
+};
+
+/**
+ * @brief Parameters for the joint calibration (homing and go to initial pose).
+ */
+struct CalibrationParameters
+{
+    //! @brief Ratio of the max. torque that is used to find the end stop.
+    double torque_ratio;  // TODO better used fixed torque
+    //! @brief P-gain for the position controller.
+    double control_gain_kp;
+    //! @brief D-gain for the position controller.
+    double control_gain_kd;
+    //! @brief Tolerance for reaching the starting position.
+    double position_tolerance_rad;
+    //! @brief Timeout for reaching the starting position.
+    double move_timeout;
+};
+
+
+// TODO add "BLMC" in the name?
+/**
+ * @brief Base class for simple n-joint BLMC robots.
+ *
+ * This is a generic base class to easily implement drivers for simple BLMC
+ * robots that consist of a chain of joints.
+ *
+ * @tparam N_JOINTS Number of joints.
+ * @tparam N_MOTOR_BOARDS Number of motor control boards that are used.
+ */
+template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+class NJointBlmcRobotDriver
+    : public robot_interfaces::RobotDriver<
+          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Action,
+          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation>
 {
 public:
-    typedef robot_interfaces::finger::Action Action;
-    typedef robot_interfaces::finger::Observation Observation;
-    typedef robot_interfaces::finger::Vector Vector;
-    typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, 3> Motors;
-    typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2>
+    typedef
+        typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Action Action;
+    typedef typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation
+        Observation;
+    typedef
+        typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Vector Vector;
+    typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
+        Motors;
+    typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
+                       N_MOTOR_BOARDS>
         MotorBoards;
 
-    RealFingerDriver(const std::string &can_0, const std::string &can_1)
-        : RealFingerDriver(create_motor_boards(can_0, can_1))
+    NJointBlmcRobotDriver(const std::array<std::string, N_MOTOR_BOARDS> &can_ports,
+                      const MotorParameters &motor_parameters,
+                      const double max_action_duration_s,
+                      const double max_inter_action_duration_s)
+        : NJointBlmcRobotDriver(create_motor_boards(can_ports),
+                            motor_parameters,
+                            max_action_duration_s,
+                            max_inter_action_duration_s)
     {
     }
 
-    RealFingerDriver(const MotorBoards &motor_boards)
-        : RealFingerDriver(create_motors(motor_boards))
+    NJointBlmcRobotDriver(const MotorBoards &motor_boards,
+                      const MotorParameters &motor_parameters,
+                      const double max_action_duration_s,
+                      const double max_inter_action_duration_s)
+        : NJointBlmcRobotDriver(create_motors(motor_boards),
+                            motor_parameters,
+                            max_action_duration_s,
+                            max_inter_action_duration_s)
     {
         motor_boards_ = motor_boards;
 
-        max_torque_ = 2.0 * 0.02 * 9.0;
-
-        calibrate();
+        max_torque_Nm_ = motor_parameters.max_current_A *
+                         motor_parameters.torque_constant_NmpA *
+                         motor_parameters.gear_ratio;
 
         for (size_t i = 0; i < motor_boards_.size(); i++)
         {
@@ -54,23 +121,27 @@ public:
         }
     }
 
-    static MotorBoards create_motor_boards(const std::string &can_0,
-                                           const std::string &can_1)
+    static MotorBoards create_motor_boards(
+        const std::array<std::string, N_MOTOR_BOARDS> &can_ports)
     {
         // setup can buses -----------------------------------------------------
-        std::array<std::shared_ptr<blmc_drivers::CanBus>, 2> can_buses;
-        can_buses[0] = std::make_shared<blmc_drivers::CanBus>(can_0);
-        can_buses[1] = std::make_shared<blmc_drivers::CanBus>(can_1);
+        std::array<std::shared_ptr<blmc_drivers::CanBus>, N_MOTOR_BOARDS>
+            can_buses;
+        for (size_t i = 0; i < can_buses.size(); i++)
+        {
+            can_buses[i] = std::make_shared<blmc_drivers::CanBus>(can_ports[i]);
+        }
 
         // set up motor boards -------------------------------------------------
         MotorBoards motor_boards;
-        for (size_t i = 0; i < 2; i++)
+        for (size_t i = 0; i < motor_boards.size(); i++)
         {
             motor_boards[i] = std::make_shared<blmc_drivers::CanBusMotorBoard>(
-                can_buses[i], 1000,
-                10);  /// \TODO: reduce the timeout further!!
+                can_buses[i], 1000, 10);
+            /// \TODO: reduce the timeout further!!
         }
-        for (size_t i = 0; i < 2; i++)
+
+        for (size_t i = 0; i < motor_boards.size(); i++)
         {
             motor_boards[i]->wait_until_ready();
         }
@@ -81,34 +152,6 @@ public:
     Vector get_measured_index_angles() const
     {
         return joint_modules_.get_measured_index_angles();
-    }
-
-protected:
-    RealFingerDriver(const Motors &motors)
-        : RobotDriver(0.003, 0.005),
-          joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
-                         Vector::Zero())
-    {
-    }
-
-protected:
-    Action apply_action(const Action &desired_action) override
-    {
-        double start_time_sec = real_time_tools::Timer::get_current_time_sec();
-
-        Observation observation = get_latest_observation();
-        Vector kd(0.08, 0.08, 0.04);
-        double max_torque = 0.36;
-        Action applied_action =
-            mct::clamp(desired_action, -max_torque, max_torque);
-        applied_action = applied_action - kd.cwiseProduct(observation.velocity);
-        applied_action = mct::clamp(applied_action, -max_torque, max_torque);
-
-        joint_modules_.set_torques(applied_action);
-        joint_modules_.send_torques();
-        real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
-
-        return applied_action;
     }
 
 public:
@@ -122,17 +165,6 @@ public:
     }
 
 protected:
-    void shutdown() override
-    {
-        for (size_t i = 0; i < motor_boards_.size(); i++)
-        {
-            motor_boards_[i]->pause_motors();
-        }
-    }
-
-protected:
-    Eigen::Vector3d max_angles_;
-
     static Motors create_motors(const MotorBoards &motor_boards)
     {
         // set up motors -------------------------------------------------------
@@ -143,6 +175,48 @@ protected:
 
         return motors;
     }
+
+    NJointBlmcRobotDriver(const Motors &motors,
+                      const MotorParameters &motor_parameters,
+                      const double max_action_duration_s,
+                      const double max_inter_action_duration_s)
+        : robot_interfaces::RobotDriver<Action, Observation>(
+              max_action_duration_s, max_inter_action_duration_s),
+          joint_modules_(motors,
+                         motor_parameters.torque_constant_NmpA * Vector::Ones(),
+                         motor_parameters.gear_ratio * Vector::Ones(),
+                         Vector::Zero())
+    {
+    }
+
+    Action apply_action(const Action &desired_action) override
+    {
+        double start_time_sec = real_time_tools::Timer::get_current_time_sec();
+
+        Observation observation = get_latest_observation();
+        Action applied_action =
+            mct::clamp(desired_action, -max_torque_Nm_, max_torque_Nm_);
+        applied_action =
+            applied_action - safety_kd_.cwiseProduct(observation.velocity);
+        applied_action =
+            mct::clamp(applied_action, -max_torque_Nm_, max_torque_Nm_);
+
+        joint_modules_.set_torques(applied_action);
+        joint_modules_.send_torques();
+        real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
+
+        return applied_action;
+    }
+
+    void shutdown() override
+    {
+        for (size_t i = 0; i < motor_boards_.size(); i++)
+        {
+            motor_boards_[i]->pause_motors();
+        }
+    }
+
+    virtual CalibrationParameters get_calibration_parameters() = 0;
 
     /// \todo: calibrate needs to be cleaned and should probably not be here
     /// there are two identical copies in disentanglement_platform and finger,
@@ -172,12 +246,14 @@ protected:
      *
      * @param torque_ratio Ratio of max. torque that is used to move the joints.
      * @param home_offset_rad Offset between the home position and the desired
-     * zero
-     *                    position.
+     *     zero position.
      */
     bool home_on_index_after_negative_end_stop(
         double torque_ratio, Vector home_offset_rad = Vector::Zero())
     {
+        // TODO this can be dangerous in generic NJointBlmcRobotDriver as not all
+        // robots have end stops!
+
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
         /// torque limitation in the motor this would be very unsafe
@@ -246,8 +322,10 @@ protected:
      *     procedure is aborted. Unit: Number of control loop cycles.
      * @return True if goal position is reached, false if timeout is exceeded.
      */
-    bool move_to_position(const Vector &goal_pos, const double kp,
-                          const double kd, const double tolerance,
+    bool move_to_position(const Vector &goal_pos,
+                          const double kp,
+                          const double kd,
+                          const double tolerance,
                           const uint32_t timeout_cycles)
     {
         /// \todo: this relies on the safety check in the motor right now,
@@ -272,18 +350,6 @@ protected:
             // we implement here a small PD control at the current level
             desired_torque = kp * position_error - kd * velocity;
 
-#ifdef VERBOSE
-            if (cycle_count % 100 == 0)
-            {
-                rt_printf(
-                    "--\n"
-                    "position error: %10.5f, %10.5f, %10.5f\n"
-                    "velocity:       %10.5f, %10.5f, %10.5f\n",
-                    position_error[0], position_error[1], position_error[2],
-                    velocity[0], velocity[1], velocity[2]);
-            }
-#endif
-
             // Check if the goal is reached (position error below tolerance and
             // velocity close to zero).
             constexpr double ZERO_VELOCITY = 1e-4;
@@ -297,46 +363,30 @@ protected:
     }
 
     /**
-     * @brief this is an initial calibration procedure executed before the
-     * actual control loop to have angle readings in an absolute coordinate
-     * frame.
+     * @brief Find home position of all joints and move to start position.
      *
-     * The finger reaches its joint limits by applying a constant negative
-     * torque simultaneously in all the joints. Be aware that this procedure
-     * assumes safe motors where the maximum velocities are constrained.
+     * Homes all joints using home_on_index_after_negative_end_stop.  When
+     * finished, move the joint to the starting position (defined in
+     * `starting_position_rad_`).
      *
-     * The calibration procedure is finished once the joint velocities are zero
-     * according to a moving average estimation of them.
      */
     void calibrate()
     {
-        constexpr double TORQUE_RATIO = 0.6;
-        constexpr double CONTROL_GAIN_KP = 0.4;
-        constexpr double CONTROL_GAIN_KD = 0.0025;
-        constexpr double POSITION_TOLERANCE_RAD = 0.2;
-        constexpr double MOVE_TIMEOUT = 2000;
+        const CalibrationParameters params = get_calibration_parameters();
 
-        // Offset between home position and zero.  Defined such that the zero
-        // position is at the negative end stop (for compatibility with old
-        // homing method).
-        Vector home_offset_rad;
-        home_offset_rad << -0.54, -0.17, 0.0;
+        joint_modules_.set_position_control_gains(params.control_gain_kp,
+                                                  params.control_gain_kd);
 
-        // Start position to which the robot moves after homing.
-        Vector starting_position_rad;
-        starting_position_rad << 1.5, 1.5, 3.0;
-
-        joint_modules_.set_position_control_gains(CONTROL_GAIN_KP,
-                                                  CONTROL_GAIN_KD);
-
-        bool is_homed = home_on_index_after_negative_end_stop(TORQUE_RATIO,
-                                                              home_offset_rad);
+        bool is_homed = home_on_index_after_negative_end_stop(
+            params.torque_ratio, home_offset_rad_);
 
         if (is_homed)
         {
-            bool reached_goal = move_to_position(
-                starting_position_rad, CONTROL_GAIN_KP, CONTROL_GAIN_KD,
-                POSITION_TOLERANCE_RAD, MOVE_TIMEOUT);
+            bool reached_goal = move_to_position(starting_position_rad_,
+                                                 params.control_gain_kp,
+                                                 params.control_gain_kd,
+                                                 params.position_tolerance_rad,
+                                                 params.move_timeout);
             if (!reached_goal)
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
@@ -344,30 +394,87 @@ protected:
         }
     }
 
-private:
-    /// todo: this should probably go away
-    double max_torque_;
+protected:
+    /**
+     * \brief Offset between home position and zero.
+     *
+     * Defined such that the zero position is at the negative end stop (for
+     * compatibility with old homing method).
+     */
+    Vector home_offset_rad_ = Vector::Zero();
 
-    BlmcJointModules<3> joint_modules_;
+    //! \brief Start position to which the robot moves after homing.
+    Vector starting_position_rad_ = Vector::Zero();
+
+    //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
+    Vector safety_kd_ = Vector::Zero();
+
+    /// todo: this should probably go away
+    double max_torque_Nm_;
+
+    BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
 
-    /// todo: this should probably go away
-
 public:
-    Vector get_max_torques() const { return max_torque_ * Vector::Ones(); }
+    Vector get_max_torques() const { return max_torque_Nm_ * Vector::Ones(); }
 };
 
-robot_interfaces::finger::BackendPtr create_real_finger_backend(
-    const std::string &can_0, const std::string &can_1,
-    robot_interfaces::finger::DataPtr robot_data)
+class RealFingerDriver : public NJointBlmcRobotDriver<3, 2>
 {
-    std::shared_ptr<
-        robot_interfaces::RobotDriver<robot_interfaces::finger::Action,
-                                      robot_interfaces::finger::Observation>>
+public:
+    RealFingerDriver(const std::string &can_0, const std::string &can_1)
+        : NJointBlmcRobotDriver<3, 2>({can_0, can_1},
+                                  {.max_current_A = 2.0,
+                                   .torque_constant_NmpA = 0.02,
+                                   .gear_ratio = 9.0},
+                                  0.003,
+                                  0.005)
+    {
+        initialize();
+    }
+
+    // TODO do we need this constructor?
+    // RealFingerDriver(const MotorBoards &motor_boards)
+    //    : NJointBlmcRobotDriver<3, 2>(motor_boards, 0.003, 0.005)
+    //{
+    //    initialize();
+    //}
+
+protected:
+    // this is needed to be able to overload the method above.
+    using NJointBlmcRobotDriver<3, 2>::calibrate;
+
+    void initialize()
+    {
+        safety_kd_ << 0.08, 0.08, 0.04;
+        home_offset_rad_ << -0.54, -0.17, 0.0;
+        starting_position_rad_ << 1.5, 1.5, 3.0;
+    }
+
+    CalibrationParameters get_calibration_parameters()
+    {
+        return {
+            .torque_ratio = 0.6,
+            .control_gain_kp = 0.4,
+            .control_gain_kd = 0.0025,
+            .position_tolerance_rad = 0.2,
+            .move_timeout = 2000,
+        };
+    }
+};
+
+robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
+    const std::string &can_0,
+    const std::string &can_1,
+    robot_interfaces::FingerTypes::DataPtr robot_data)
+{
+    std::shared_ptr<robot_interfaces::RobotDriver<
+        robot_interfaces::FingerTypes::Action,
+        robot_interfaces::FingerTypes::Observation>>
         robot = std::make_shared<RealFingerDriver>(can_0, can_1);
 
-    auto backend =
-        std::make_shared<robot_interfaces::finger::Backend>(robot, robot_data);
+    auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
+        robot, robot_data);
     backend->set_max_action_repetitions(-1);
 
     return backend;
