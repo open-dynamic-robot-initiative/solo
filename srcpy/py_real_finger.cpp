@@ -28,4 +28,5 @@ PYBIND11_MODULE(py_real_finger, m)
 {
     pybind11::module::import("py_finger");
     m.def("create_real_finger_backend", &create_real_finger_backend);
+    m.def("create_one_joint_backend", &create_one_joint_backend);
 }

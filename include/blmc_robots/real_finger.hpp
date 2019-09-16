@@ -452,4 +452,65 @@ robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
     return backend;
 }
 
+
+// FIXME move this out of here!
+
+class OneJointDriver : public NJointBlmcRobotDriver<1, 1>
+{
+public:
+
+    OneJointDriver(const std::string &can_port)
+        : OneJointDriver(create_motor_boards({can_port}))
+    {
+    }
+
+private:
+    OneJointDriver(const MotorBoards &motor_boards)
+        : NJointBlmcRobotDriver<1, 1>(motor_boards,
+                                      create_motors(motor_boards),
+                                      { // MotorParameters
+                                          .max_current_A = 2.0,
+                                          .torque_constant_NmpA = 0.02,
+                                          .gear_ratio = 9.0,
+                                      },
+                                      { // CalibrationParameters
+                                          .torque_ratio = 0.6,
+                                          .control_gain_kp = 3.0,
+                                          .control_gain_kd = 0.03,
+                                          .position_tolerance_rad = 0.05,
+                                          .move_timeout = 2000,
+                                      },
+                                      Vector(0.08))
+    {
+    }
+
+    static Motors create_motors(const MotorBoards &motor_boards)
+    {
+        // set up motors
+        Motors motors;
+        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
+
+        return motors;
+    }
+};
+
+robot_interfaces::NJointRobotTypes<1>::BackendPtr create_one_joint_backend(
+    const std::string &can_0,
+    robot_interfaces::NJointRobotTypes<1>::DataPtr robot_data)
+{
+    constexpr double MAX_ACTION_DURATION_S = 0.003;
+    constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
+
+    std::shared_ptr<robot_interfaces::RobotDriver<
+        robot_interfaces::NJointRobotTypes<1>::Action,
+        robot_interfaces::NJointRobotTypes<1>::Observation>>
+        robot = std::make_shared<OneJointDriver>(can_0);
+
+    auto backend = std::make_shared<robot_interfaces::NJointRobotTypes<1>::Backend>(
+        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+    backend->set_max_action_repetitions(-1);
+
+    return backend;
+}
+
 }  // namespace blmc_robots
