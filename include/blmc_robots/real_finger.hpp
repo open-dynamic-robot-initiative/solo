@@ -191,6 +191,11 @@ protected:
 
     Action apply_action(const Action &desired_action) override
     {
+        if (!is_calibrated_)
+        {
+            throw std::runtime_error("Robot needs to be calibrated before applying actions.  Run the `calibrate()` method.");
+        }
+
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
         Observation observation = get_latest_observation();
@@ -217,10 +222,6 @@ protected:
     }
 
     virtual CalibrationParameters get_calibration_parameters() = 0;
-
-    /// \todo: calibrate needs to be cleaned and should probably not be here
-    /// there are two identical copies in disentanglement_platform and finger,
-    /// which is disgusting.
 
     /**
      * @brief Homing on negative end stop and encoder index.
@@ -377,6 +378,11 @@ protected:
         joint_modules_.set_position_control_gains(params.control_gain_kp,
                                                   params.control_gain_kd);
 
+        // For the calibration procedure we need to set the is_calibrated_ flag
+        // otherwise the robot cannot move during calibration.
+        // TODO: this is dirty, find a better solution.
+        is_calibrated_ = true;
+
         bool is_homed = home_on_index_after_negative_end_stop(
             params.torque_ratio, home_offset_rad_);
 
@@ -391,7 +397,15 @@ protected:
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
             }
+
+            is_calibrated_ = reached_goal;
         }
+        else
+        {
+            // calibration failed
+            is_calibrated_ = false;
+        }
+
     }
 
 protected:
@@ -414,6 +428,8 @@ protected:
 
     BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
+
+    bool is_calibrated_ = false;
 
 public:
     Vector get_max_torques() const { return max_torque_Nm_ * Vector::Ones(); }
@@ -441,8 +457,6 @@ public:
     //}
 
 protected:
-    // this is needed to be able to overload the method above.
-    using NJointBlmcRobotDriver<3, 2>::calibrate;
 
     void initialize()
     {
