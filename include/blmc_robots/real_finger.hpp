@@ -114,10 +114,7 @@ public:
                          motor_parameters.torque_constant_NmpA *
                          motor_parameters.gear_ratio;
 
-        for (size_t i = 0; i < motor_boards_.size(); i++)
-        {
-            motor_boards_[i]->pause_motors();
-        }
+        pause_motors();
     }
 
     static MotorBoards create_motor_boards(
@@ -146,6 +143,14 @@ public:
         }
 
         return motor_boards;
+    }
+
+    void pause_motors()
+    {
+        for (size_t i = 0; i < motor_boards_.size(); i++)
+        {
+            motor_boards_[i]->pause_motors();
+        }
     }
 
     Vector get_measured_index_angles() const
@@ -216,10 +221,7 @@ protected:
 
     void shutdown() override
     {
-        for (size_t i = 0; i < motor_boards_.size(); i++)
-        {
-            motor_boards_[i]->pause_motors();
-        }
+        pause_motors();
     }
 
     virtual CalibrationParameters get_calibration_parameters() = 0;
@@ -406,6 +408,8 @@ protected:
             // calibration failed
             is_calibrated_ = false;
         }
+
+        pause_motors();
     }
 
 protected:
@@ -432,7 +436,10 @@ protected:
     bool is_calibrated_ = false;
 
 public:
-    Vector get_max_torques() const { return max_torque_Nm_ * Vector::Ones(); }
+    Vector get_max_torques() const
+    {
+        return max_torque_Nm_ * Vector::Ones();
+    }
 };
 
 class RealFingerDriver : public NJointBlmcRobotDriver<3, 2>
