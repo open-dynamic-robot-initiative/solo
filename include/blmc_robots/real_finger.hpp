@@ -59,8 +59,6 @@ struct CalibrationParameters
     double move_timeout;
 };
 
-
-// TODO add "BLMC" in the name?
 /**
  * @brief Base class for simple n-joint BLMC robots.
  *
@@ -89,25 +87,26 @@ public:
                        N_MOTOR_BOARDS>
         MotorBoards;
 
-    NJointBlmcRobotDriver(const std::array<std::string, N_MOTOR_BOARDS> &can_ports,
-                      const MotorParameters &motor_parameters,
-                      const double max_action_duration_s,
-                      const double max_inter_action_duration_s)
+    NJointBlmcRobotDriver(
+        const std::array<std::string, N_MOTOR_BOARDS> &can_ports,
+        const MotorParameters &motor_parameters,
+        const double max_action_duration_s,
+        const double max_inter_action_duration_s)
         : NJointBlmcRobotDriver(create_motor_boards(can_ports),
-                            motor_parameters,
-                            max_action_duration_s,
-                            max_inter_action_duration_s)
+                                motor_parameters,
+                                max_action_duration_s,
+                                max_inter_action_duration_s)
     {
     }
 
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
-                      const MotorParameters &motor_parameters,
-                      const double max_action_duration_s,
-                      const double max_inter_action_duration_s)
+                          const MotorParameters &motor_parameters,
+                          const double max_action_duration_s,
+                          const double max_inter_action_duration_s)
         : NJointBlmcRobotDriver(create_motors(motor_boards),
-                            motor_parameters,
-                            max_action_duration_s,
-                            max_inter_action_duration_s)
+                                motor_parameters,
+                                max_action_duration_s,
+                                max_inter_action_duration_s)
     {
         motor_boards_ = motor_boards;
 
@@ -177,9 +176,9 @@ protected:
     }
 
     NJointBlmcRobotDriver(const Motors &motors,
-                      const MotorParameters &motor_parameters,
-                      const double max_action_duration_s,
-                      const double max_inter_action_duration_s)
+                          const MotorParameters &motor_parameters,
+                          const double max_action_duration_s,
+                          const double max_inter_action_duration_s)
         : robot_interfaces::RobotDriver<Action, Observation>(
               max_action_duration_s, max_inter_action_duration_s),
           joint_modules_(motors,
@@ -193,7 +192,9 @@ protected:
     {
         if (!is_calibrated_)
         {
-            throw std::runtime_error("Robot needs to be calibrated before applying actions.  Run the `calibrate()` method.");
+            throw std::runtime_error(
+                "Robot needs to be calibrated before applying actions.  Run "
+                "the `calibrate()` method.");
         }
 
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
@@ -252,8 +253,8 @@ protected:
     bool home_on_index_after_negative_end_stop(
         double torque_ratio, Vector home_offset_rad = Vector::Zero())
     {
-        // TODO this can be dangerous in generic NJointBlmcRobotDriver as not all
-        // robots have end stops!
+        // TODO this can be dangerous in generic NJointBlmcRobotDriver as not
+        // all robots have end stops!
 
         /// \todo: this relies on the safety check in the motor right now,
         /// which is maybe not the greatest idea. Without the velocity and
@@ -405,7 +406,6 @@ protected:
             // calibration failed
             is_calibrated_ = false;
         }
-
     }
 
 protected:
@@ -440,11 +440,11 @@ class RealFingerDriver : public NJointBlmcRobotDriver<3, 2>
 public:
     RealFingerDriver(const std::string &can_0, const std::string &can_1)
         : NJointBlmcRobotDriver<3, 2>({can_0, can_1},
-                                  {.max_current_A = 2.0,
-                                   .torque_constant_NmpA = 0.02,
-                                   .gear_ratio = 9.0},
-                                  0.003,
-                                  0.005)
+                                      {.max_current_A = 2.0,
+                                       .torque_constant_NmpA = 0.02,
+                                       .gear_ratio = 9.0},
+                                      0.003,
+                                      0.005)
     {
         initialize();
     }
@@ -457,7 +457,6 @@ public:
     //}
 
 protected:
-
     void initialize()
     {
         safety_kd_ << 0.08, 0.08, 0.04;
