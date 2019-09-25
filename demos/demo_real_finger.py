@@ -14,6 +14,7 @@ def main():
                                                                finger_data)
     finger = py_finger.Frontend(finger_data)
 
+    finger_backend.calibrate()
 
     kp = 5
     kd = 0
