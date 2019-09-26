@@ -90,8 +90,10 @@ public:
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
+                          const CalibrationParameters &calibration_parameters,
                           const double max_action_duration_s,
-                          const double max_inter_action_duration_s)
+                          const double max_inter_action_duration_s,
+                          const Vector &safety_kd)
         : robot_interfaces::RobotDriver<Action, Observation>(
               max_action_duration_s, max_inter_action_duration_s),
           joint_modules_(motors,
@@ -101,7 +103,9 @@ public:
           motor_boards_(motor_boards),
           max_torque_Nm_(motor_parameters.max_current_A *
                          motor_parameters.torque_constant_NmpA *
-                         motor_parameters.gear_ratio)
+                         motor_parameters.gear_ratio),
+          calibration_parameters_(calibration_parameters),
+          safety_kd_(safety_kd)
     {
         pause_motors();
     }
@@ -188,8 +192,6 @@ protected:
     {
         pause_motors();
     }
-
-    virtual CalibrationParameters get_calibration_parameters() = 0;
 
     /**
      * @brief Homing on negative end stop and encoder index.
@@ -336,15 +338,14 @@ protected:
      *
      * Homes all joints using home_on_index_after_negative_end_stop.  When
      * finished, move the joint to the starting position (defined in
-     * `starting_position_rad_`).
+     * `initial_position_rad_`).
      *
      */
     void calibrate()
     {
-        const CalibrationParameters params = get_calibration_parameters();
-
-        joint_modules_.set_position_control_gains(params.control_gain_kp,
-                                                  params.control_gain_kd);
+        joint_modules_.set_position_control_gains(
+            calibration_parameters_.control_gain_kp,
+            calibration_parameters_.control_gain_kd);
 
         // For the calibration procedure we need to set the is_calibrated_ flag
         // otherwise the robot cannot move during calibration.
@@ -352,15 +353,16 @@ protected:
         is_calibrated_ = true;
 
         bool is_homed = home_on_index_after_negative_end_stop(
-            params.torque_ratio, home_offset_rad_);
+            calibration_parameters_.torque_ratio, home_offset_rad_);
 
         if (is_homed)
         {
-            bool reached_goal = move_to_position(starting_position_rad_,
-                                                 params.control_gain_kp,
-                                                 params.control_gain_kd,
-                                                 params.position_tolerance_rad,
-                                                 params.move_timeout);
+            bool reached_goal = move_to_position(
+                initial_position_rad_,
+                calibration_parameters_.control_gain_kp,
+                calibration_parameters_.control_gain_kd,
+                calibration_parameters_.position_tolerance_rad,
+                calibration_parameters_.move_timeout);
             if (!reached_goal)
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
@@ -387,16 +389,18 @@ protected:
     Vector home_offset_rad_ = Vector::Zero();
 
     //! \brief Start position to which the robot moves after homing.
-    Vector starting_position_rad_ = Vector::Zero();
+    Vector initial_position_rad_ = Vector::Zero();
 
     //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
-    Vector safety_kd_ = Vector::Zero();
+    Vector safety_kd_;
 
     /// todo: this should probably go away
     double max_torque_Nm_;
 
     BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
+
+    CalibrationParameters calibration_parameters_;
 
     bool is_calibrated_ = false;
 
@@ -419,13 +423,24 @@ private:
     RealFingerDriver(const MotorBoards &motor_boards)
         : NJointBlmcRobotDriver<3, 2>(motor_boards,
                                       create_motors(motor_boards),
-                                      {.max_current_A = 2.0,
-                                       .torque_constant_NmpA = 0.02,
-                                       .gear_ratio = 9.0},
+                                      { // MotorParameters
+                                          .max_current_A = 2.0,
+                                          .torque_constant_NmpA = 0.02,
+                                          .gear_ratio = 9.0,
+                                      },
+                                      { // CalibrationParameters
+                                          .torque_ratio = 0.6,
+                                          .control_gain_kp = 3.0,
+                                          .control_gain_kd = 0.03,
+                                          .position_tolerance_rad = 0.05,
+                                          .move_timeout = 2000,
+                                      },
                                       0.003,
-                                      0.005)
+                                      0.005,
+                                      Vector(0.08, 0.08, 0.04))
     {
-        initialize();
+        home_offset_rad_ << -0.54, -0.17, 0.0;
+        initial_position_rad_ << 1.5, 1.5, 3.0;
     }
 
     static Motors create_motors(const MotorBoards &motor_boards)
@@ -437,24 +452,6 @@ private:
         motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
 
         return motors;
-    }
-
-    void initialize()
-    {
-        safety_kd_ << 0.08, 0.08, 0.04;
-        home_offset_rad_ << -0.54, -0.17, 0.0;
-        starting_position_rad_ << 1.5, 1.5, 3.0;
-    }
-
-    CalibrationParameters get_calibration_parameters()
-    {
-        return {
-            .torque_ratio = 0.6,
-            .control_gain_kp = 3.0,
-            .control_gain_kd = 0.03,
-            .position_tolerance_rad = 0.05,
-            .move_timeout = 2000,
-        };
     }
 };
 
