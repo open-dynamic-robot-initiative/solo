@@ -87,33 +87,22 @@ public:
                        N_MOTOR_BOARDS>
         MotorBoards;
 
-    NJointBlmcRobotDriver(
-        const std::array<std::string, N_MOTOR_BOARDS> &can_ports,
-        const MotorParameters &motor_parameters,
-        const double max_action_duration_s,
-        const double max_inter_action_duration_s)
-        : NJointBlmcRobotDriver(create_motor_boards(can_ports),
-                                motor_parameters,
-                                max_action_duration_s,
-                                max_inter_action_duration_s)
-    {
-    }
-
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
+                          const Motors &motors,
                           const MotorParameters &motor_parameters,
                           const double max_action_duration_s,
                           const double max_inter_action_duration_s)
-        : NJointBlmcRobotDriver(create_motors(motor_boards),
-                                motor_parameters,
-                                max_action_duration_s,
-                                max_inter_action_duration_s)
-    {
-        motor_boards_ = motor_boards;
-
-        max_torque_Nm_ = motor_parameters.max_current_A *
+        : robot_interfaces::RobotDriver<Action, Observation>(
+              max_action_duration_s, max_inter_action_duration_s),
+          joint_modules_(motors,
+                         motor_parameters.torque_constant_NmpA * Vector::Ones(),
+                         motor_parameters.gear_ratio * Vector::Ones(),
+                         Vector::Zero()),
+          motor_boards_(motor_boards),
+          max_torque_Nm_(motor_parameters.max_current_A *
                          motor_parameters.torque_constant_NmpA *
-                         motor_parameters.gear_ratio;
-
+                         motor_parameters.gear_ratio)
+    {
         pause_motors();
     }
 
@@ -169,30 +158,6 @@ public:
     }
 
 protected:
-    static Motors create_motors(const MotorBoards &motor_boards)
-    {
-        // set up motors -------------------------------------------------------
-        Motors motors;
-        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
-        motors[1] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
-        motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
-
-        return motors;
-    }
-
-    NJointBlmcRobotDriver(const Motors &motors,
-                          const MotorParameters &motor_parameters,
-                          const double max_action_duration_s,
-                          const double max_inter_action_duration_s)
-        : robot_interfaces::RobotDriver<Action, Observation>(
-              max_action_duration_s, max_inter_action_duration_s),
-          joint_modules_(motors,
-                         motor_parameters.torque_constant_NmpA * Vector::Ones(),
-                         motor_parameters.gear_ratio * Vector::Ones(),
-                         Vector::Zero())
-    {
-    }
-
     Action apply_action(const Action &desired_action) override
     {
         if (!is_calibrated_)
@@ -446,7 +411,14 @@ class RealFingerDriver : public NJointBlmcRobotDriver<3, 2>
 {
 public:
     RealFingerDriver(const std::string &can_0, const std::string &can_1)
-        : NJointBlmcRobotDriver<3, 2>({can_0, can_1},
+        : RealFingerDriver(create_motor_boards({can_0, can_1}))
+    {
+    }
+
+private:
+    RealFingerDriver(const MotorBoards &motor_boards)
+        : NJointBlmcRobotDriver<3, 2>(motor_boards,
+                                      create_motors(motor_boards),
                                       {.max_current_A = 2.0,
                                        .torque_constant_NmpA = 0.02,
                                        .gear_ratio = 9.0},
@@ -456,14 +428,17 @@ public:
         initialize();
     }
 
-    // TODO do we need this constructor?
-    // RealFingerDriver(const MotorBoards &motor_boards)
-    //    : NJointBlmcRobotDriver<3, 2>(motor_boards, 0.003, 0.005)
-    //{
-    //    initialize();
-    //}
+    static Motors create_motors(const MotorBoards &motor_boards)
+    {
+        // set up motors
+        Motors motors;
+        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
+        motors[1] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
+        motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
 
-protected:
+        return motors;
+    }
+
     void initialize()
     {
         safety_kd_ << 0.08, 0.08, 0.04;
