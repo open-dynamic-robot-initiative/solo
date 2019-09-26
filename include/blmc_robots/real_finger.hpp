@@ -164,17 +164,17 @@ public:
 protected:
     Action apply_action(const Action &desired_action) override
     {
-        if (!is_calibrated_)
+        if (!is_initialized_)
         {
             throw std::runtime_error(
-                "Robot needs to be calibrated before applying actions.  Run "
-                "the `calibrate()` method.");
+                "Robot needs to be initialized before applying actions.  Run "
+                "the `initialize()` method.");
         }
 
-        return apply_action_uncalibrated(desired_action);
+        return apply_action_uninitialized(desired_action);
     }
 
-    Action apply_action_uncalibrated(const Action &desired_action)
+    Action apply_action_uninitialized(const Action &desired_action)
     {
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
@@ -255,7 +255,7 @@ protected:
                 STOP_VELOCITY))
         {
             Vector torques = -1 * torque_ratio * get_max_torques();
-            apply_action_uncalibrated(torques);
+            apply_action_uninitialized(torques);
             Vector abs_velocities =
                 get_latest_observation().velocity.cwiseAbs();
 
@@ -335,16 +335,16 @@ protected:
      * `initial_position_rad_`).
      *
      */
-    void calibrate() override
+    void initialize() override
     {
         joint_modules_.set_position_control_gains(
             calibration_parameters_.control_gain_kp,
             calibration_parameters_.control_gain_kd);
 
-        is_calibrated_ = home_on_index_after_negative_end_stop(
+        is_initialized_ = home_on_index_after_negative_end_stop(
             calibration_parameters_.torque_ratio, home_offset_rad_);
 
-        if (is_calibrated_)
+        if (is_initialized_)
         {
             bool reached_goal = move_to_position(
                 initial_position_rad_,
@@ -384,7 +384,7 @@ protected:
 
     CalibrationParameters calibration_parameters_;
 
-    bool is_calibrated_ = false;
+    bool is_initialized_ = false;
 
 public:
     Vector get_max_torques() const

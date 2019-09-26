@@ -12,7 +12,7 @@ finger_backend = py_real_finger.create_real_finger_backend("can0", "can1",
 finger = py_finger.Frontend(finger_data)
 
 
-finger_backend.calibrate()
+finger_backend.initialize()
 
 # TODO this makes the application hang
 #t = finger.get_current_time_index()
