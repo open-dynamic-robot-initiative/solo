@@ -230,10 +230,6 @@ protected:
         // TODO this can be dangerous in generic NJointBlmcRobotDriver as not
         // all robots have end stops!
 
-        /// \todo: this relies on the safety check in the motor right now,
-        /// which is maybe not the greatest idea. Without the velocity and
-        /// torque limitation in the motor this would be very unsafe
-
         //! Min. number of steps when moving to the end stop.
         constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
         //! Size of the window when computing average velocity.
@@ -273,9 +269,6 @@ protected:
             step_count++;
         }
 
-        // need to "pause" as the desired actions queue is not filled while
-        // homing is running.
-
         // Home on encoder index
         HomingReturnCode homing_status = joint_modules_.execute_homing(
             SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad);
@@ -304,10 +297,6 @@ protected:
                           const double tolerance,
                           const uint32_t timeout_cycles)
     {
-        /// \todo: this relies on the safety check in the motor right now,
-        /// which is maybe not the greatest idea. Without the velocity and
-        /// torque limitation in the motor this would be very unsafe
-
         bool reached_goal = false;
         int cycle_count = 0;
         Vector desired_torque = Vector::Zero();
