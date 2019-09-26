@@ -171,6 +171,11 @@ protected:
                 "the `calibrate()` method.");
         }
 
+        return apply_action_uncalibrated(desired_action);
+    }
+
+    Action apply_action_uncalibrated(const Action &desired_action)
+    {
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
         Observation observation = get_latest_observation();
@@ -254,7 +259,7 @@ protected:
                 STOP_VELOCITY))
         {
             Vector torques = -1 * torque_ratio * get_max_torques();
-            apply_action(torques);
+            apply_action_uncalibrated(torques);
             Vector abs_velocities =
                 get_latest_observation().velocity.cwiseAbs();
 
@@ -341,21 +346,16 @@ protected:
      * `initial_position_rad_`).
      *
      */
-    void calibrate()
+    void calibrate() override
     {
         joint_modules_.set_position_control_gains(
             calibration_parameters_.control_gain_kp,
             calibration_parameters_.control_gain_kd);
 
-        // For the calibration procedure we need to set the is_calibrated_ flag
-        // otherwise the robot cannot move during calibration.
-        // TODO: this is dirty, find a better solution.
-        is_calibrated_ = true;
-
-        bool is_homed = home_on_index_after_negative_end_stop(
+        is_calibrated_ = home_on_index_after_negative_end_stop(
             calibration_parameters_.torque_ratio, home_offset_rad_);
 
-        if (is_homed)
+        if (is_calibrated_)
         {
             bool reached_goal = move_to_position(
                 initial_position_rad_,
@@ -367,13 +367,6 @@ protected:
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
             }
-
-            is_calibrated_ = reached_goal;
-        }
-        else
-        {
-            // calibration failed
-            is_calibrated_ = false;
         }
 
         pause_motors();
