@@ -19,7 +19,7 @@
 using namespace blmc_robots;
 using namespace robot_interfaces;
 
-typedef std::tuple<std::shared_ptr<finger::Frontend>,
+typedef std::tuple<std::shared_ptr<FingerTypes::Frontend>,
                    std::shared_ptr<Sliders<3>>>
     FingerAndSliders;
 
@@ -37,10 +37,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     double kp = 0.2;
     double kd = 0.0025;
 
-    finger::Action desired_torque = finger::Action::Zero();
+    FingerTypes::Action desired_torque = FingerTypes::Action::Zero();
     while (true)
     {
-        finger::TimeIndex t = finger->append_desired_action(desired_torque);
+        TimeIndex t = finger->append_desired_action(desired_torque);
         desired_torque =
             kp * (sliders->get_positions() - finger->get_observation(t).angle) -
             kd * finger->get_observation(t).velocity;

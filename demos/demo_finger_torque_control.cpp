@@ -20,14 +20,14 @@ using namespace blmc_robots;
 using namespace robot_interfaces;
 
 
-typedef std::tuple<std::shared_ptr<finger::Frontend>,
+typedef std::tuple<std::shared_ptr<FingerTypes::Frontend>,
                    std::shared_ptr<Sliders<3>>>
     FingerAndSliders;
 
 struct Hardware
 {
     std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, 2> motor_boards;
-    std::shared_ptr<finger::Frontend> finger;
+    std::shared_ptr<FingerTypes::Frontend> finger;
     std::shared_ptr<Sliders<3>> sliders;
 };
 
@@ -39,7 +39,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
     // position controller -----------------------------------------------------
     while (true)
     {
-        finger::TimeIndex t = hardware.finger->append_desired_action(
+        TimeIndex t = hardware.finger->append_desired_action(
             hardware.sliders->get_positions());
 
         hardware.finger->get_observation(t);
