@@ -10,8 +10,7 @@ import py_real_finger
 
 def main():
     finger_data = py_finger.Data()
-    finger_backend = py_real_finger.create_real_finger_backend("can0", "can1",
-                                                               finger_data)
+    finger_backend = py_real_finger.create_real_finger_backend("can0", "can1", finger_data)
     finger = py_finger.Frontend(finger_data)
 
 

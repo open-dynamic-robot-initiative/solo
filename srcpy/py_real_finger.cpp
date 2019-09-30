@@ -28,4 +28,12 @@ PYBIND11_MODULE(py_real_finger, m)
 {
     pybind11::module::import("py_finger");
     m.def("create_real_finger_backend", &create_real_finger_backend);
+
+    pybind11::module::import("py_finger");
+    m.def("create_random_finger_backend", &create_random_finger_backend);
+
+    pybind11::class_<Logger>(m, "Logger")
+    .def(pybind11::init<robot_interfaces::finger::DataPtr>())
+    //.def("write", &Logger::write) -  no definition for a statis void*
+    .def("run", &Logger::run);
 }
