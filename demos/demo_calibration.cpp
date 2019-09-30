@@ -11,106 +11,116 @@
 #include <signal.h>
 #include <atomic>
 
+#include <cmath>
 #include <deque>
 #include <numeric>
-#include <cmath>
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "real_time_tools/timer.hpp"
 
 /**
  * @brief This boolean is here to kill cleanly the application upon ctrl+c
  */
-std::atomic_bool StopDemos (false);
+std::atomic_bool StopDemos(false);
 
 /**
  * @brief This function is the callback upon a ctrl+c call from the terminal.
- * 
- * @param s 
+ *
+ * @param s
  */
-void my_handler(int s){
-  StopDemos = true;
+void my_handler(int s)
+{
+    StopDemos = true;
 }
 
 using namespace blmc_robots;
 
-struct Robot{
-  std::shared_ptr<blmc_drivers::CanBus> can_bus;
-  std::shared_ptr<blmc_drivers::CanBusMotorBoard> can_bus_motor_board;
+struct Robot
+{
+    std::shared_ptr<blmc_drivers::CanBus> can_bus;
+    std::shared_ptr<blmc_drivers::CanBusMotorBoard> can_bus_motor_board;
 
-  std::shared_ptr<blmc_drivers::AnalogSensor> slider_a;
-  std::shared_ptr<blmc_drivers::AnalogSensor> slider_b;
-  std::shared_ptr<blmc_drivers::MotorInterface> motor;
-  
-  std::shared_ptr<BlmcJointModule> joint_module;
+    std::shared_ptr<blmc_drivers::AnalogSensor> slider_a;
+    std::shared_ptr<blmc_drivers::AnalogSensor> slider_b;
+    std::shared_ptr<blmc_drivers::MotorInterface> motor;
 
-  double motor_constant;
-  double gear_ratio;
-  double zero_angle;
-  double angle_zero_to_index;
-  double calibrated_index_angle;
-  bool mechanical_calibration;
-  bool reverse_polarity;
+    std::shared_ptr<BlmcJointModule> joint_module;
+
+    double motor_constant;
+    double gear_ratio;
+    double zero_angle;
+    double angle_zero_to_index;
+    double calibrated_index_angle;
+    bool mechanical_calibration;
+    bool reverse_polarity;
 };
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-  Robot& robot = *(static_cast<Robot*>(robot_void_ptr));
-  robot.angle_zero_to_index = 0.134252;
-  robot.calibrated_index_angle = 0.0;
-  robot.mechanical_calibration = false; // true;
-  robot.joint_module->calibrate(robot.angle_zero_to_index,
-                                robot.calibrated_index_angle,
-                                robot.mechanical_calibration);
+    Robot& robot = *(static_cast<Robot*>(robot_void_ptr));
+    robot.angle_zero_to_index = 0.134252;
+    robot.calibrated_index_angle = 0.0;
+    robot.mechanical_calibration = false;  // true;
+    robot.joint_module->calibrate(robot.angle_zero_to_index,
+                                  robot.calibrated_index_angle,
+                                  robot.mechanical_calibration);
 
-  // real_time_tools::Spinner spinner;
-  // spinner.set_period(0.1);
-  // while(!StopDemos)
-  // {
-  //   rt_printf("current measurement = %f, current index = %f\n", robot.joint_module->get_measured_angle(), robot.joint_module->get_measured_index_angle());
-  //   spinner.spin();
-  // }
-}// end control_loop
+    // real_time_tools::Spinner spinner;
+    // spinner.set_period(0.1);
+    // while(!StopDemos)
+    // {
+    //   rt_printf("current measurement = %f, current index = %f\n",
+    //   robot.joint_module->get_measured_angle(),
+    //   robot.joint_module->get_measured_index_angle()); spinner.spin();
+    // }
+}  // end control_loop
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  // make sure we catch the ctrl+c signal to kill the application properly.
-  struct sigaction sigIntHandler;
-  sigIntHandler.sa_handler = my_handler;
-  sigemptyset(&sigIntHandler.sa_mask);
-  sigIntHandler.sa_flags = 0;
-  sigaction(SIGINT, &sigIntHandler, NULL);
-  StopDemos = false;
+    // make sure we catch the ctrl+c signal to kill the application properly.
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, NULL);
+    StopDemos = false;
 
-  real_time_tools::RealTimeThread thread;
+    real_time_tools::RealTimeThread thread;
 
-  Robot robot;
-  robot.can_bus = std::make_shared<blmc_drivers::CanBus>("can0");
-  robot.can_bus_motor_board = std::make_shared<blmc_drivers::CanBusMotorBoard>(robot.can_bus);
-  robot.slider_a = std::make_shared<blmc_drivers::AnalogSensor>(robot.can_bus_motor_board, 0);
-  robot.slider_b = std::make_shared<blmc_drivers::AnalogSensor>(robot.can_bus_motor_board, 1);
-  robot.motor = std::make_shared<blmc_drivers::Motor>(robot.can_bus_motor_board, 0);
-  robot.motor_constant = 0.025;
-  robot.gear_ratio = 9.0;
-  robot.zero_angle = 0.0;
-  robot.reverse_polarity = true;
-  robot.joint_module = std::make_shared<BlmcJointModule>(
-    robot.motor, robot.motor_constant, robot.gear_ratio, robot.zero_angle, robot.reverse_polarity);
-  
-  robot.can_bus_motor_board->wait_until_ready();
+    Robot robot;
+    robot.can_bus = std::make_shared<blmc_drivers::CanBus>("can0");
+    robot.can_bus_motor_board =
+        std::make_shared<blmc_drivers::CanBusMotorBoard>(robot.can_bus);
+    robot.slider_a = std::make_shared<blmc_drivers::AnalogSensor>(
+        robot.can_bus_motor_board, 0);
+    robot.slider_b = std::make_shared<blmc_drivers::AnalogSensor>(
+        robot.can_bus_motor_board, 1);
+    robot.motor =
+        std::make_shared<blmc_drivers::Motor>(robot.can_bus_motor_board, 0);
+    robot.motor_constant = 0.025;
+    robot.gear_ratio = 9.0;
+    robot.zero_angle = 0.0;
+    robot.reverse_polarity = true;
+    robot.joint_module =
+        std::make_shared<BlmcJointModule>(robot.motor,
+                                          robot.motor_constant,
+                                          robot.gear_ratio,
+                                          robot.zero_angle,
+                                          robot.reverse_polarity);
 
-  char str[256];
+    robot.can_bus_motor_board->wait_until_ready();
 
-  rt_printf("Press enter to launch the calibration \n");
-  std::cin.get (str,256);    // get c-string
+    char str[256];
 
-  rt_printf("controller is set up \n");
+    rt_printf("Press enter to launch the calibration \n");
+    std::cin.get(str, 256);  // get c-string
 
-  thread.create_realtime_thread(&control_loop, &robot);
+    rt_printf("controller is set up \n");
 
-  rt_printf("control loop started \n");
+    thread.create_realtime_thread(&control_loop, &robot);
 
-  thread.join();
+    rt_printf("control loop started \n");
 
-  return 0;
+    thread.join();
+
+    return 0;
 }
-

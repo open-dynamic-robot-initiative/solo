@@ -37,8 +37,8 @@
 namespace blmc_robots
 {
 class RealFingerDriver : public robot_interfaces::RobotDriver<
-                              robot_interfaces::finger::Action,
-                              robot_interfaces::finger::Observation>
+                             robot_interfaces::finger::Action,
+                             robot_interfaces::finger::Observation>
 {
 public:
     typedef robot_interfaces::finger::Action Action;
@@ -81,7 +81,8 @@ public:
         for (size_t i = 0; i < 2; i++)
         {
             motor_boards[i] = std::make_shared<blmc_drivers::CanBusMotorBoard>(
-                can_buses[i], 1000,
+                can_buses[i],
+                1000,
                 10);  /// \TODO: reduce the timeout further!!
         }
         for (size_t i = 0; i < 2; i++)
@@ -100,7 +101,9 @@ public:
 protected:
     RealFingerDriver(const Motors &motors)
         : RobotDriver(0.003, 0.005),
-          joint_modules_(motors, 0.02 * Vector::Ones(), 9.0 * Vector::Ones(),
+          joint_modules_(motors,
+                         0.02 * Vector::Ones(),
+                         9.0 * Vector::Ones(),
                          Vector::Zero())
     {
     }
@@ -260,8 +263,10 @@ protected:
      *     procedure is aborted. Unit: Number of control loop cycles.
      * @return True if goal position is reached, false if timeout is exceeded.
      */
-    bool move_to_position(const Vector &goal_pos, const double kp,
-                          const double kd, const double tolerance,
+    bool move_to_position(const Vector &goal_pos,
+                          const double kp,
+                          const double kd,
+                          const double tolerance,
                           const uint32_t timeout_cycles)
     {
         /// \todo: this relies on the safety check in the motor right now,
@@ -293,8 +298,12 @@ protected:
                     "--\n"
                     "position error: %10.5f, %10.5f, %10.5f\n"
                     "velocity:       %10.5f, %10.5f, %10.5f\n",
-                    position_error[0], position_error[1], position_error[2],
-                    velocity[0], velocity[1], velocity[2]);
+                    position_error[0],
+                    position_error[1],
+                    position_error[2],
+                    velocity[0],
+                    velocity[1],
+                    velocity[2]);
             }
 #endif
 
@@ -348,9 +357,11 @@ protected:
 
         if (is_homed)
         {
-            bool reached_goal = move_to_position(
-                starting_position_rad, CONTROL_GAIN_KP, CONTROL_GAIN_KD,
-                POSITION_TOLERANCE_RAD, MOVE_TIMEOUT);
+            bool reached_goal = move_to_position(starting_position_rad,
+                                                 CONTROL_GAIN_KP,
+                                                 CONTROL_GAIN_KD,
+                                                 POSITION_TOLERANCE_RAD,
+                                                 MOVE_TIMEOUT);
             if (!reached_goal)
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
@@ -368,12 +379,15 @@ private:
     /// todo: this should probably go away
 
 public:
-    Vector get_max_torques() const { return max_torque_ * Vector::Ones(); }
+    Vector get_max_torques() const
+    {
+        return max_torque_ * Vector::Ones();
+    }
 };
 
-
 robot_interfaces::finger::BackendPtr create_real_finger_backend(
-    const std::string &can_0, const std::string &can_1,
+    const std::string &can_0,
+    const std::string &can_1,
     robot_interfaces::finger::DataPtr robot_data)
 {
     std::shared_ptr<
@@ -389,58 +403,64 @@ robot_interfaces::finger::BackendPtr create_real_finger_backend(
 }
 
 class RandomFingerDriver : public robot_interfaces::RobotDriver<
-                              robot_interfaces::finger::Action,
-                              robot_interfaces::finger::Observation>
+                               robot_interfaces::finger::Action,
+                               robot_interfaces::finger::Observation>
 {
-
 public:
     typedef robot_interfaces::finger::Action Action;
     typedef robot_interfaces::finger::Observation Observation;
     typedef robot_interfaces::finger::Vector Vector;
     typedef robot_interfaces::finger::Status Status;
 
-    //default constructor, error: implicitly deleitng
-    RandomFingerDriver() : RobotDriver(0.003, 0.005) {}
+    // default constructor, error: implicitly deleitng
+    RandomFingerDriver() : RobotDriver(0.003, 0.005)
+    {
+    }
 
     int i = 0;
 
-    Observation get_latest_observation() override {
+    Observation get_latest_observation() override
+    {
+        Observation observation;
+        observation.angle[0] = i;
+        observation.angle[1] = 2 * i;
+        observation.angle[2] = 3 * i;
+        observation.velocity[0] = i + 1;
+        observation.velocity[1] = 2 * i + 1;
+        observation.velocity[2] = 3 * i + 1;
+        observation.torque[0] = i + 2;
+        observation.torque[1] = 2 * i + 2;
+        observation.torque[2] = 3 * i + 2;
 
-      Observation observation;
-      observation.angle[0] = i;  observation.angle[1] = 2*i; observation.angle[2] = 3*i;
-      observation.velocity[0] = i + 1; observation.velocity[1] = 2*i + 1; observation.velocity[2] = 3*i + 1;
-      observation.torque[0] = i + 2; observation.torque[1] = 2*i + 2; observation.torque[2] = 3*i + 2;
+        i++;
 
-      i++;
-
-      return observation;
-
+        return observation;
     }
 
-    //check for better "void" implementations
+    // check for better "void" implementations
 
-    Action apply_action(const Action &desired_action) override {
+    Action apply_action(const Action &desired_action) override
+    {
+        // (maybe) isolated casue to this: the random driver just goes on
+        // spitting values,
+        //  and by the time one observation is written to the file, 10 newer
+        //  ones get
+        // added to the buffer already. View this by printing out the index and
+        // the logger_data_->observation->newest_timeindex_()
+        double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
-      // (maybe) isolated casue to this: the random driver just goes on spitting values,
-      //  and by the time one observation is written to the file, 10 newer ones get
-      // added to the buffer already. View this by printing out the index and the
-      // logger_data_->observation->newest_timeindex_()
-      double start_time_sec = real_time_tools::Timer::get_current_time_sec();
+        real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.0001);
 
-      real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.0001);
+        // okay, so reducing the delay here actually helped. Seems
+        // counterintuitive rn.
 
-      // okay, so reducing the delay here actually helped. Seems counterintuitive rn.
-
-      return desired_action;
-
+        return desired_action;
     }
 
-    void shutdown() override {
-
-      return;
-
+    void shutdown() override
+    {
+        return;
     }
-
 };
 
 robot_interfaces::finger::BackendPtr create_random_finger_backend(
@@ -460,132 +480,175 @@ robot_interfaces::finger::BackendPtr create_random_finger_backend(
 
 class Logger
 {
-  //template <typename Type>
+    // template <typename Type>
 public:
+    int block_size_ = 10;
+    int count = 0;
 
-  int block_size_ = 10;
-  int count = 0;
+    typedef robot_interfaces::finger::Action Action;
+    typedef robot_interfaces::finger::Observation Observation;
+    typedef robot_interfaces::finger::Status Status;
+    // typedef std::numeric_limits< double > dbl;
 
-  typedef robot_interfaces::finger::Action Action;
-  typedef robot_interfaces::finger::Observation Observation;
-  typedef robot_interfaces::finger::Status Status;
-  //typedef std::numeric_limits< double > dbl;
+    bool destructor_was_called_;
 
-  bool destructor_was_called_;
-
-  //The Logger
-  Logger(std::shared_ptr<robot_interfaces::RobotData<Action, Observation, Status>>robot_data):logger_data_(robot_data), destructor_was_called_(false) {
-    thread_ = std::make_shared<real_time_tools::RealTimeThread>();
-  }
-
-  std::shared_ptr<robot_interfaces::RobotData<Action, Observation, Status>> logger_data_;
-
-  virtual ~Logger()
-  {
-    destructor_was_called_ = true;
-    thread_->join();
-  }
-
-  int index;
-
-  static void *write(void *instance_pointer)
-  {
-      ((Logger *)(instance_pointer))->write();
-      return nullptr;
-  }
-
-  void write() {
-
-    //std::ofstream output_file("/local_data/sjoshi/blmc_ei/workspace/src/catkin/robots/blmc_robots/demos/./log.csv");
-    std::ofstream output_file;
-    //std::cout << "Hello";
-
-    //errno = 0;
-    output_file.open("log.csv");
-
-    //std::cerr << "Error: " << strerror(errno) << std::endl;
-
-    output_file << "(Timestamp)" << "," << "(Current Index)" << ","  << " [O] Angle J1 " << "," << " [O] Angle J2 " << "," << " [O] Angle J3 " << "," << " [O] Velocity J1 " << "," << " [O] Velocity J2 " << "," << " [O] Velocity J3 " << "," << " [O] Torque J1 " << "," << " [O] Torque J2 " << "," << " [O] Torque J3 " << "," << " [A] Applied J1 " << "," << " [A] Applied J2 " << "," << " [A] Applied J3 " << "," << " [A] Desired J1 " <<  "," << " [A] Desired J2 " << "," << " [A] Desired J3 " << "," << " Status " << std::endl;
-    output_file.close();
-
-    while (!destructor_was_called_ &&
-       !logger_data_->desired_action->wait_for_timeindex(0, 0.1))
-       // check wait_for_timeindex here !!
+    // The Logger
+    Logger(std::shared_ptr<
+           robot_interfaces::RobotData<Action, Observation, Status>> robot_data)
+        : logger_data_(robot_data), destructor_was_called_(false)
     {
-
+        thread_ = std::make_shared<real_time_tools::RealTimeThread>();
     }
 
-    index = logger_data_->observation->newest_timeindex();
+    std::shared_ptr<robot_interfaces::RobotData<Action, Observation, Status>>
+        logger_data_;
 
-    //std::cout << index << std::endl; //index is anywhere from 6 to 25 (+/-), gen around 20
+    virtual ~Logger()
+    {
+        destructor_was_called_ = true;
+        thread_->join();
+    }
 
-    count = 0;
-    //meh used same index
-    for(long int t = 0; !destructor_was_called_; t++) {
+    int index;
 
-      count++;
+    static void *write(void *instance_pointer)
+    {
+        ((Logger *)(instance_pointer))->write();
+        return nullptr;
+    }
 
-      if (count==block_size_) {
+    void write()
+    {
+        // std::ofstream
+        // output_file("/local_data/sjoshi/blmc_ei/workspace/src/catkin/robots/blmc_robots/demos/./log.csv");
+        std::ofstream output_file;
+        // std::cout << "Hello";
 
-        output_file.open("log.csv", std::ios_base::app);
+        // errno = 0;
+        output_file.open("log.csv");
 
-        auto t1 = std::chrono::high_resolution_clock::now();
+        // std::cerr << "Error: " << strerror(errno) << std::endl;
 
-        for (int j = index ; j < index + block_size_; j ++) {
-
-          //std::cout.precision(dbl::max_digits10);
-          //get returns the stored pointer
-          output_file <<std::fixed<< logger_data_->observation->timestamp_s(j)
-              << "," << j << "," << (*logger_data_->observation)[j].angle[0] <<
-              "," << (*logger_data_->observation)[j].angle[1] << "," <<
-              (*logger_data_->observation)[j].angle[2] << "," <<
-              (*logger_data_->observation)[j].velocity[0] << "," <<
-              (*logger_data_->observation)[j].velocity[1] << "," <<
-              (*logger_data_->observation)[j].velocity[2] << "," <<
-              (*logger_data_->observation)[j].torque[0] << "," <<
-              (*logger_data_->observation)[j].torque[1] << "," <<
-              (*logger_data_->observation)[j].torque[2] << "," <<
-              (*logger_data_->applied_action)[j][0] << "," <<
-              (*logger_data_->applied_action)[j][1] << "," <<
-              (*logger_data_->applied_action)[j][2] << "," <<
-              (*logger_data_->desired_action)[j][0] << "," <<
-              (*logger_data_->desired_action)[j][1] << "," <<
-              (*logger_data_->desired_action)[j][2] << "," <<
-              (*logger_data_->status)[j].action_repetitions << std::endl;
-
-          // error here says trying to access more dimensions than are there. Review eigen vectors. yeah, indexing begins from 0 :P
-
-          std::cout << index<< std::endl;
-          std::cout <<  logger_data_->observation->newest_timeindex()  << std::endl;
-        }
-
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-        //std::cout << duration << std::endl;
-
-        count = 0;
-        index += block_size_;
-
+        output_file << "(Timestamp)"
+                    << ","
+                    << "(Current Index)"
+                    << ","
+                    << " [O] Angle J1 "
+                    << ","
+                    << " [O] Angle J2 "
+                    << ","
+                    << " [O] Angle J3 "
+                    << ","
+                    << " [O] Velocity J1 "
+                    << ","
+                    << " [O] Velocity J2 "
+                    << ","
+                    << " [O] Velocity J3 "
+                    << ","
+                    << " [O] Torque J1 "
+                    << ","
+                    << " [O] Torque J2 "
+                    << ","
+                    << " [O] Torque J3 "
+                    << ","
+                    << " [A] Applied J1 "
+                    << ","
+                    << " [A] Applied J2 "
+                    << ","
+                    << " [A] Applied J3 "
+                    << ","
+                    << " [A] Desired J1 "
+                    << ","
+                    << " [A] Desired J2 "
+                    << ","
+                    << " [A] Desired J3 "
+                    << ","
+                    << " Status " << std::endl;
         output_file.close();
 
-      }
+        while (!destructor_was_called_ &&
+               !logger_data_->desired_action->wait_for_timeindex(0, 0.1))
+        // check wait_for_timeindex here !!
+        {
+        }
+
+        index = logger_data_->observation->newest_timeindex();
+
+        // std::cout << index << std::endl; //index is anywhere from 6 to 25
+        // (+/-), gen around 20
+
+        count = 0;
+        // meh used same index
+        for (long int t = 0; !destructor_was_called_; t++)
+        {
+            count++;
+
+            if (count == block_size_)
+            {
+                output_file.open("log.csv", std::ios_base::app);
+
+                auto t1 = std::chrono::high_resolution_clock::now();
+
+                for (int j = index; j < index + block_size_; j++)
+                {
+                    // std::cout.precision(dbl::max_digits10);
+                    // get returns the stored pointer
+                    output_file
+                        << std::fixed
+                        << logger_data_->observation->timestamp_s(j) << "," << j
+                        << "," << (*logger_data_->observation)[j].angle[0]
+                        << "," << (*logger_data_->observation)[j].angle[1]
+                        << "," << (*logger_data_->observation)[j].angle[2]
+                        << "," << (*logger_data_->observation)[j].velocity[0]
+                        << "," << (*logger_data_->observation)[j].velocity[1]
+                        << "," << (*logger_data_->observation)[j].velocity[2]
+                        << "," << (*logger_data_->observation)[j].torque[0]
+                        << "," << (*logger_data_->observation)[j].torque[1]
+                        << "," << (*logger_data_->observation)[j].torque[2]
+                        << "," << (*logger_data_->applied_action)[j][0] << ","
+                        << (*logger_data_->applied_action)[j][1] << ","
+                        << (*logger_data_->applied_action)[j][2] << ","
+                        << (*logger_data_->desired_action)[j][0] << ","
+                        << (*logger_data_->desired_action)[j][1] << ","
+                        << (*logger_data_->desired_action)[j][2] << ","
+                        << (*logger_data_->status)[j].action_repetitions
+                        << std::endl;
+
+                    // error here says trying to access more dimensions than are
+                    // there. Review eigen vectors. yeah, indexing begins from 0
+                    // :P
+
+                    std::cout << index << std::endl;
+                    std::cout << logger_data_->observation->newest_timeindex()
+                              << std::endl;
+                }
+
+                auto t2 = std::chrono::high_resolution_clock::now();
+                auto duration =
+                    std::chrono::duration_cast<std::chrono::microseconds>(t2 -
+                                                                          t1)
+                        .count();
+                // std::cout << duration << std::endl;
+
+                count = 0;
+                index += block_size_;
+
+                output_file.close();
+            }
+        }
+
+        output_file.close();
     }
 
-    output_file.close();
+    void run()
+    {
+        thread_->create_realtime_thread(&Logger::write, this);
 
-  }
-
-  void run() {
-
-    thread_->create_realtime_thread(&Logger::write, this);
-
-    // "this" or just write()
-
-  }
+        // "this" or just write()
+    }
 
 private:
-  std::shared_ptr<real_time_tools::RealTimeThread> thread_;
-
+    std::shared_ptr<real_time_tools::RealTimeThread> thread_;
 };
 
 }  // namespace blmc_robots

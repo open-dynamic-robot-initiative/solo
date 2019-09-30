@@ -1,0 +1,10 @@
+---
+BasedOnStyle: Google
+AccessModifierOffset: '-4'
+AllowShortFunctionsOnASingleLine: None
+BinPackArguments: 'false'
+BinPackParameters: 'false'
+BreakBeforeBraces: Allman
+IndentWidth: '4'
+
+...
