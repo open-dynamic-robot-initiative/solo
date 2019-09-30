@@ -535,7 +535,23 @@ public:
 
           //std::cout.precision(dbl::max_digits10);
           //get returns the stored pointer
-          output_file <<std::fixed<< logger_data_->observation->timestamp_s(j) << "," << j << "," << (*logger_data_->observation)[j].angle[0] << "," << (*logger_data_->observation)[j].angle[1] << "," << (*logger_data_->observation)[j].angle[2] << "," << (*logger_data_->observation)[j].velocity[0] << "," << (*logger_data_->observation)[j].velocity[1] << "," << (*logger_data_->observation)[j].velocity[2] << "," << (*logger_data_->observation)[j].torque[0] << "," << (*logger_data_->observation)[j].torque[1] << "," << (*logger_data_->observation)[j].torque[2] << "," << (*logger_data_->applied_action)[j][0] << "," << (*logger_data_->applied_action)[j][1] << "," << (*logger_data_->applied_action)[j][2] << (*logger_data_->desired_action)[j][0] << "," << (*logger_data_->desired_action)[j][1] << "," << (*logger_data_->desired_action)[j][2] << "," << (*logger_data_->status)[j].action_repetitions << std::endl;
+          output_file <<std::fixed<< logger_data_->observation->timestamp_s(j)
+              << "," << j << "," << (*logger_data_->observation)[j].angle[0] <<
+              "," << (*logger_data_->observation)[j].angle[1] << "," <<
+              (*logger_data_->observation)[j].angle[2] << "," <<
+              (*logger_data_->observation)[j].velocity[0] << "," <<
+              (*logger_data_->observation)[j].velocity[1] << "," <<
+              (*logger_data_->observation)[j].velocity[2] << "," <<
+              (*logger_data_->observation)[j].torque[0] << "," <<
+              (*logger_data_->observation)[j].torque[1] << "," <<
+              (*logger_data_->observation)[j].torque[2] << "," <<
+              (*logger_data_->applied_action)[j][0] << "," <<
+              (*logger_data_->applied_action)[j][1] << "," <<
+              (*logger_data_->applied_action)[j][2] << "," <<
+              (*logger_data_->desired_action)[j][0] << "," <<
+              (*logger_data_->desired_action)[j][1] << "," <<
+              (*logger_data_->desired_action)[j][2] << "," <<
+              (*logger_data_->status)[j].action_repetitions << std::endl;
 
           // error here says trying to access more dimensions than are there. Review eigen vectors. yeah, indexing begins from 0 :P
 
