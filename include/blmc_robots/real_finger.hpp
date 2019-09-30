@@ -91,11 +91,8 @@ public:
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
                           const CalibrationParameters &calibration_parameters,
-                          const double max_action_duration_s,
-                          const double max_inter_action_duration_s,
                           const Vector &safety_kd)
-        : robot_interfaces::RobotDriver<Action, Observation>(
-              max_action_duration_s, max_inter_action_duration_s),
+        : robot_interfaces::RobotDriver<Action, Observation>(),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
@@ -417,8 +414,6 @@ private:
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },
-                                      0.003,
-                                      0.005,
                                       Vector(0.08, 0.08, 0.04))
     {
         home_offset_rad_ << -0.54, -0.17, 0.0;
@@ -442,13 +437,16 @@ robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
     const std::string &can_1,
     robot_interfaces::FingerTypes::DataPtr robot_data)
 {
+    constexpr double MAX_ACTION_DURATION_S = 0.003;
+    constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
+
     std::shared_ptr<robot_interfaces::RobotDriver<
         robot_interfaces::FingerTypes::Action,
         robot_interfaces::FingerTypes::Observation>>
         robot = std::make_shared<RealFingerDriver>(can_0, can_1);
 
     auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
-        robot, robot_data);
+        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
     backend->set_max_action_repetitions(-1);
 
     return backend;
