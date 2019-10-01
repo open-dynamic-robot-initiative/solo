@@ -455,17 +455,33 @@ robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
 
 // FIXME move this out of here!
 
+/**
+ * @brief Driver for a single joint.
+ *
+ * Driver for a single BLMC joint.  Mostly intended for testing purposes.
+ */
 class OneJointDriver : public NJointBlmcRobotDriver<1, 1>
 {
 public:
 
-    OneJointDriver(const std::string &can_port)
-        : OneJointDriver(create_motor_boards({can_port}))
+    /**
+     * @brief Constructor
+     *
+     * @param can_port  Name of the CAN port to which the joint is connected
+     *     (e.g. "can0")
+     * @param home_offset_rad  Home offset of the joint.  This is the offset
+     *     between the home position (= encoder index found during homing) and
+     *     the desired zero position.
+     */
+    OneJointDriver(const std::string &can_port,
+                   const double home_offset_rad=0.0)
+        : OneJointDriver(create_motor_boards({can_port}), home_offset_rad)
     {
     }
 
 private:
-    OneJointDriver(const MotorBoards &motor_boards)
+    OneJointDriver(const MotorBoards &motor_boards,
+                   const double home_offset_rad)
         : NJointBlmcRobotDriver<1, 1>(motor_boards,
                                       create_motors(motor_boards),
                                       { // MotorParameters
@@ -480,8 +496,10 @@ private:
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },
-                                      Vector(0.08))
+                                      make_vector(0.08))
     {
+        home_offset_rad_ << home_offset_rad;
+        initial_position_rad_ << -home_offset_rad;
     }
 
     static Motors create_motors(const MotorBoards &motor_boards)
@@ -492,10 +510,28 @@ private:
 
         return motors;
     }
+
+    /**
+     * @brief Create a Vector with the given value.
+     *
+     * This is a helper function needed for initializing Vectors with a
+     * specific value upon creation.
+     *
+     * @param value Value to be set in the vector.
+     *
+     * @return The Vector.
+     */
+    static Vector make_vector(double value)
+    {
+        Vector vec;
+        vec << value;
+        return vec;
+    }
 };
 
 robot_interfaces::NJointRobotTypes<1>::BackendPtr create_one_joint_backend(
     const std::string &can_0,
+    const double home_offset_rad,
     robot_interfaces::NJointRobotTypes<1>::DataPtr robot_data)
 {
     constexpr double MAX_ACTION_DURATION_S = 0.003;
@@ -504,7 +540,7 @@ robot_interfaces::NJointRobotTypes<1>::BackendPtr create_one_joint_backend(
     std::shared_ptr<robot_interfaces::RobotDriver<
         robot_interfaces::NJointRobotTypes<1>::Action,
         robot_interfaces::NJointRobotTypes<1>::Observation>>
-        robot = std::make_shared<OneJointDriver>(can_0);
+        robot = std::make_shared<OneJointDriver>(can_0, home_offset_rad);
 
     auto backend = std::make_shared<robot_interfaces::NJointRobotTypes<1>::Backend>(
         robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
