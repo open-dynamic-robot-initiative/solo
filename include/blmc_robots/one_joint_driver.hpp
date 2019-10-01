@@ -11,7 +11,7 @@
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 
-#include <robot_interfaces/finger.hpp>
+#include <robot_interfaces/n_joint_robot_types.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 
 namespace blmc_robots

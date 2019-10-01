@@ -26,7 +26,6 @@ using namespace blmc_robots;
 
 PYBIND11_MODULE(py_one_joint, m)
 {
-    pybind11::module::import("py_finger");
     m.def("create_one_joint_backend", &create_one_joint_backend);
 }
 

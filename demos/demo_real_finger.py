@@ -4,15 +4,15 @@ import numpy as np
 
 import threading
 import ipdb
-import py_finger
+import robot_interfaces
 import blmc_robots
 
 
 def main():
-    finger_data = py_finger.Data()
+    finger_data = robot_interfaces.finger.Data()
     finger_backend = blmc_robots.create_real_finger_backend("can0", "can1",
                                                                finger_data)
-    finger = py_finger.Frontend(finger_data)
+    finger = robot_interfaces.finger.Frontend(finger_data)
 
     finger_backend.initialize()
 

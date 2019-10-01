@@ -10,11 +10,11 @@
 #include <iostream>
 #include <tuple>
 
-#include "real_time_tools/spinner.hpp"
-#include "robot_interfaces/finger.hpp"
-#include "blmc_robots/real_finger_driver.hpp"
-#include "blmc_robots/slider.hpp"
-#include "real_time_tools/thread.hpp"
+#include <real_time_tools/spinner.hpp>
+#include <robot_interfaces/finger_types.hpp>
+#include <blmc_robots/real_finger_driver.hpp>
+#include <blmc_robots/slider.hpp>
+#include <real_time_tools/thread.hpp>
 
 using namespace blmc_robots;
 using namespace robot_interfaces;

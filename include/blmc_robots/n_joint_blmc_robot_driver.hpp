@@ -8,11 +8,13 @@
 #pragma once
 
 #include <math.h>
-#include <Eigen/Eigen>
-#include <blmc_robots/common_header.hpp>
 
+#include <mpi_cpp_tools/math.hpp>
+#include <robot_interfaces/robot_driver.hpp>
+#include <robot_interfaces/n_joint_robot_types.hpp>
+
+#include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
-#include <robot_interfaces/finger.hpp>
 
 namespace blmc_robots
 {
@@ -291,9 +293,6 @@ protected:
         bool reached_goal = false;
         int cycle_count = 0;
         Vector desired_torque = Vector::Zero();
-        Eigen::Vector3d last_diff(std::numeric_limits<double>::max(),
-                                  std::numeric_limits<double>::max(),
-                                  std::numeric_limits<double>::max());
 
         while (!reached_goal && cycle_count < timeout_cycles)
         {

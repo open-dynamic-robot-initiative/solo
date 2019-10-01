@@ -3,7 +3,7 @@
 import numpy as np
 import copy
 
-import py_finger
+from robot_interfaces import one_joint
 import blmc_robots
 
 
@@ -29,11 +29,11 @@ def main():
     # ========================================
 
 
-    finger_data = py_finger.OJData()
-    finger_backend = blmc_robots.create_one_joint_backend("can7",
-                                                             home_offset,
-                                                             finger_data)
-    finger = py_finger.OJFrontend(finger_data)
+    robot_data = one_joint.Data()
+    robot_backend = blmc_robots.create_one_joint_backend("can7",
+                                                         home_offset,
+                                                         robot_data)
+    robot = one_joint.Frontend(robot_data)
 
 
     N_JOINTS = 1
@@ -56,40 +56,40 @@ def main():
         """
         desired_torque = np.zeros(N_JOINTS)
 
-        t = finger.append_desired_action(desired_torque)
+        t = robot.append_desired_action(desired_torque)
         # Use current position as start position.
         # Copy the current position, so value in the variable can be modified
         # later.
-        desired_step_position = copy.copy(finger.get_observation(t).angle)
+        desired_step_position = copy.copy(robot.get_observation(t).angle)
 
         stepsize = (goal_position - desired_step_position) / steps
 
         # move from start to goal
         for step in range(steps):
             desired_step_position += stepsize
-            t = finger.append_desired_action(desired_torque)
+            t = robot.append_desired_action(desired_torque)
             position_error = (desired_step_position -
-                              finger.get_observation(t).angle)
+                              robot.get_observation(t).angle)
             desired_torque = (kp * position_error -
-                              kd * finger.get_observation(t).velocity)
+                              kd * robot.get_observation(t).velocity)
 
         # hold at goal position
         for step in range(hold):
-            t = finger.append_desired_action(desired_torque)
-            position_error = goal_position - finger.get_observation(t).angle
+            t = robot.append_desired_action(desired_torque)
+            position_error = goal_position - robot.get_observation(t).angle
             desired_torque = (kp * position_error -
-                              kd * finger.get_observation(t).velocity)
+                              kd * robot.get_observation(t).velocity)
 
 
     def go_to_zero(steps, hold):
         go_to(np.zeros(N_JOINTS), steps, hold)
 
 
-    finger_backend.initialize()
+    robot_backend.initialize()
     print("homing finished")
     go_to_zero(1000, 2000)
 
-    finger.append_desired_action(np.ones(N_JOINTS) * 0.15)
+    robot.append_desired_action(np.ones(N_JOINTS) * 0.15)
 
     goal_position = position_limit
     while True:
