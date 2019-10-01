@@ -7,7 +7,7 @@
  * This file defines the RealFinger class.
  */
 
-#include "blmc_robots/real_finger.hpp"
+#include "blmc_robots/real_finger_driver.hpp"
 
 #include <limits>
 

@@ -12,7 +12,7 @@
 
 #include "real_time_tools/spinner.hpp"
 #include "robot_interfaces/finger.hpp"
-#include "blmc_robots/real_finger.hpp"
+#include "blmc_robots/real_finger_driver.hpp"
 #include "blmc_robots/slider.hpp"
 #include "real_time_tools/thread.hpp"
 

@@ -20,7 +20,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 
-#include <blmc_robots/real_finger.hpp>
+#include <blmc_robots/real_finger_driver.hpp>
+#include <blmc_robots/one_joint_driver.hpp>
 
 using namespace blmc_robots;
 
