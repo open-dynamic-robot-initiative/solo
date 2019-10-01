@@ -4,7 +4,7 @@ import numpy as np
 import copy
 
 import py_finger
-import py_real_finger
+import blmc_robots
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
 
 
     finger_data = py_finger.OJData()
-    finger_backend = py_real_finger.create_one_joint_backend("can7",
+    finger_backend = blmc_robots.create_one_joint_backend("can7",
                                                              home_offset,
                                                              finger_data)
     finger = py_finger.OJFrontend(finger_data)

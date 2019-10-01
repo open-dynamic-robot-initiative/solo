@@ -3,11 +3,11 @@
 import numpy as np
 
 import py_finger
-import py_real_finger
+import blmc_robots
 
 
 finger_data = py_finger.Data()
-finger_backend = py_real_finger.create_real_finger_backend("can0", "can1",
+finger_backend = blmc_robots.create_real_finger_backend("can0", "can1",
                                                            finger_data)
 finger = py_finger.Frontend(finger_data)
 
