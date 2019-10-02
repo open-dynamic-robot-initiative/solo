@@ -11,12 +11,11 @@
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 
-#include <robot_interfaces/n_joint_robot_types.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include <robot_interfaces/n_joint_robot_types.hpp>
 
 namespace blmc_robots
 {
-
 /**
  * @brief Driver for a single joint.
  *
@@ -25,7 +24,6 @@ namespace blmc_robots
 class OneJointDriver : public NJointBlmcRobotDriver<1, 1>
 {
 public:
-
     /**
      * @brief Constructor
      *
@@ -36,7 +34,7 @@ public:
      *     the desired zero position.
      */
     OneJointDriver(const std::string &can_port,
-                   const double home_offset_rad=0.0)
+                   const double home_offset_rad = 0.0)
         : OneJointDriver(create_motor_boards({can_port}), home_offset_rad)
     {
     }
@@ -46,12 +44,14 @@ private:
                    const double home_offset_rad)
         : NJointBlmcRobotDriver<1, 1>(motor_boards,
                                       create_motors(motor_boards),
-                                      { // MotorParameters
+                                      {
+                                          // MotorParameters
                                           .max_current_A = 2.0,
                                           .torque_constant_NmpA = 0.02,
                                           .gear_ratio = 9.0,
                                       },
-                                      { // CalibrationParameters
+                                      {
+                                          // CalibrationParameters
                                           .torque_ratio = 0.6,
                                           .control_gain_kp = 3.0,
                                           .control_gain_kd = 0.03,
@@ -104,12 +104,15 @@ robot_interfaces::NJointRobotTypes<1>::BackendPtr create_one_joint_backend(
         robot_interfaces::NJointRobotTypes<1>::Observation>>
         robot = std::make_shared<OneJointDriver>(can_0, home_offset_rad);
 
-    auto backend = std::make_shared<robot_interfaces::NJointRobotTypes<1>::Backend>(
-        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+    auto backend =
+        std::make_shared<robot_interfaces::NJointRobotTypes<1>::Backend>(
+            robot,
+            robot_data,
+            MAX_ACTION_DURATION_S,
+            MAX_INTER_ACTION_DURATION_S);
     backend->set_max_action_repetitions(-1);
 
     return backend;
 }
 
 }  // namespace blmc_robots
-

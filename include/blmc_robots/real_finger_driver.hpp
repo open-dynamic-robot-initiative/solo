@@ -13,12 +13,11 @@
 #include <Eigen/Eigen>
 #include <blmc_robots/common_header.hpp>
 
-#include <robot_interfaces/finger_types.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include <robot_interfaces/finger_types.hpp>
 
 namespace blmc_robots
 {
-
 class RealFingerDriver : public NJointBlmcRobotDriver<3, 2>
 {
 public:
@@ -31,12 +30,14 @@ private:
     RealFingerDriver(const MotorBoards &motor_boards)
         : NJointBlmcRobotDriver<3, 2>(motor_boards,
                                       create_motors(motor_boards),
-                                      { // MotorParameters
+                                      {
+                                          // MotorParameters
                                           .max_current_A = 2.0,
                                           .torque_constant_NmpA = 0.02,
                                           .gear_ratio = 9.0,
                                       },
-                                      { // CalibrationParameters
+                                      {
+                                          // CalibrationParameters
                                           .torque_ratio = 0.6,
                                           .control_gain_kp = 3.0,
                                           .control_gain_kd = 0.03,

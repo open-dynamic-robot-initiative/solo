@@ -10,11 +10,11 @@
 #include <math.h>
 
 #include <mpi_cpp_tools/math.hpp>
-#include <robot_interfaces/robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
+#include <robot_interfaces/robot_driver.hpp>
 
-#include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
 {
@@ -336,12 +336,12 @@ protected:
 
         if (is_initialized_)
         {
-            bool reached_goal = move_to_position(
-                initial_position_rad_,
-                calibration_parameters_.control_gain_kp,
-                calibration_parameters_.control_gain_kd,
-                calibration_parameters_.position_tolerance_rad,
-                calibration_parameters_.move_timeout);
+            bool reached_goal =
+                move_to_position(initial_position_rad_,
+                                 calibration_parameters_.control_gain_kp,
+                                 calibration_parameters_.control_gain_kd,
+                                 calibration_parameters_.position_tolerance_rad,
+                                 calibration_parameters_.move_timeout);
             if (!reached_goal)
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
@@ -384,4 +384,3 @@ public:
 };
 
 }  // namespace blmc_robots
-
