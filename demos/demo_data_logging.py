@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Send zero-torque commands to the robot and write to a csv file the following- timestamp, the current time index, observations (angles, velocities, torques) from the three joints, applied actions to the three joints, actions applied on them, and the status."""
+"""Send zero-torque commands to the robot and create log"""
 
 import time
 import numpy as np
