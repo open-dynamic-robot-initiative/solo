@@ -16,10 +16,11 @@
  */
 
 #include <pybind11/eigen.h>
-#include <pybind11/stl_bind.h>
-#include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl_bind.h>
 
+#include <blmc_robots/random_finger_driver.hpp>
 #include <blmc_robots/real_finger.hpp>
 
 using namespace blmc_robots;
@@ -32,8 +33,6 @@ PYBIND11_MODULE(py_real_finger, m)
     pybind11::module::import("py_finger");
     m.def("create_random_finger_backend", &create_random_finger_backend);
 
-    pybind11::class_<Logger>(m, "Logger")
-    .def(pybind11::init<robot_interfaces::finger::DataPtr>())
-    //.def("write", &Logger::write) -  no definition for a statis void*
-    .def("run", &Logger::run);
+    pybind11::module::import("py_finger");
+    m.def("create_random_finger_backend", &create_random_finger_backend);
 }
