@@ -58,7 +58,8 @@ private:
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },
-                                      make_vector(0.08))
+                                      make_vector(0.08),
+                                      true)
     {
         home_offset_rad_ << home_offset_rad;
         initial_position_rad_ << -home_offset_rad;
