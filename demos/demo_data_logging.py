@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
-"""Send zero-torque commands to the robot and create log"""
+"""Send zero-torque commands to the robot and create a log"""
 
 import time
 import numpy as np
 
-import py_finger
-import py_real_finger
+import robot_interfaces
+import blmc_robots
 
-finger_data = py_finger.Data()
-finger_backend = py_real_finger.create_random_finger_backend(finger_data)
-finger = py_finger.Frontend(finger_data)
+def main():
 
-desired_torque = np.zeros(3)
+    finger_data = robot_interfaces.finger.Data()
+    finger_backend = blmc_robots.create_random_finger_backend(finger_data)
+    finger = robot_interfaces.finger.Frontend(finger_data)
 
-block_size = 100
-filename = "log.csv";
+    desired_torque = np.zeros(3)
 
-finger_logger = py_finger.FingerLogger(finger_data, block_size, filename)
-finger_logger.run()
+    block_size = 100
+    filename = "log.csv";
 
-while True:
-    for _ in range(1000):
-        t = finger.append_desired_action(desired_torque)
+    finger_logger = robot_interfaces.finger.FingerLogger(finger_data, block_size, filename)
+    finger_logger.run()
 
-        pos = finger.get_observation(t).angle
+    while True:
+        for _ in range(1000):
+            t = finger.append_desired_action(desired_torque)
+
+            pos = finger.get_observation(t).angle
+
+if __name__ == "__main__":
+    main()
