@@ -19,7 +19,6 @@
 using namespace blmc_robots;
 using namespace robot_interfaces;
 
-
 typedef std::tuple<std::shared_ptr<FingerTypes::Frontend>,
                    std::shared_ptr<Sliders<3>>>
     FingerAndSliders;
@@ -51,19 +50,23 @@ int main(int argc, char **argv)
 {
     // Hardware hardware;
 
-    // // set up motor boards -----------------------------------------------------
+    // // set up motor boards
+    // -----------------------------------------------------
     // hardware.motor_boards = RealFinger::create_motor_boards("can0", "can1");
 
-    // // set up finger -----------------------------------------------------------
+    // // set up finger
+    // -----------------------------------------------------------
     // hardware.finger = std::make_shared<RealFinger>(hardware.motor_boards);
 
-    // // set up sliders ----------------------------------------------------------
+    // // set up sliders
+    // ----------------------------------------------------------
     // hardware.sliders =
     //     std::make_shared<Sliders<3>>(hardware.motor_boards,
     //                                  -hardware.finger->get_max_torques(),
     //                                  hardware.finger->get_max_torques());
 
-    // // start real-time control loop --------------------------------------------
+    // // start real-time control loop
+    // --------------------------------------------
     // real_time_tools::RealTimeThread thread;
     // thread.create_realtime_thread(&control_loop, &hardware);
     // rt_printf("control loop started \n");
