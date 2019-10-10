@@ -44,7 +44,8 @@ private:
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },
-                                      Vector(0.08, 0.08, 0.04))
+                                      Vector(0.08, 0.08, 0.04),
+                                      true)
     {
         home_offset_rad_ << -0.54, -0.17, 0.0;
         initial_position_rad_ << 1.5, 1.5, 3.0;
