@@ -7,7 +7,9 @@
 
 #pragma once
 
-#include <math.h>
+#include <cmath>
+
+#include <Eigen/Eigen>
 
 #include <mpi_cpp_tools/math.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
@@ -71,18 +73,16 @@ class NJointBlmcRobotDriver
           typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation>
 {
 public:
-    typedef
-        typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Action Action;
-    typedef typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation
-        Observation;
-    typedef
-        typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Vector Vector;
+    typedef typename robot_interfaces::NJointRobotTypes<N_JOINTS> Types;
+
+    typedef typename Types::Action Action;
+    typedef typename Types::Observation Observation;
+    typedef typename Types::Vector Vector;
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
         Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
                        N_MOTOR_BOARDS>
         MotorBoards;
-
 
     /**
      * @brief True if the joints have mechanical end stops, false if not.
@@ -98,12 +98,13 @@ public:
      */
     const bool has_endstop_;
 
-
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
                           const CalibrationParameters &calibration_parameters,
                           const Vector &safety_kd,
+                          const Vector &position_kp,
+                          const Vector &position_kd,
                           const bool has_endstop)
         : robot_interfaces::RobotDriver<Action, Observation>(),
           joint_modules_(motors,
@@ -116,6 +117,8 @@ public:
                          motor_parameters.gear_ratio),
           calibration_parameters_(calibration_parameters),
           safety_kd_(safety_kd),
+          default_position_kp_(position_kp),
+          default_position_kd_(position_kd),
           has_endstop_(has_endstop)
     {
         pause_motors();
@@ -190,15 +193,73 @@ protected:
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
         Observation observation = get_latest_observation();
-        Action applied_action =
-            mct::clamp(desired_action, -max_torque_Nm_, max_torque_Nm_);
-        applied_action =
-            applied_action - safety_kd_.cwiseProduct(observation.velocity);
-        applied_action =
-            mct::clamp(applied_action, -max_torque_Nm_, max_torque_Nm_);
 
-        joint_modules_.set_torques(applied_action);
+        Action applied_action;
+
+        applied_action.torque = desired_action.torque;
+        applied_action.position = desired_action.position;
+
+        // Position controller
+        // -------------------
+        // TODO: add position limits
+        //
+        // NOTE: in the following lines, the Eigen function `unaryExpr` is
+        // used to determine which elements of the vectors are NaN.  This is
+        // because `isNaN()` was only added in Eigen 3.3 but we have to be
+        // compatible with 3.2.
+        // The std::isnan call needs to be wrapped in a lambda because it is
+        // overloaded and unaryExpr cannot resolve which version to use when
+        // passed directly.
+
+        // Run the position controller only if a target position is set for at
+        // least one joint.
+        if (!applied_action.position
+                 .unaryExpr([](double x) { return std::isnan(x); })
+                 .all())
+        {
+            // Replace NaN-values with default gains
+            applied_action.position_kp =
+                applied_action.position_kp
+                    .unaryExpr([](double x) { return std::isnan(x); })
+                    .select(default_position_kp_, desired_action.position_kp);
+            applied_action.position_kd =
+                applied_action.position_kd
+                    .unaryExpr([](double x) { return std::isnan(x); })
+                    .select(default_position_kd_, desired_action.position_kd);
+
+            Vector position_error = applied_action.position - observation.angle;
+
+            // simple PD controller
+            Vector position_control_torque =
+                applied_action.position_kp.cwiseProduct(position_error) +
+                applied_action.position_kd.cwiseProduct(observation.velocity);
+
+            // position_control_torque contains NaN for joints where target
+            // position is set to NaN!  Filter those out and set the torque to
+            // zero instead.
+            position_control_torque =
+                position_control_torque
+                    .unaryExpr([](double x) { return std::isnan(x); })
+                    .select(0, position_control_torque);
+
+            // Add result of position controller to the torque command
+            applied_action.torque += position_control_torque;
+        }
+
+        // Safety Checks
+        // -------------
+        // limit to configured maximum torque
+        applied_action.torque =
+            mct::clamp(applied_action.torque, -max_torque_Nm_, max_torque_Nm_);
+        // velocity damping to prevent too fast movements
+        applied_action.torque -= safety_kd_.cwiseProduct(observation.velocity);
+        // after applying checks, make sure we are still below the max. torque
+        applied_action.torque =
+            mct::clamp(applied_action.torque, -max_torque_Nm_, max_torque_Nm_);
+
+        joint_modules_.set_torques(applied_action.torque);
         joint_modules_.send_torques();
+
         real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
 
         return applied_action;
@@ -311,12 +372,14 @@ protected:
                           const double tolerance,
                           const uint32_t timeout_cycles)
     {
+        // FIXME use position controller through action
         bool reached_goal = false;
         int cycle_count = 0;
         Vector desired_torque = Vector::Zero();
 
         while (!reached_goal && cycle_count < timeout_cycles)
         {
+            // FIXME Why is this compiling?!
             apply_action(desired_torque);
 
             const Vector position_error =
@@ -386,6 +449,11 @@ protected:
 
     //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
     Vector safety_kd_;
+
+    //! \brief default P-gain for position controller.
+    Vector default_position_kp_;
+    //! \brief default D-gain for position controller.
+    Vector default_position_kd_;
 
     /// todo: this should probably go away
     double max_torque_Nm_;

@@ -59,6 +59,8 @@ private:
                                           .move_timeout = 2000,
                                       },
                                       make_vector(0.08),
+                                      make_vector(3.0),
+                                      make_vector(0.03),
                                       true)
     {
         home_offset_rad_ << home_offset_rad;

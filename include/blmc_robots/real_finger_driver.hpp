@@ -45,6 +45,8 @@ private:
                                           .move_timeout = 2000,
                                       },
                                       Vector(0.08, 0.08, 0.04),
+                                      Vector::Ones() * 3.0,
+                                      Vector::Ones() * 0.03,
                                       true)
     {
         home_offset_rad_ << -0.54, -0.17, 0.0;
