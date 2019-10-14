@@ -520,16 +520,16 @@ public:
     }
 
     /**
-     * @brief Set same position control gains for all joints.
+     * @brief Set position control gains for all joints.
      *
-     * @param kp P gain.
-     * @param kd D gain.
+     * @param kp P gains.
+     * @param kd D gains.
      */
-    void set_position_control_gains(double kp, double kd)
+    void set_position_control_gains(Vector kp, Vector kd)
     {
         for(size_t i = 0; i < COUNT; i++)
         {
-           set_position_control_gains(i, kp, kd);
+           set_position_control_gains(i, kp[i], kd[i]);
         }
     }
 

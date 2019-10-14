@@ -53,8 +53,6 @@ private:
                                       {
                                           // CalibrationParameters
                                           .torque_ratio = 0.6,
-                                          .control_gain_kp = 3.0,
-                                          .control_gain_kd = 0.03,
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },

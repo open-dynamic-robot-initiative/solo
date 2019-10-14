@@ -47,10 +47,6 @@ struct CalibrationParameters
 {
     //! @brief Ratio of the max. torque that is used to find the end stop.
     double torque_ratio;  // TODO better used fixed torque
-    //! @brief P-gain for the position controller.
-    double control_gain_kp;
-    //! @brief D-gain for the position controller.
-    double control_gain_kd;
     //! @brief Tolerance for reaching the starting position.
     double position_tolerance_rad;
     //! @brief Timeout for reaching the starting position.
@@ -357,8 +353,6 @@ protected:
      * @brief Move to given goal position using PD control.
      *
      * @param goal_pos Angular goal position for each joint.
-     * @param kp Gain K_p for the PD controller.
-     * @param kd Gain K_d for the PD controller.
      * @param tolerance Allowed position error for reaching the goal.  This is
      *     checked per joint, that is the maximal possible error is +/-tolerance
      *     on each joint.
@@ -367,27 +361,19 @@ protected:
      * @return True if goal position is reached, false if timeout is exceeded.
      */
     bool move_to_position(const Vector &goal_pos,
-                          const double kp,
-                          const double kd,
                           const double tolerance,
                           const uint32_t timeout_cycles)
     {
-        // FIXME use position controller through action
         bool reached_goal = false;
         int cycle_count = 0;
-        Vector desired_torque = Vector::Zero();
 
         while (!reached_goal && cycle_count < timeout_cycles)
         {
-            // FIXME Why is this compiling?!
-            apply_action(desired_torque);
+            apply_action(Action::Position(goal_pos));
 
             const Vector position_error =
                 goal_pos - get_latest_observation().angle;
             const Vector velocity = get_latest_observation().velocity;
-
-            // we implement here a small PD control at the current level
-            desired_torque = kp * position_error - kd * velocity;
 
             // Check if the goal is reached (position error below tolerance and
             // velocity close to zero).
@@ -411,9 +397,8 @@ protected:
      */
     void initialize() override
     {
-        joint_modules_.set_position_control_gains(
-            calibration_parameters_.control_gain_kp,
-            calibration_parameters_.control_gain_kd);
+        joint_modules_.set_position_control_gains(default_position_kp_,
+                                                  default_position_kd_);
 
         is_initialized_ = home_on_index_after_negative_end_stop(
             calibration_parameters_.torque_ratio, home_offset_rad_);
@@ -422,8 +407,6 @@ protected:
         {
             bool reached_goal =
                 move_to_position(initial_position_rad_,
-                                 calibration_parameters_.control_gain_kp,
-                                 calibration_parameters_.control_gain_kd,
                                  calibration_parameters_.position_tolerance_rad,
                                  calibration_parameters_.move_timeout);
             if (!reached_goal)
