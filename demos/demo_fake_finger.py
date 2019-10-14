@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Basic demo on how to control the Finger robot.
+"""Basic demo on how to control the Finger robot using a fake driver.
 
-This script illustrates how to control a robot via the Python interface.
+This script illustrates how to control a robot via the Python interface.  It
+uses a fake driver, i.e. it can be executed without an actual robot.  The fake
+driver will simply provide fake observations and ignore any actions that are
+sent to it.
 """
 import numpy as np
 
@@ -14,16 +17,16 @@ def main():
     finger_data = robot_interfaces.finger.Data()
 
     # The backend sends actions from the data to the robot and writes
-    # observations from the robot to the data.
-    real_finger_backend = blmc_robots.create_real_finger_backend("can0",
-                                                                 "can1",
-                                                                 finger_data)
+    # observations from the robot to the data.  Here we use a backend using the
+    # "random finger driver" which just provides fake observations and does not
+    # need an actual robot to be executed.
+    fake_finger_backend = blmc_robots.create_random_finger_backend(finger_data)
 
     # The frontend is used by the user to get observations and send actions
     finger = robot_interfaces.finger.Frontend(finger_data)
 
     # Initializes the robot (e.g. performs homing).
-    real_finger_backend.initialize()
+    fake_finger_backend.initialize()
 
     # Control gains
     kp = 5
