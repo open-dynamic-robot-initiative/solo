@@ -6,16 +6,16 @@
 #include <tuple>
 
 #include <blmc_robots/blmc_joint_module.hpp>
-#include "real_time_tools/spinner.hpp"
-#include "real_time_tools/timer.hpp"
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
+#include "real_time_tools/spinner.hpp"
+#include "real_time_tools/timer.hpp"
 
 namespace blmc_robots
 {
-class RandomFingerDriver : public robot_interfaces::RobotDriver<
-                               robot_interfaces::FingerTypes::Action,
-                               robot_interfaces::FingerTypes::Observation>
+class FakeFingerDriver : public robot_interfaces::RobotDriver<
+                             robot_interfaces::FingerTypes::Action,
+                             robot_interfaces::FingerTypes::Observation>
 {
 public:
     typedef robot_interfaces::FingerTypes::Action Action;
@@ -25,10 +25,9 @@ public:
 
     int data_generating_index_ = 0;
 
-    RandomFingerDriver()
+    FakeFingerDriver()
     {
     }
-
 
     Observation get_latest_observation() override
     {
@@ -69,28 +68,27 @@ public:
 
     void initialize() override
     {
-      return;
+        return;
     }
 };
 
-robot_interfaces::FingerTypes::BackendPtr create_random_finger_backend(
+robot_interfaces::FingerTypes::BackendPtr create_fake_finger_backend(
     robot_interfaces::FingerTypes::DataPtr robot_data)
 {
+    // adjusted values
+    constexpr double MAX_ACTION_DURATION_S = 0.03;
+    constexpr double MAX_INTER_ACTION_DURATION_S = 0.05;
 
-  //adjusted values
-  constexpr double MAX_ACTION_DURATION_S = 0.03;
-  constexpr double MAX_INTER_ACTION_DURATION_S = 0.05;
+    std::shared_ptr<robot_interfaces::RobotDriver<
+        robot_interfaces::FingerTypes::Action,
+        robot_interfaces::FingerTypes::Observation>>
+        robot = std::make_shared<FakeFingerDriver>();
 
-  std::shared_ptr<
-      robot_interfaces::RobotDriver<robot_interfaces::FingerTypes::Action,
-                                    robot_interfaces::FingerTypes::Observation>>
-      robot = std::make_shared<RandomFingerDriver>();
+    auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
+        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+    backend->set_max_action_repetitions(-1);
 
-  auto backend =
-      std::make_shared<robot_interfaces::FingerTypes::Backend>(robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
-  backend->set_max_action_repetitions(-1);
-
-  return backend;
+    return backend;
 }
 
 }  // namespace blmc_robots

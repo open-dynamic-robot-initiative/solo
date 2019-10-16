@@ -10,7 +10,7 @@ import blmc_robots
 def main():
 
     finger_data = robot_interfaces.finger.Data()
-    finger_backend = blmc_robots.create_random_finger_backend(finger_data)
+    finger_backend = blmc_robots.create_fake_finger_backend(finger_data)
     finger = robot_interfaces.finger.Frontend(finger_data)
 
     desired_torque = np.zeros(3)

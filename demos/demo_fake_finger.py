@@ -20,7 +20,7 @@ def main():
     # observations from the robot to the data.  Here we use a backend using the
     # "random finger driver" which just provides fake observations and does not
     # need an actual robot to be executed.
-    fake_finger_backend = blmc_robots.create_random_finger_backend(finger_data)
+    fake_finger_backend = blmc_robots.create_fake_finger_backend(finger_data)
 
     # The frontend is used by the user to get observations and send actions
     finger = robot_interfaces.finger.Frontend(finger_data)
