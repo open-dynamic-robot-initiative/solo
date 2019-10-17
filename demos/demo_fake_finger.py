@@ -32,6 +32,8 @@ def main():
     kp = 5
     kd = 0
 
+    Action = robot_interfaces.finger.Action
+
     desired_torque = np.zeros(3)
     while True:
         # Run a position controller that randomly changes the desired position
@@ -43,7 +45,7 @@ def main():
             # Appends a torque command ("action") to the action queue.
             # Returns the time step at which the action is going to be
             # executed.
-            t = finger.append_desired_action(desired_torque)
+            t = finger.append_desired_action(Action(torque=desired_torque))
 
             # Get observations of the time step t.  Will block and wait if t is
             # in the future.
