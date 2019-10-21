@@ -143,7 +143,7 @@ void BlmcJointModule::set_position_control_gains(double kp, double kd)
 
 double BlmcJointModule::execute_position_controller(double target_position_rad) const
 {
-    double diff = homing_state_.target_position_rad - get_measured_angle();
+    double diff = target_position_rad - get_measured_angle();
 
     // simple PD control
     double desired_torque = position_control_gain_p_ * diff
@@ -174,9 +174,8 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
 
     // we reset the internal zero angle.
     zero_angle_ = 0.0;
-    
+
     long int last_index_time = get_motor_measurement_index(mi::encoder_index);
-    double last_time_stamp = get_motor_measurement_index(mi::encoder_index);
     if(std::isnan(last_index_time)){last_index_time = -1;}
     bool reached_next_index = false;
     real_time_tools::Spinner spinner;
@@ -271,6 +270,9 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
     set_torque(0.0);
     send_torque();
     spinner.spin();
+
+    // FIXME: always returns true as there is no error checking
+    return true;
 }
 
 
@@ -324,11 +326,12 @@ HomingReturnCode BlmcJointModule::update_homing()
         case HomingReturnCode::RUNNING: {
 
             // number of steps after which the distance limit is reached
-            const int max_steps = homing_state_.search_distance_limit_rad /
-                std::abs(homing_state_.profile_step_size_rad);
+            const uint32_t max_step_count =
+                std::abs(homing_state_.search_distance_limit_rad /
+                         homing_state_.profile_step_size_rad);
 
             // abort if distance limit is reached
-            if (homing_state_.step_count >= max_steps) {
+            if (homing_state_.step_count >= max_step_count) {
                 set_torque(0.0);
                 send_torque();
 
@@ -344,9 +347,9 @@ HomingReturnCode BlmcJointModule::update_homing()
             homing_state_.step_count++;
             homing_state_.target_position_rad +=
                 homing_state_.profile_step_size_rad;
-            const double current_position = get_measured_angle();
 
 #ifdef VERBOSE
+            const double current_position = get_measured_angle();
             if (homing_state_.step_count % 100 == 0) {
                 rt_printf("[%d] cur: %f,\t des: %f\n", homing_state_.joint_id,
                         current_position, homing_state_.target_position_rad);

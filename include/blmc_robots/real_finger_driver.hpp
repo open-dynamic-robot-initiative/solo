@@ -78,7 +78,7 @@ robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
 
     auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
         robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
-    backend->set_max_action_repetitions(-1);
+    backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
 }

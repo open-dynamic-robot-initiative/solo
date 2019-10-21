@@ -111,7 +111,7 @@ robot_interfaces::NJointRobotTypes<1>::BackendPtr create_one_joint_backend(
             robot_data,
             MAX_ACTION_DURATION_S,
             MAX_INTER_ACTION_DURATION_S);
-    backend->set_max_action_repetitions(-1);
+    backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
 }
