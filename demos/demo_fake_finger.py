@@ -49,7 +49,7 @@ def main():
 
             # Get observations of the time step t.  Will block and wait if t is
             # in the future.
-            current_position = finger.get_observation(t).angle
+            current_position = finger.get_observation(t).position
             current_velocity = finger.get_observation(t).velocity
 
             # Simple PD controller to compute desired torque for next iteration

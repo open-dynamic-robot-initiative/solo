@@ -20,5 +20,5 @@ finger_backend.initialize()
 
 while True:
     t = finger.append_desired_action(robot_interfaces.finger.Action())
-    pos = finger.get_observation(t).angle
+    pos = finger.get_observation(t).position
     print("\r%6.3f %6.3f %6.3f" % (pos[0], pos[1], pos[2]), end="")

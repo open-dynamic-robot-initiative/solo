@@ -35,9 +35,9 @@ public:
         // being logged correctly as the timeindex increases.
 
         Observation observation;
-        observation.angle[0] = data_generating_index_;
-        observation.angle[1] = 2 * data_generating_index_;
-        observation.angle[2] = 3 * data_generating_index_;
+        observation.position[0] = data_generating_index_;
+        observation.position[1] = 2 * data_generating_index_;
+        observation.position[2] = 3 * data_generating_index_;
 
         observation.velocity[0] = data_generating_index_ + 1;
         observation.velocity[1] = 2 * data_generating_index_ + 1;

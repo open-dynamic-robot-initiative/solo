@@ -26,7 +26,7 @@ def main():
             t = finger_frontend.append_desired_action(
                 finger.Action(torque=desired_torque))
 
-            pos = finger_frontend.get_observation(t).angle
+            pos = finger_frontend.get_observation(t).position
 
 if __name__ == "__main__":
     main()
