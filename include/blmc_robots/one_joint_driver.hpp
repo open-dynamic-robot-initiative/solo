@@ -53,12 +53,13 @@ private:
                                       {
                                           // CalibrationParameters
                                           .torque_ratio = 0.6,
-                                          .control_gain_kp = 3.0,
-                                          .control_gain_kd = 0.03,
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },
-                                      make_vector(0.08))
+                                      make_vector(0.08),
+                                      make_vector(3.0),
+                                      make_vector(0.03),
+                                      true)
     {
         home_offset_rad_ << home_offset_rad;
         initial_position_rad_ << -home_offset_rad;
@@ -110,7 +111,7 @@ robot_interfaces::NJointRobotTypes<1>::BackendPtr create_one_joint_backend(
             robot_data,
             MAX_ACTION_DURATION_S,
             MAX_INTER_ACTION_DURATION_S);
-    backend->set_max_action_repetitions(-1);
+    backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
 }

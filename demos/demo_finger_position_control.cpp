@@ -37,20 +37,20 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     double kp = 0.2;
     double kd = 0.0025;
 
-    FingerTypes::Action desired_torque = FingerTypes::Action::Zero();
+    FingerTypes::Action desired_action = FingerTypes::Action::Zero();
     while (true)
     {
-        TimeIndex t = finger->append_desired_action(desired_torque);
-        desired_torque =
-            kp * (sliders->get_positions() - finger->get_observation(t).angle) -
-            kd * finger->get_observation(t).velocity;
+        TimeIndex t = finger->append_desired_action(desired_action);
+        desired_action.torque = kp * (sliders->get_positions() -
+                                      finger->get_observation(t).position) -
+                                kd * finger->get_observation(t).velocity;
 
         // print ---------------------------------------------------------------
         if ((t % 1000) == 0)
         {
-            std::cout << "desired_torque: " << finger->get_desired_action(t)
-                      << std::endl;
-            std::cout << "angles: " << finger->get_observation(t).angle
+            std::cout << "desired_torque: "
+                      << finger->get_desired_action(t).torque << std::endl;
+            std::cout << "angles: " << finger->get_observation(t).position
                       << std::endl;
         }
     }

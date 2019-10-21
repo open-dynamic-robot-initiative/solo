@@ -39,12 +39,13 @@ private:
                                       {
                                           // CalibrationParameters
                                           .torque_ratio = 0.6,
-                                          .control_gain_kp = 3.0,
-                                          .control_gain_kd = 0.03,
                                           .position_tolerance_rad = 0.05,
                                           .move_timeout = 2000,
                                       },
-                                      Vector(0.08, 0.08, 0.04))
+                                      Vector(0.08, 0.08, 0.04),
+                                      Vector::Ones() * 3.0,
+                                      Vector::Ones() * 0.03,
+                                      true)
     {
         home_offset_rad_ << -0.54, -0.17, 0.0;
         initial_position_rad_ << 1.5, 1.5, 3.0;
@@ -77,7 +78,7 @@ robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
 
     auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
         robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
-    backend->set_max_action_repetitions(-1);
+    backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
 }

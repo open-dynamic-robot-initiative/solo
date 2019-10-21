@@ -20,7 +20,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-#include <blmc_robots/random_finger_driver.hpp>
+#include <blmc_robots/fake_finger_driver.hpp>
 #include <blmc_robots/real_finger_driver.hpp>
 
 using namespace blmc_robots;
@@ -29,7 +29,6 @@ PYBIND11_MODULE(py_real_finger, m)
 {
     m.def("create_real_finger_backend", &create_real_finger_backend);
 
-    m.def("create_random_finger_backend", &create_random_finger_backend);
+    m.def("create_fake_finger_backend", &create_fake_finger_backend);
 
 }
-
