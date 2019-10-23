@@ -26,6 +26,6 @@ using namespace blmc_robots;
 
 PYBIND11_MODULE(py_one_joint, m)
 {
-    m.def("create_one_joint_backend", &create_one_joint_backend);
+    m.def("create_one_joint_backend", &create_backend<OneJointDriver>);
 }
 

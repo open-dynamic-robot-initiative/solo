@@ -26,6 +26,6 @@ using namespace blmc_robots;
 
 PYBIND11_MODULE(py_two_joint, m)
 {
-    m.def("create_two_joint_backend", &create_two_joint_backend);
+    m.def("create_two_joint_backend", &create_backend<TwoJointDriver>);
 }
 

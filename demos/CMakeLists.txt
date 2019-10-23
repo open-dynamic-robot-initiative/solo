@@ -21,6 +21,7 @@ macro(create_demo demo_name robot_name)
     ${robot_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
   )
 
   # first look if a robot_properties_${robot_name} package contain a config file.
