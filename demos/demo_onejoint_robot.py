@@ -30,7 +30,7 @@ def main():
 
 
     robot_data = one_joint.Data()
-    robot_backend = blmc_robots.create_one_joint_backend("can7",
+    robot_backend = blmc_robots.create_one_joint_backend("can6",
                                                          home_offset,
                                                          robot_data)
     robot = one_joint.Frontend(robot_data)
@@ -56,27 +56,30 @@ def main():
         """
         desired_torque = np.zeros(N_JOINTS)
 
-        t = robot.append_desired_action(desired_torque)
+        action = one_joint.Action(torque=desired_torque)
+        t = robot.append_desired_action(action)
         # Use current position as start position.
         # Copy the current position, so value in the variable can be modified
         # later.
-        desired_step_position = copy.copy(robot.get_observation(t).angle)
+        desired_step_position = copy.copy(robot.get_observation(t).position)
 
         stepsize = (goal_position - desired_step_position) / steps
 
         # move from start to goal
         for step in range(steps):
             desired_step_position += stepsize
-            t = robot.append_desired_action(desired_torque)
+            action = one_joint.Action(torque=desired_torque)
+            t = robot.append_desired_action(action)
             position_error = (desired_step_position -
-                              robot.get_observation(t).angle)
+                              robot.get_observation(t).position)
             desired_torque = (kp * position_error -
                               kd * robot.get_observation(t).velocity)
 
         # hold at goal position
         for step in range(hold):
-            t = robot.append_desired_action(desired_torque)
-            position_error = goal_position - robot.get_observation(t).angle
+            action = one_joint.Action(torque=desired_torque)
+            t = robot.append_desired_action(action)
+            position_error = goal_position - robot.get_observation(t).position
             desired_torque = (kp * position_error -
                               kd * robot.get_observation(t).velocity)
 
@@ -89,7 +92,8 @@ def main():
     print("homing finished")
     go_to_zero(1000, 2000)
 
-    robot.append_desired_action(np.ones(N_JOINTS) * 0.15)
+    action = one_joint.Action(torque=np.ones(N_JOINTS) * 0.15)
+    robot.append_desired_action(action)
 
     goal_position = position_limit
     while True:
