@@ -31,7 +31,7 @@ def main():
 
     robot_data = two_joint.Data()
     robot_backend = blmc_robots.create_two_joint_backend("can6",
-							                             home_offset,
+							 home_offset,
                                                          robot_data)
     robot = two_joint.Frontend(robot_data)
 
