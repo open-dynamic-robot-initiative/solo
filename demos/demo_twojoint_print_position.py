@@ -8,7 +8,7 @@ import blmc_robots
 home_offset = np.array([2.256, 2.2209])
 robot_data = two_joint.Data()
 robot_backend = blmc_robots.create_two_joint_backend("can6",
-						     						 home_offset,
+						     home_offset,
                                                      robot_data)
 
 robot = two_joint.Frontend(robot_data)
