@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple demo moving a single joint back and forth."""
+"""Simple demo moving two joints back and forth."""
 import numpy as np
 import copy
 
