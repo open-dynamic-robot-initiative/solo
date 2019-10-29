@@ -17,9 +17,9 @@
 namespace blmc_robots
 {
 /**
- * @brief Driver for a single joint.
+ * @brief Driver for two joints.
  *
- * Driver for a single BLMC joint.  Mostly intended for testing purposes.
+ * Driver for a double BLMC joint.  Mostly intended for testing purposes.
  */
 
 class TwoJointDriver : public NJointBlmcRobotDriver<2, 1>
@@ -66,7 +66,6 @@ private:
                                       true)
     {
         home_offset_rad_ << home_offset_rad;
-        // initial_position_rad_ << -2.256, -2.2209; // defaults to 0
     }
 
     static Motors create_motors(const MotorBoards &motor_boards)
@@ -78,23 +77,7 @@ private:
 
         return motors;
     }
-
-    /**
-     * @brief Create a Vector with the given value.
-     *
-     * This is a helper function needed for initializing Vectors with a
-     * specific value upon creation.
-     *
-     * @param value Value to be set in the vector.
-     *
-     * @return The Vector.
-     */
-    static Vector make_vector(double value)
-    {
-        Vector vec;
-        vec << value, value;
-        return vec;
-    }
+    
 };
 
 robot_interfaces::NJointRobotTypes<2>::BackendPtr create_two_joint_backend(
