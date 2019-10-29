@@ -92,9 +92,6 @@ def main():
     print("homing finished")
     go_to_zero(1000, 2000)
 
-    action = two_joint.Action(torque=np.ones(N_JOINTS) * 0.15)
-    robot.append_desired_action(action)
-
     goal_position = position_limit
     while True:
         goal_position *= -1
