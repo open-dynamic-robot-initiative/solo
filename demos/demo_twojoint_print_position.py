@@ -18,5 +18,4 @@ robot_backend.initialize()
 while True:
     t = robot.append_desired_action(two_joint.Action())
     pos = robot.get_observation(t).position
-    #print("\r%6.3f %6.3f %6.3f" % (pos[0], pos[1], pos[2]), end="")
     print(pos)
