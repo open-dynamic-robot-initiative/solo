@@ -8,8 +8,8 @@ import blmc_robots
 home_offset = 2.241742
 robot_data = one_joint.Data()
 robot_backend = blmc_robots.create_one_joint_backend("can6",
-                                                         home_offset,
-                                                         robot_data)
+                                                     home_offset,
+                                                     robot_data)
 robot = one_joint.Frontend(robot_data)
 
 
