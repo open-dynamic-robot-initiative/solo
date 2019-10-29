@@ -104,6 +104,16 @@ set_target_properties(py_one_joint PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
 install(TARGETS py_one_joint DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
 
+
+set(py_two_joint_SRC_FILES 
+  srcpy/py_two_joint.cpp
+)
+pybind11_add_module(py_two_joint ${py_two_joint_SRC_FILES})
+target_link_libraries(py_two_joint PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME})
+set_target_properties(py_two_joint PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
+install(TARGETS py_two_joint DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
+
 ##########################
 # building documentation #
 ##########################
