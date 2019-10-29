@@ -15,10 +15,6 @@ robot = one_joint.Frontend(robot_data)
 
 robot_backend.initialize()
 
-# TODO this makes the application hang
-#t = finger.get_current_time_index()
-#print("t = %d" % t)
-
 while True:
     t = robot.append_desired_action(one_joint.Action())
     pos = robot.get_observation(t).position
