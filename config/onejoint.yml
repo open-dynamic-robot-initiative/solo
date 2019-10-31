@@ -1,0 +1,8 @@
+# can6: MPI board
+# can7: TI Launchpad
+can_ports: ["can6"]
+
+# Offset between encoder index and zero-position (in radian).
+# Set this such that the zero position is in the center between left and
+# right end stop.
+home_offset_rad: [2.241742]
