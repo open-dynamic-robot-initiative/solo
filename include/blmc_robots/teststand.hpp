@@ -70,9 +70,7 @@ public:
    * @return true if success
    * @return false if failure
    */
-  bool calibrate(std::array<double, 2>& zero_to_index_angle,
-                 std::array<double, 2>& index_angle,
-                 bool mechanical_calibration = false);
+  bool calibrate(const Vector2d& home_offset_rad);
 
   /**
    * @brief get_motor_inertias
@@ -238,24 +236,6 @@ public:
   }
 
 private:
-  bool calibrate_one_joint(int joint_index)
-  {
-    return joints_[joint_index]->calibrate(zero_to_index_angle_[joint_index],
-                                           index_angle_[joint_index],
-                                           mechanical_calibration_);
-  }
-
-  static void* calibrate_hfe(void *context)
-  {
-    static_cast<Teststand *>(context)->calibrate_one_joint(0);
-    return nullptr;
-  }
-
-  static void* calibrate_kfe(void *context)
-  {
-    static_cast<Teststand *>(context)->calibrate_one_joint(1);
-    return nullptr;
-  }
 
   /**
    * @brief ATI sensor.
@@ -389,13 +369,13 @@ private:
    * @brief motors_ are the objects allowing us to send motor commands and
    * receive data
    */
-  std::array<Motor_ptr, 2> motors_;
+  std::array<MotorInterface_ptr, 2> motors_;
 
   /**
-   * @brief joints_ are the objects allowing us to send commands and receive
+   * @brief joint_ptrs_ are the objects allowing us to send commands and receive
    * data at the joint level. It also ones some self calibration routines.
    */
-  std::array<BlmcJointModule_ptr, 2> joints_;
+  BlmcJointModules<2> joints_;
 
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
@@ -408,32 +388,11 @@ private:
    */
   std::array<ContactSensor_ptr, 1> contact_sensors_;
 
-
   /**
    * @brief contact_sensors_ is the contact sensors at each foot tips. They also
    * are analogue inputs.
    */
   std::array<HeightSensor_ptr, 1> height_sensors_;
-
-  /**
-   * @brief Threads to calibrate all joints at the same time.
-   */
-  std::array<real_time_tools::RealTimeThread, 2> calibration_threads_;
-
-  /**
-   * @brief This is the distance between the next joint index and the
-   * theoretical zero.
-   */
-  std::array<double, 2> zero_to_index_angle_;
-  /**
-   * @brief is the position of the next joint index using the raw encoder
-   */
-  std::array<double, 2> index_angle_;
-  /**
-   * @brief is the last decision taken to calibrate the join form the last known
-   * position or using the parameters.
-   */
-  bool mechanical_calibration_;
 };
 
 } // namespace blmc_robots

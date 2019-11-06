@@ -30,7 +30,7 @@ std::atomic_bool StopDemos(false);
  *
  * @param s
  */
-void my_handler(int s)
+void my_handler(int)
 {
     StopDemos = true;
 }
@@ -50,28 +50,17 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
     Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
 
-    std::array<double, 2> zero_to_index_angle;
-    std::array<double, 2> index_angle;
-    bool mechanical_calibration;
-
-    zero_to_index_angle.fill(0.0);
-    index_angle.fill(0.0);
-    mechanical_calibration = true;
-
-    robot.calibrate(zero_to_index_angle, index_angle, mechanical_calibration);
-
-    for (unsigned i = 0; i < 2; ++i)
-    {
-        rt_printf("zero_to_index_angle[%d] = %f\n", i, zero_to_index_angle[i]);
-        rt_printf("index_angle[%d] = %f\n", i, index_angle[i]);
-    }
+    Eigen::Vector2d zero_to_index_angle;
+    zero_to_index_angle[0] = 0.354043;
+    zero_to_index_angle[1] = 0.243433;
+    robot.calibrate(zero_to_index_angle);
 
     StopDemos = true;
 
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
     // make sure we catch the ctrl+c signal to kill the application properly.
     struct sigaction sigIntHandler;
