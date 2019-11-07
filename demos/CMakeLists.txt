@@ -14,6 +14,7 @@ include_directories(
 macro(create_demo demo_name robot_name)
   add_executable(demo_${demo_name}
     demo_${demo_name}.cpp
+    common_demo_header.hpp
   )
 
   target_link_libraries(demo_${demo_name}
@@ -31,10 +32,11 @@ endmacro(create_demo demo_name)
 ###############
 
 create_demo(test_bench_8_motors test_bench_8_motors)
-create_demo(quadruped quadruped)
+create_demo(solo quadruped)
 create_demo(teststand teststand)
 create_demo(stuggihop stuggihop)
 
+create_demo(solo_calibration teststand)
 create_demo(teststand_calibration teststand)
 
 create_demo(finger_position_control "")

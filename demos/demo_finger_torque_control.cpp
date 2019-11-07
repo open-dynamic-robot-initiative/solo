@@ -46,6 +46,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
     return THREAD_FUNCTION_RETURN_VALUE;
 }
 
+/// TODO: fixme 
 int main(int argc, char **argv)
 {
     // Hardware hardware;

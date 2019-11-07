@@ -1,9 +1,9 @@
-#include <math.h>
-#include "blmc_robots/quadruped.hpp"
+#include <cmath>
+#include "blmc_robots/solo.hpp"
 
 namespace blmc_robots{
 
-Quadruped::Quadruped()
+Solo::Solo()
 {
   /**
     * Motor data
@@ -71,7 +71,7 @@ Quadruped::Quadruped()
 }
 
 
-void Quadruped::initialize()
+void Solo::initialize()
 {
   // initialize the communication with the can cards
   for(unsigned i=0 ; i<can_buses_.size() ; ++i)
@@ -149,7 +149,7 @@ void Quadruped::initialize()
   }
 }
 
-void Quadruped::acquire_sensors()
+void Solo::acquire_sensors()
 {
   /**
     * Motor data
@@ -252,18 +252,18 @@ void Quadruped::acquire_sensors()
   motor_ready_[7] = static_cast<bool>(HR_status.motor1_ready); // HR_KFE
 }
 
-void Quadruped::set_hardstop2zero_offsets(const Eigen::Ref<Vector8d> hardstop2zero_offsets)
+void Solo::set_hardstop2zero_offsets(const Eigen::Ref<Vector8d> hardstop2zero_offsets)
 {
   joint_hardstop2zero_offsets_ = hardstop2zero_offsets;
 }
 
-void Quadruped::set_start2hardstop_offsets(const Eigen::Ref<Vector8d> start2hardstop_offsets)
+void Solo::set_start2hardstop_offsets(const Eigen::Ref<Vector8d> start2hardstop_offsets)
 {
   joint_start2hardstop_offsets_ = start2hardstop_offsets;
 }
 
 
-void Quadruped::send_target_motor_current(
+void Solo::send_target_motor_current(
     const Eigen::Ref<Vector8d> target_motor_current)
 {
   // set up the target current
@@ -279,7 +279,7 @@ void Quadruped::send_target_motor_current(
   }
 }
 
-void Quadruped::send_target_joint_torque(
+void Solo::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
   target_motor_current_tmp_ = target_joint_torque.array() /

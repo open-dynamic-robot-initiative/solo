@@ -41,7 +41,7 @@ endmacro()
 ####################
 
 create_robots_library(test_bench_8_motors)
-create_robots_library(quadruped)
+create_robots_library(solo)
 create_robots_library(teststand)
 create_robots_library(stuggihop)
 create_robots_library(single_motor)
