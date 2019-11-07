@@ -16,6 +16,7 @@
 
 #include "blmc_drivers/devices/motor.hpp"
 #include "blmc_robots/common_header.hpp"
+#include "blmc_robots/mathematics/polynome.hpp"
 
 namespace blmc_robots
 {
@@ -33,6 +34,18 @@ enum class HomingReturnCode {
     //! Homing is succeeded.
     SUCCEEDED,
     //! Homing failed.
+    FAILED
+};
+
+/**
+ * @brief Possible return values of the go_to
+ */
+enum class GoToReturnCode {
+    //! GoTo is currently running.
+    RUNNING,
+    //! Position has been reached succeeded.
+    SUCCEEDED,
+    //! Robot is stuck(hit an obstacle) before reaching its final position.
     FAILED
 };
 
@@ -595,8 +608,57 @@ public:
         return homing_status;
     }
 
+    GoToReturnCode go_to(Vector angle_to_reach_rad,
+                         double average_speed=1.0)
+    {
+        // Compute a min jerk trajectory
+        Vector init_pos = get_measured_angles();
+        double final_time = (angle_to_reach_rad - init_pos)
+                            .array().abs().maxCoeff() /
+                            average_speed;
 
+        std::array<TimePolynome<5> , COUNT> min_jerk_trajs;
+        for(unsigned i = 0; i < COUNT; i++)
+        {
+            double init_pose = init_pos[i];
+            double init_speed = 0.0;
+            double final_pose = angle_to_reach_rad[i];
+            min_jerk_trajs[i].set_parameters(
+              final_time, init_pose, init_speed, final_pose);
+        }
 
+        // run got_to for all joints
+        real_time_tools::Spinner spinner;
+        double sampling_period = 0.001; // TODO magic number
+        spinner.set_period(sampling_period);  
+        GoToReturnCode got_to_status;
+        double current_time = 0.0;
+        do{
+            // TODO: add a security if error gets too big
+            for(unsigned i = 0; i < COUNT; i++)
+            {
+                double desired_pose = min_jerk_trajs[i].compute(current_time);
+                double desired_torque = 
+                  modules_[i]->execute_position_controller(desired_pose);
+                modules_[i]->set_torque(desired_torque);
+                modules_[i]->send_torque();
+            }
+            got_to_status = GoToReturnCode::RUNNING;
+
+            current_time += sampling_period;
+            spinner.spin(); 
+                         
+        } while(current_time < (final_time + sampling_period));
+
+        Vector final_pos = get_measured_angles();
+        if ( (angle_to_reach_rad - final_pos).isMuchSmallerThan(1.0, 1e-3) )
+        {
+            got_to_status = GoToReturnCode::SUCCEEDED;
+        }else{
+            got_to_status = GoToReturnCode::FAILED;
+        }
+        return got_to_status;
+    }
 
 private:
     /**

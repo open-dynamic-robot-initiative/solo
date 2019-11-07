@@ -22,7 +22,7 @@ BlmcJointModule::BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> m
                     const double& zero_angle,
                     const bool& reverse_polarity,
                     const double& max_current):
-    homing_state_({0})
+    homing_state_(HomingState())
 {
     motor_ = motor;
     motor_constant_ = motor_constant;

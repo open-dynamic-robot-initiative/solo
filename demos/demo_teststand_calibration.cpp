@@ -51,8 +51,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
 
     Eigen::Vector2d zero_to_index_angle;
-    zero_to_index_angle[0] = 0.354043;
-    zero_to_index_angle[1] = 0.243433;
+    zero_to_index_angle[0] = -0.354043;
+    zero_to_index_angle[1] = -0.243433;
     robot.calibrate(zero_to_index_angle);
 
     StopDemos = true;

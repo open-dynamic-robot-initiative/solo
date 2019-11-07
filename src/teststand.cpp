@@ -181,6 +181,8 @@ bool Teststand::calibrate(const Vector2d& home_offset_rad)
   double profile_step_size_rad=0.001;
   joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
                          profile_step_size_rad);
+  Vector2d zero_pose = Vector2d::Zero();
+  joints_.go_to(zero_pose);
   return true; 
 }
 
