@@ -12,6 +12,7 @@
 #include "real_time_tools/iostream.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 
+
 namespace blmc_robots{
 
 
@@ -20,8 +21,7 @@ BlmcJointModule::BlmcJointModule(std::shared_ptr<blmc_drivers::MotorInterface> m
                     const double& gear_ratio,
                     const double& zero_angle,
                     const bool& reverse_polarity,
-                    const double& max_current):
-    homing_state_({0})
+                    const double& max_current)
 {
     motor_ = motor;
     motor_constant_ = motor_constant;

@@ -4,6 +4,7 @@
 
 add_library(${PROJECT_NAME} SHARED
   blmc_joint_module.cpp
+  mathematics/polynome.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})

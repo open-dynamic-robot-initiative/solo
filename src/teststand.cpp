@@ -49,11 +49,6 @@ Teststand::Teststand()
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
-
-  // calibration data
-  zero_to_index_angle_.fill(0.0);
-  index_angle_.fill(0.0);
-  mechanical_calibration_ = false;
 }
 
 
@@ -76,14 +71,18 @@ void Teststand::initialize()
   motors_[0] = std::make_shared<blmc_drivers::Motor> (can_motor_boards_[0], 1);
   // MOTOR_KFE
   motors_[1] = std::make_shared<blmc_drivers::Motor> (can_motor_boards_[0], 0);
-  // JOINT_HFE
-  joints_[0] = std::make_shared<BlmcJointModule> (
-    motors_[0], motor_torque_constants_[0], joint_gear_ratios_[0], 0.0, false,
-    motor_max_current_[0]);
-  // JOINT_KFE
-  joints_[1] = std::make_shared<BlmcJointModule> (
-    motors_[1], motor_torque_constants_[1], joint_gear_ratios_[1], 0.0, false,
-    motor_max_current_[1]);
+
+  // Create the joint module objects
+  joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
+                          joint_zero_positions_, motor_max_current_);
+  
+  // The the control gains in order to perform the calibration
+  Eigen::Vector2d kp, kd;
+  kp[0] = 2.0;
+  kd[0] = 0.05;
+  kp[1] = 2.0;
+  kd[1] = 0.05;
+  joints_.set_position_control_gains(kp, kd);
 
   // can 1
   sliders_[0] =
@@ -113,19 +112,16 @@ bool Teststand::acquire_sensors()
     /**
       * Joint data
       */
-    for (unsigned i=0 ; i<joints_.size() ; ++i)
-    {
-      // acquire the joint position
-      joint_positions_(i) = joints_[i]->get_measured_angle();
-      // acquire the joint velocities
-      joint_velocities_(i) = joints_[i]->get_measured_velocity();
-      // acquire the joint torques
-      joint_torques_(i) = joints_[i]->get_measured_torque();
-      // acquire the joint index
-      joint_encoder_index_(i) = joints_[i]->get_measured_index_angle();
-      // acquire the target joint torques
-      joint_target_torques_(i) = joints_[i]->get_sent_torque();
-    }
+    // acquire the joint position
+    joint_positions_ = joints_.get_measured_angles();
+    // acquire the joint velocities
+    joint_velocities_ = joints_.get_measured_velocities();
+    // acquire the joint torques
+    joint_torques_ = joints_.get_measured_torques();
+    // acquire the joint index
+    joint_encoder_index_ = joints_.get_measured_index_angles();
+    // acquire the target joint torques
+    joint_target_torques_ = joints_.get_sent_torques();
 
     /**
       * Additional data
@@ -173,31 +169,21 @@ bool Teststand::acquire_sensors()
 bool Teststand::send_target_joint_torque(
     const Eigen::Ref<Vector2d> target_joint_torque)
 {
-  for (unsigned i=0 ; i<joints_.size() ; ++i)
-  {
-    joints_[i]->set_torque(target_joint_torque(i));
-    joints_[i]->send_torque();
-  }
+  joints_.set_torques(target_joint_torque);
+  joints_.send_torques();
   return true;
 }
 
-bool Teststand::calibrate(std::array<double, 2>& zero_to_index_angle,
-                          std::array<double, 2>& index_angle,
-                          bool mechanical_calibration)
+bool Teststand::calibrate(const Vector2d& home_offset_rad)
 {
-  zero_to_index_angle_ = zero_to_index_angle;
-  mechanical_calibration_ = mechanical_calibration;
-
-  calibration_threads_[0].create_realtime_thread(Teststand::calibrate_hfe, this);
-  calibration_threads_[1].create_realtime_thread(Teststand::calibrate_kfe, this);
-
-  calibration_threads_[0].join();
-  calibration_threads_[1].join();
-
-  index_angle = index_angle_;
+  // Maximum distance is twice the angle between joint indexes
+  double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
+  double profile_step_size_rad=0.001;
+  joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
+                         profile_step_size_rad);
+  Vector2d zero_pose = Vector2d::Zero();
+  joints_.go_to(zero_pose);
   return true; 
 }
-
-
 
 } // namespace blmc_robots

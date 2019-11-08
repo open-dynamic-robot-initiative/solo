@@ -30,7 +30,7 @@ std::atomic_bool StopDemos(false);
  *
  * @param s
  */
-void my_handler(int s)
+void my_handler(int)
 {
     StopDemos = true;
 }
@@ -63,7 +63,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     std::vector<std::deque<double> > sliders_filt_buffer(
         robot.get_slider_positions().size());
-    int max_filt_dim = 200;
+    size_t max_filt_dim = 200;
     for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
     {
         sliders_filt_buffer[i].clear();

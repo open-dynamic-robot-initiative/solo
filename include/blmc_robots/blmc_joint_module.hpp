@@ -16,6 +16,7 @@
 
 #include "blmc_drivers/devices/motor.hpp"
 #include "blmc_robots/common_header.hpp"
+#include "blmc_robots/mathematics/polynome.hpp"
 
 namespace blmc_robots
 {
@@ -36,27 +37,39 @@ enum class HomingReturnCode {
     FAILED
 };
 
+/**
+ * @brief Possible return values of the go_to
+ */
+enum class GoToReturnCode {
+    //! GoTo is currently running.
+    RUNNING,
+    //! Position has been reached succeeded.
+    SUCCEEDED,
+    //! Robot is stuck(hit an obstacle) before reaching its final position.
+    FAILED
+};
+
 
 /**
  * @brief State variables required for the homing.
  */
 struct HomingState {
     //! Id of the joint.  Just use for debug prints.
-    int joint_id;
+    int joint_id = 0;
     //! Max. distance to move while searching the encoder index.
-    double search_distance_limit_rad;
+    double search_distance_limit_rad = 0.0;
     //! Offset from home position to zero position.
-    double home_offset_rad;
+    double home_offset_rad = 0.0;
     //! Step size for the position profile.
-    double profile_step_size_rad;
+    double profile_step_size_rad = 0.0;
     //! Timestamp from when the encoder index was seen the last time.
-    long int last_encoder_index_time_index;
+    long int last_encoder_index_time_index = 0;
     //! Number of profile steps already taken.
-    uint32_t step_count;
+    uint32_t step_count = 0;
     //! Current target position of the position profile.
-    double target_position_rad;
+    double target_position_rad = 0.0;
     //! Current status of the homing procedure.
-    HomingReturnCode status;
+    HomingReturnCode status = HomingReturnCode::NOT_INITIALIZED;
 };
 
 
@@ -595,8 +608,55 @@ public:
         return homing_status;
     }
 
+    GoToReturnCode go_to(Vector angle_to_reach_rad,
+                         double average_speed_rad_per_sec=1.0)
+    {
+        // Compute a min jerk trajectory
+        Vector initial_joint_positions = get_measured_angles();
+        double final_time = (angle_to_reach_rad - initial_joint_positions)
+                            .array().abs().maxCoeff() /
+                            average_speed_rad_per_sec;
 
+        std::array<TimePolynome<5> , COUNT> min_jerk_trajs;
+        for(unsigned i = 0; i < COUNT; i++)
+        {
+            min_jerk_trajs[i].set_parameters(final_time,
+              initial_joint_positions[i], 0.0 /*initial speed*/,
+              angle_to_reach_rad[i]);
+        }
 
+        // run got_to for all joints
+        real_time_tools::Spinner spinner;
+        double sampling_period = 0.001; // TODO magic number
+        spinner.set_period(sampling_period);  
+        GoToReturnCode go_to_status;
+        double current_time = 0.0;
+        do{
+            // TODO: add a security if error gets too big
+            for(unsigned i = 0; i < COUNT; i++)
+            {
+                double desired_pose = min_jerk_trajs[i].compute(current_time);
+                double desired_torque = 
+                  modules_[i]->execute_position_controller(desired_pose);
+                modules_[i]->set_torque(desired_torque);
+                modules_[i]->send_torque();
+            }
+            go_to_status = GoToReturnCode::RUNNING;
+
+            current_time += sampling_period;
+            spinner.spin(); 
+                         
+        } while(current_time < (final_time + sampling_period));
+
+        Vector final_pos = get_measured_angles();
+        if ( (angle_to_reach_rad - final_pos).isMuchSmallerThan(1.0, 1e-3) )
+        {
+            go_to_status = GoToReturnCode::SUCCEEDED;
+        }else{
+            go_to_status = GoToReturnCode::FAILED;
+        }
+        return go_to_status;
+    }
 
 private:
     /**
