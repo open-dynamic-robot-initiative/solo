@@ -134,6 +134,11 @@ void Solo::initialize()
   // Create the joint module objects
   joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
                           joint_zero_positions_, motor_max_current_);
+  // The the control gains in order to perform the calibration
+  blmc_robots::Vector8d kp, kd;
+  kp.fill(3.0);
+  kd.fill(0.05);
+  joints_.set_position_control_gains(kp, kd);
 
   // wait until all board are ready and connected
   for(unsigned i=0 ; i<can_buses_.size() ; ++i)

@@ -45,15 +45,16 @@ int main(int, char**)
     robot.initialize();
 
     rt_printf("controller is set up \n");
+    rt_printf("Press enter to launch the calibration \n");
+    char str[256];
+    std::cin.get(str, 256);  // get c-string
 
     thread.create_realtime_thread(&control_loop, &robot);
 
-    rt_printf("control loop started \n");
+    // Wait until the application is killed.
+    thread.join();
 
-    while (true)
-    {
-        real_time_tools::Timer::sleep_sec(0.01);
-    }
+    rt_printf("Exit cleanly \n");
 
     return 0;
 }
