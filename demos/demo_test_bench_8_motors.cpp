@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/test_bench_8_motors.hpp"
-#include "common_header.hpp"
+#include "blmc_robots/common_header.hpp"
 
 
 using namespace blmc_robots;

@@ -14,6 +14,7 @@ include_directories(
 macro(create_demo demo_name robot_name)
   add_executable(demo_${demo_name}
     demo_${demo_name}.cpp
+    common_demo_header.hpp
   )
 
   target_link_libraries(demo_${demo_name}
@@ -22,8 +23,13 @@ macro(create_demo demo_name robot_name)
     ${catkin_LIBRARIES}
   )
 
+  # first look if a robot_properties_${robot_name} package contain a config file.
+  set(config_file
+    "${robot_properties_${robot_name}_SOURCE_DIR}/config/dgm_parameters.yaml"
+  )
   target_compile_definitions(demo_${demo_name} PUBLIC
-    YAML_PARAMS="${CMAKE_CURRENT_SOURCE_DIR}/config/${demo_name}.yaml")
+    YAML_PARAMS="${config_file}")
+
 endmacro(create_demo demo_name)
 
 ###############

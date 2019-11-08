@@ -28,6 +28,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   mpi_cmake_modules
   robot_interfaces
   pybind11_catkin
+  yaml_cpp_catkin
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 

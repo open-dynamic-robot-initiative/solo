@@ -11,6 +11,8 @@
 #ifndef COMMON_HEADER_HPP
 #define COMMON_HEADER_HPP
 
+// read some parameters
+#include "yaml_cpp_catkin/yaml_cpp_fwd.hpp"
 
 // For mathematical operation
 #include <Eigen/Eigen>
@@ -139,6 +141,28 @@ void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
         rt_printf("%f, ", v(i));
     }
     rt_printf("]\n");
+}
+
+/**
+ * @brief This small structure is used for reading the calibration parameters
+ * for the calibrations demos.
+ * 
+ * @tparam ROBOT_TYPE 
+ */
+template<class ROBOT_TYPE>
+struct ThreadCalibrationData{
+  ROBOT_TYPE* robot;
+  Eigen::Vector2d joint_index_to_zero;
+
+  ThreadCalibrationData(ROBOT_TYPE* robot_in){
+    robot = robot_in;
+    std::cout << "Loading paramters from "
+              << YAML_PARAMS
+              << std::endl;
+    YAML::Node param = YAML::LoadFile(YAML_PARAMS);
+    YAML::ReadParameter(param["hardware_communication"]["calibration"],
+                        "index_to_zero_angle", joint_index_to_zero);
+  }
 }
 
 } // namespace blmc_robots

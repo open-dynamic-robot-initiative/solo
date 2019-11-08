@@ -10,7 +10,7 @@
 
 #include <tuple>
 #include "blmc_robots/real_disentanglement_platform.hpp"
-#include "common_header.hpp"
+#include "blmc_robots/common_header.hpp"
 
 
 using namespace blmc_robots;

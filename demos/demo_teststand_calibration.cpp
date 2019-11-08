@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/teststand.hpp"
-#include "common_demo_header.hpp"
+#include "blmc_robots/common_header.hpp"
 
 
 using namespace blmc_robots;
@@ -18,6 +18,7 @@ using namespace blmc_robots;
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
     Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
+
 
     Eigen::Vector2d joint_index_to_zero;
     joint_index_to_zero[0] = -0.354043;

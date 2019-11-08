@@ -59,7 +59,7 @@ macro(build_programs program_name robot_name)
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
   )
-endmacro(create_demo program_name)
+endmacro(build_programs program_name robot_name)
 
 ######################
 # Build the programs #

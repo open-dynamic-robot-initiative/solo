@@ -8,9 +8,8 @@
  */
 
 
-#include "real_time_tools/timer.hpp"
 #include "blmc_robots/solo.hpp"
-#include "common_demo_header.hpp"
+#include "blmc_robots/common_demo_header.hpp"
 
 
 using namespace blmc_robots;

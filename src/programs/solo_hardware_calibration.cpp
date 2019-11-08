@@ -10,7 +10,7 @@
 
 #include "real_time_tools/timer.hpp"
 #include "blmc_robots/solo.hpp"
-#include "common_header.hpp"
+#include "blmc_robots/common_header.hpp"
 
 
 using namespace blmc_robots;
