@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/teststand.hpp"
-#include "common_demo_header.hpp"
+#include "common_header.hpp"
 
 
 using namespace blmc_robots;
@@ -40,7 +40,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     size_t count = 0;
     bool success_acquiring_sensor = true;
     bool success_sending_torques = true;
-    while (!StopDemos && success_acquiring_sensor && success_sending_torques)
+    while (!StopControl && success_acquiring_sensor && success_sending_torques)
     {
         // acquire the sensors
         success_acquiring_sensor = robot.acquire_sensors();
@@ -108,7 +108,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     // send zero torques after the control loop.
     desired_torque.fill(0.0);
     robot.send_target_joint_torque(desired_torque);
-    StopDemos = true;
+    StopControl = true;
 
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
@@ -128,7 +128,7 @@ int main(int, char**)
     thread.create_realtime_thread(&control_loop, &robot);
 
     // Wait until the application is killed.
-    while (!StopDemos)
+    while (!StopControl)
     {
         real_time_tools::Timer::sleep_sec(0.01);
     }

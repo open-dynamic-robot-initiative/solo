@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/blmc_joint_module.hpp"
-#include "common_demo_header.hpp"
+#include "common_header.hpp"
 
 
 using namespace blmc_robots;
@@ -47,7 +47,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     // real_time_tools::Spinner spinner;
     // spinner.set_period(0.1);
-    // while(!StopDemos)
+    // while(!StopControl)
     // {
     //   rt_printf("current measurement = %f, current index = %f\n",
     //   robot.joint_module->get_measured_angle(),

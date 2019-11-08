@@ -15,7 +15,6 @@ endif()
 
 set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${PROJECT_NAME})
 
-
 ###############################################
 # Declare a simple macro to build the library #
 ###############################################
@@ -46,6 +45,27 @@ create_robots_library(teststand)
 create_robots_library(stuggihop)
 create_robots_library(single_motor)
 create_robots_library(single_leg)
+
+################################################
+# Declare a simple macro to build the programs #
+################################################
+
+macro(build_programs program_name robot_name)
+  add_executable(${program_name}
+    programs/${program_name}.cpp
+  )
+  target_link_libraries(${program_name}
+    ${robot_name}
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+  )
+endmacro(create_demo program_name)
+
+######################
+# Build the programs #
+######################
+
+build_programs(teststand_hardware_calibration teststand)
 
 ######################################################
 # Export the libraries in the devel folder of catkin #

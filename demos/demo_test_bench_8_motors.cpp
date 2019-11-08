@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/test_bench_8_motors.hpp"
-#include "common_demo_header.hpp"
+#include "common_header.hpp"
 
 
 using namespace blmc_robots;
@@ -30,7 +30,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     real_time_tools::Spinner spinner;
     spinner.set_period(0.001);
     size_t count = 0;
-    while (!StopDemos)
+    while (!StopControl)
     {
         // acquire the sensors
         robot.acquire_sensors();
@@ -86,7 +86,7 @@ int main(int, char**)
     rt_printf("control loop started \n");
 
     // Wait until the application is killed.
-    while (!StopDemos)
+    while (!StopControl)
     {
         real_time_tools::Timer::sleep_sec(0.01);
     }

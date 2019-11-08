@@ -11,9 +11,24 @@
 #ifndef COMMON_HEADER_HPP
 #define COMMON_HEADER_HPP
 
+
+// For mathematical operation
 #include <Eigen/Eigen>
+
+// manage the exit of the program with ctrl+c
+#include <signal.h> // manage the ctrl+c signal
+#include <atomic> // thread safe flag for application shutdown management
+
+// some real_time_tools in order to have a real time control
+#include "real_time_tools/iostream.hpp"
+#include "real_time_tools/timer.hpp"
+#include "real_time_tools/spinner.hpp"
+#include "real_time_tools/thread.hpp"
+
+// The robot drivers for building the robot wrapper around.
 #include <blmc_drivers/devices/motor.hpp>
 #include <blmc_drivers/devices/analog_sensor.hpp>
+
 
 namespace blmc_robots
 {
@@ -78,6 +93,53 @@ typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
  * @brief mi, this typedef is used to get the measurements from the blmc api
  */
 typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
+
+/**
+ * @brief This boolean is here to kill cleanly the application upon ctrl+c
+ */
+std::atomic_bool StopControl(false);
+
+/**
+ * @brief This function is the callback upon a ctrl+c call from the terminal.
+ *
+ * @param s is the id of the signal
+ */
+void my_handler(int)
+{
+    StopControl = true;
+}
+
+/**
+ * @brief Enable to kill the demos cleanly with a ctrl+c
+ */
+void enable_ctrl_c()
+{
+    // make sure we catch the ctrl+c signal to kill the application properly.
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, NULL);
+    StopControl = false;
+}
+
+/**
+ * @brief Usefull tool for the demos and programs in order to print data in
+ * real time.
+ * 
+ * @param v_name  is a string defining the data to print.
+ * @param v the vector to print.
+ */
+void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
+{
+    v_name += ": [";
+    rt_printf("%s", v_name.c_str());
+    for (int i = 0; i < v.size(); ++i)
+    {
+        rt_printf("%f, ", v(i));
+    }
+    rt_printf("]\n");
+}
 
 } // namespace blmc_robots
 

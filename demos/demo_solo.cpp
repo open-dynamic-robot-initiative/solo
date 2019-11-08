@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/solo.hpp"
-#include "common_demo_header.hpp"
+#include "common_header.hpp"
 
 
 using namespace blmc_robots;
@@ -36,7 +36,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
         sliders_filt_buffer[i].clear();
     }
     size_t count = 0;
-    while (!StopDemos)
+    while (!StopControl)
     {
         // acquire the sensors
         robot.acquire_sensors();

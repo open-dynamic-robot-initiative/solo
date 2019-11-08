@@ -14,7 +14,6 @@ include_directories(
 macro(create_demo demo_name robot_name)
   add_executable(demo_${demo_name}
     demo_${demo_name}.cpp
-    common_demo_header.hpp
   )
 
   target_link_libraries(demo_${demo_name}
