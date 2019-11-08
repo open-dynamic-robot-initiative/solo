@@ -65,6 +65,7 @@ endmacro(build_programs program_name robot_name)
 # Build the programs #
 ######################
 
+build_programs(solo_hardware_calibration solo)
 build_programs(teststand_hardware_calibration teststand)
 
 ######################################################

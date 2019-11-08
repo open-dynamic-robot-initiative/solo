@@ -45,19 +45,27 @@ include_directories(
     ${Eigen_INCLUDE_DIRS}
 )
 
+##########################################
+# export the package as a catkin package #
+##########################################
+set(exported_libraries
+  test_bench_8_motors
+  solo
+  teststand
+  stuggihop
+  single_motor
+  single_leg
+)
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${exported_libraries}
+  CATKIN_DEPENDS ${CATKIN_PKGS}
+)
+
 ########################################################
 # manage the creation of the libraries and executables #
 ########################################################
 add_subdirectory(src)
-
-##########################################
-# export the package as a catkin package #
-##########################################
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${EXPORTED_LIBRAIRIES}
-  CATKIN_DEPENDS ${CATKIN_PKGS}
-)
 
 #########################
 # manage the unit tests #

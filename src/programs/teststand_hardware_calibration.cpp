@@ -52,8 +52,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     long int count = 0;
     while(!StopControl)
     {
-      if(count % 200)
+      if(count % 200 == 0)
       {
+        robot.acquire_sensors();
         print_vector("Joint Positions", robot.get_joint_positions());
       }
     }
