@@ -38,8 +38,6 @@ void TimePolynome<5>::set_parameters(
   double is = init_speed;
   double ia = final_acc_;
   double fp = final_pose_;
-  double fs = final_speed_;
-  double fa = final_acc_;
   // do the computation using the analytical solution
   double tmp;
   coefficients_[0] = ip;

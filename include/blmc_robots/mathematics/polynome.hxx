@@ -11,14 +11,11 @@
 
 #pragma once
 
-#ifdef max
-#undef max
-#undef min
-#endif
 
 #include <iostream>
 #include <vector>
 #include "blmc_robots/mathematics/polynome.hpp"
+
 
 namespace blmc_robots
 {
@@ -43,7 +40,7 @@ double Polynome<ORDER>::compute(double x)
 {
   double res = 0.0;
   double pt = 1.0;
-  for(int i = 0 ; i < coefficients_.size() ; ++i)
+  for(size_t i = 0 ; i < coefficients_.size() ; ++i)
   {
       res += coefficients_[i] * pt;
       pt *= x;
@@ -56,7 +53,7 @@ double Polynome<ORDER>::compute_derivative(double x)
 {
   double res = 0.0;
   double pt = 1.0;
-  for(int i = 1 ; i < coefficients_.size() ; ++i)
+  for(size_t i = 1 ; i < coefficients_.size() ; ++i)
   {
       res += i * coefficients_[i] * pt;
       pt *= x ;
@@ -69,7 +66,7 @@ double Polynome<ORDER>::compute_sec_derivative(double x)
 {
   double res = 0.0;
   double pt = 1.0;
-  for(int i = 2 ; i < coefficients_.size() ; ++i)
+  for(size_t i = 2 ; i < coefficients_.size() ; ++i)
     {
       res += i * (i - 1) * coefficients_[i] * pt;
       pt *= x;
@@ -92,7 +89,7 @@ void Polynome<ORDER>::set_coefficients(const Coefficients &coefficients)
 template<int ORDER>
 void Polynome<ORDER>::print() const
 {
-  for(int i = 0 ; i < ORDER ; ++i)
+  for(size_t i = 0 ; i < ORDER ; ++i)
   {
     std::cout << coefficients_[i] << " " ;
   }

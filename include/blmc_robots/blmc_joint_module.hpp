@@ -70,6 +70,18 @@ struct HomingState {
     double target_position_rad;
     //! Current status of the homing procedure.
     HomingReturnCode status;
+
+    HomingState()
+    {
+      joint_id = 0.0;
+      search_distance_limit_rad = 0.0;
+      home_offset_rad = 0.0;
+      profile_step_size_rad = 0.0;
+      last_encoder_index_time_index = 0.0;
+      step_count = 0.0;
+      target_position_rad = 0.0;
+      status = HomingReturnCode::NOT_INITIALIZED;
+    }
 };
 
 
@@ -609,22 +621,20 @@ public:
     }
 
     GoToReturnCode go_to(Vector angle_to_reach_rad,
-                         double average_speed=1.0)
+                         double average_speed_rad_per_sec=1.0)
     {
         // Compute a min jerk trajectory
-        Vector init_pos = get_measured_angles();
-        double final_time = (angle_to_reach_rad - init_pos)
+        Vector initial_joint_positions = get_measured_angles();
+        double final_time = (angle_to_reach_rad - initial_joint_positions)
                             .array().abs().maxCoeff() /
-                            average_speed;
+                            average_speed_rad_per_sec;
 
         std::array<TimePolynome<5> , COUNT> min_jerk_trajs;
         for(unsigned i = 0; i < COUNT; i++)
         {
-            double init_pose = init_pos[i];
-            double init_speed = 0.0;
-            double final_pose = angle_to_reach_rad[i];
-            min_jerk_trajs[i].set_parameters(
-              final_time, init_pose, init_speed, final_pose);
+            min_jerk_trajs[i].set_parameters(final_time,
+              initial_joint_positions[i], 0.0 /*initial speed*/,
+              angle_to_reach_rad[i]);
         }
 
         // run got_to for all joints
