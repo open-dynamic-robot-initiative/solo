@@ -55,33 +55,21 @@ enum class GoToReturnCode {
  */
 struct HomingState {
     //! Id of the joint.  Just use for debug prints.
-    int joint_id;
+    int joint_id = 0;
     //! Max. distance to move while searching the encoder index.
-    double search_distance_limit_rad;
+    double search_distance_limit_rad = 0.0;
     //! Offset from home position to zero position.
-    double home_offset_rad;
+    double home_offset_rad = 0.0;
     //! Step size for the position profile.
-    double profile_step_size_rad;
+    double profile_step_size_rad = 0.0;
     //! Timestamp from when the encoder index was seen the last time.
-    long int last_encoder_index_time_index;
+    long int last_encoder_index_time_index = 0;
     //! Number of profile steps already taken.
-    uint32_t step_count;
+    uint32_t step_count = 0;
     //! Current target position of the position profile.
-    double target_position_rad;
+    double target_position_rad = 0.0;
     //! Current status of the homing procedure.
-    HomingReturnCode status;
-
-    HomingState()
-    {
-      joint_id = 0.0;
-      search_distance_limit_rad = 0.0;
-      home_offset_rad = 0.0;
-      profile_step_size_rad = 0.0;
-      last_encoder_index_time_index = 0.0;
-      step_count = 0.0;
-      target_position_rad = 0.0;
-      status = HomingReturnCode::NOT_INITIALIZED;
-    }
+    HomingReturnCode status = HomingReturnCode::NOT_INITIALIZED;
 };
 
 
@@ -641,7 +629,7 @@ public:
         real_time_tools::Spinner spinner;
         double sampling_period = 0.001; // TODO magic number
         spinner.set_period(sampling_period);  
-        GoToReturnCode got_to_status;
+        GoToReturnCode go_to_status;
         double current_time = 0.0;
         do{
             // TODO: add a security if error gets too big
@@ -653,7 +641,7 @@ public:
                 modules_[i]->set_torque(desired_torque);
                 modules_[i]->send_torque();
             }
-            got_to_status = GoToReturnCode::RUNNING;
+            go_to_status = GoToReturnCode::RUNNING;
 
             current_time += sampling_period;
             spinner.spin(); 
@@ -663,11 +651,11 @@ public:
         Vector final_pos = get_measured_angles();
         if ( (angle_to_reach_rad - final_pos).isMuchSmallerThan(1.0, 1e-3) )
         {
-            got_to_status = GoToReturnCode::SUCCEEDED;
+            go_to_status = GoToReturnCode::SUCCEEDED;
         }else{
-            got_to_status = GoToReturnCode::FAILED;
+            go_to_status = GoToReturnCode::FAILED;
         }
-        return got_to_status;
+        return go_to_status;
     }
 
 private:
