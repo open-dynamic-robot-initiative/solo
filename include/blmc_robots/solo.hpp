@@ -42,18 +42,14 @@ public:
   void acquire_sensors();
 
   /**
-   * @brief set_hardstop2zero_offsets
-   *
+   * @brief Calibrate the joints by moving to the next joint index position.
+   * 
+   * @param home_offset_rad This is the angle between the index and the zero
+   * pose.
+   * @return true 
+   * @return false 
    */
-  void set_hardstop2zero_offsets(
-      const Eigen::Ref<Vector8d> hardstop2zero_offsets);
-
-  /**
-   * @brief set_start2hardstop_offsets
-   *
-   */
-  void set_start2hardstop_offsets(
-      const Eigen::Ref<Vector8d> start2hardstop_offsets);
+  bool calibrate(const Vector8d& home_offset_rad);
 
   /**
    * Joint properties
@@ -91,27 +87,9 @@ public:
    * @return the max torque that has been hardcoded in the constructor of this
    * class. TODO: parametrize this via yaml or something else.
    */
-  const Eigen::Ref<Vector8d> get_max_joint_torque()
+  const Eigen::Ref<Vector8d> get_motor_max_current()
   {
-    return joint_max_torque_;
-  }
-
-
-  /**
-   * @brief get_hardstop2zero_offsets
-   * @return the position where the robot should be in "zero" configuration
-   */
-  const Eigen::Ref<Vector8d> get_hardstop2zero_offsets()
-  {
-    return joint_hardstop2zero_offsets_;
-  }
-  /**
-   * @brief get_start2hardstop_offsets_
-   * @return the position where the robot should be in "zero" configuration
-   */
-  const Eigen::Ref<Vector8d> get_start2hardstop_offsets_()
-  {
-    return joint_start2hardstop_offsets_;
+    return motor_max_current_;
   }
 
   /**
@@ -251,26 +229,15 @@ private:
   /**
    * Joint properties
    */
-
   Vector8d motor_inertias_; /**< motors inertia */
-  Vector8d motor_torque_constants_; /**< DCM motor torque constants */
-  Vector8d joint_gear_ratios_; /**< joint gear ratios (9) */
-  Vector8d joint_max_torque_; /**< Max appliable torque before the robot shutdown*/
-  /**
-   * @brief joint_hardstop2zero_offsets_ are the offsets from the hardstops to 
-   * the 0 position (legs straight down). This a constant hardware parameter.
-   */
-  Vector8d joint_hardstop2zero_offsets_;
-  /**
-   * @brief joint_start2hardstop_offsets_ are the offsets from the encoders when
-   * powered on, till the hardstops. These need to be calibrated each time.
-   */
-  Vector8d joint_start2hardstop_offsets_;
-
+  Vector8d motor_torque_constants_; /**< DCM motor torque constants. */
+  Vector8d joint_gear_ratios_; /**< joint gear ratios (9). */
+  Vector8d motor_max_current_; /**< Max appliable current before the robot shutdown. */
+  Vector8d joint_zero_positions_; /**< Offset to the theoretical "0" pose. */
+  
   /**
    * Hardware status
    */
-  
   /**
    * @brief This gives the status (enabled/disabled) of each motors using the
    * joint ordering convention.
@@ -361,6 +328,8 @@ private:
    * receive data
    */
   std::array<MotorInterface_ptr, 8> motors_;
+
+  BlmcJointModules<8> joints_;
 
   /**
    * @brief Address the rotation direction of the motor

@@ -7,11 +7,8 @@
  * This file uses the Solo class in a small demo.
  */
 
-
-#include "real_time_tools/timer.hpp"
 #include "blmc_robots/solo.hpp"
 #include "blmc_robots/common_header.hpp"
-
 
 using namespace blmc_robots;
 
@@ -20,7 +17,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
     Solo& robot = *(static_cast<Solo*>(robot_void_ptr));
 
-    Eigen::Vector2d joint_index_to_zero;
+    Eigen::Vector8d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
     robot.calibrate(joint_index_to_zero);
 

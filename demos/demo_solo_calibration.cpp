@@ -1,61 +1,56 @@
 /**
- * \file demo_test_bench_8_motors.cpp
- * \brief The use of the wrapper implementing a small pid controller.
- * \author Maximilien Naveau
- * \date 2018
- *
- * This file uses the Solo class in a small demo.
+ * @file demo_solo_calibration.cpp
+ * @author Maximilien Naveau (maximilien.naveau@gmail.com)
+ * @brief Small demo to test the calibration on the real robot.
+ * @version 0.1
+ * @date 2019-11-08
+ * 
+ * @copyright Copyright (c) 2019
+ * 
  */
 
 
 #include "blmc_robots/solo.hpp"
-#include "blmc_robots/common_demo_header.hpp"
-
+#include "common_demo_header.hpp"
 
 using namespace blmc_robots;
+typedef ThreadCalibrationData<Solo> ThreadCalibrationData_t;
 
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
-    Solo& robot = *(static_cast<Solo*>(robot_void_ptr));
+    ThreadCalibrationData_t* thread_data_ptr =
+      (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
+    blmc_robots::Vector8d joint_index_to_zero = 
+      thread_data_ptr->joint_index_to_zero;
+    thread_data_ptr->robot.calibrate(joint_index_to_zero);
 
-    Eigen::Vector2d joint_index_to_zero;
-    joint_index_to_zero[0] = 0.0;
-    joint_index_to_zero[1] = 0.0;
-    joint_index_to_zero[2] = 0.0;
-    joint_index_to_zero[3] = 0.0;
-    robot.calibrate(joint_index_to_zero);
-
-    while(!StopDemos)
-    {
-      
-    }
-
-    StopDemos = true;
-
+    StopControl = true;
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
+
 
 int main(int, char**)
 {
     enable_ctrl_c();
 
-    real_time_tools::RealTimeThread thread;
-
     Solo robot;
-
     robot.initialize();
 
+    ThreadCalibrationData_t thread_data(robot);
+
     rt_printf("controller is set up \n");
+    rt_printf("Press enter to launch the calibration \n");
+    char str[256];
+    std::cin.get(str, 256);  // get c-string
 
-    thread.create_realtime_thread(&control_loop, &robot);
+    real_time_tools::RealTimeThread thread;
+    thread.create_realtime_thread(&control_loop, &thread_data);
 
-    rt_printf("control loop started \n");
+    // Wait until the application is killed.
+    thread.join();
 
-    while (true)
-    {
-        real_time_tools::Timer::sleep_sec(0.01);
-    }
+    rt_printf("Exit cleanly \n");
 
     return 0;
 }

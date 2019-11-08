@@ -9,12 +9,30 @@
  * 
  */
 
-#include "blmc_robots/common_header.hpp"
+#include "blmc_robots/common_programs_header.hpp"
 
 namespace blmc_robots
 {
 
+/**
+ * @brief This small structure is used for reading the calibration parameters
+ * for the calibrations demos.
+ * 
+ * @tparam ROBOT_TYPE 
+ */
+template<class ROBOT_TYPE>
+struct ThreadCalibrationData{
+  ROBOT_TYPE& robot;
+  Eigen::VectorXd joint_index_to_zero;
 
-
+  ThreadCalibrationData(ROBOT_TYPE& robot_in):robot(robot_in){
+    std::cout << "Loading paramters from "
+              << YAML_PARAMS
+              << std::endl;
+    YAML::Node param = YAML::LoadFile(YAML_PARAMS);
+    YAML::ReadParameter(param["hardware_communication"]["calibration"],
+                        "index_to_zero_angle", joint_index_to_zero);
+  }
+};
 
 }

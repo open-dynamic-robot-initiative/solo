@@ -9,53 +9,41 @@
 
 
 #include "blmc_robots/teststand.hpp"
-#include "blmc_robots/common_header.hpp"
-
+#include "common_demo_header.hpp"
 
 using namespace blmc_robots;
+typedef ThreadCalibrationData<Teststand> ThreadCalibrationData_t;
 
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
-    Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
+    ThreadCalibrationData_t* thread_data_ptr =
+      (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
+    blmc_robots::Vector2d joint_index_to_zero = 
+      thread_data_ptr->joint_index_to_zero;
+    thread_data_ptr->robot.calibrate(joint_index_to_zero);
 
-
-    Eigen::Vector2d joint_index_to_zero;
-    joint_index_to_zero[0] = -0.354043;
-    joint_index_to_zero[1] = -0.243433;
-    robot.calibrate(joint_index_to_zero);
-
-    long int count = 0;
-
-    while(!StopDemos)
-    {
-      if(count % 200)
-      {
-        print_vector("Joint Positions", robot.get_joint_positions());
-      }
-    }
-
-    StopDemos = true;
-
+    StopControl = true;
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
+
 
 int main(int, char**)
 {
     enable_ctrl_c();
 
-    real_time_tools::RealTimeThread thread;
-
     Teststand robot;
-
     robot.initialize();
+
+    ThreadCalibrationData_t thread_data(robot);
 
     rt_printf("controller is set up \n");
     rt_printf("Press enter to launch the calibration \n");
     char str[256];
     std::cin.get(str, 256);  // get c-string
 
-    thread.create_realtime_thread(&control_loop, &robot);
+    real_time_tools::RealTimeThread thread;
+    thread.create_realtime_thread(&control_loop, &thread_data);
 
     // Wait until the application is killed.
     thread.join();

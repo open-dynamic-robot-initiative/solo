@@ -9,7 +9,7 @@
 
 
 #include "blmc_robots/teststand.hpp"
-#include "blmc_robots/common_header.hpp"
+#include "blmc_robots/common_programs_header.hpp"
 
 
 using namespace blmc_robots;

@@ -30,24 +30,24 @@ struct Hardware
     std::shared_ptr<Sliders<3>> sliders;
 };
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
-{
-    // cast input arguments to the right format --------------------------------
-    Hardware &hardware = *(static_cast<Hardware *>(hardware_ptr));
+// static THREAD_FUNCTION_RETURN_TYPE control_loop(void *hardware_ptr)
+// {
+//     // cast input arguments to the right format --------------------------------
+//     Hardware &hardware = *(static_cast<Hardware *>(hardware_ptr));
 
-    // position controller -----------------------------------------------------
-    while (true)
-    {
-        TimeIndex t = hardware.finger->append_desired_action(
-            hardware.sliders->get_positions());
+//     // position controller -----------------------------------------------------
+//     while (true)
+//     {
+//         TimeIndex t = hardware.finger->append_desired_action(
+//             hardware.sliders->get_positions());
 
-        hardware.finger->get_observation(t);
-    }
-    return THREAD_FUNCTION_RETURN_VALUE;
-}
+//         hardware.finger->get_observation(t);
+//     }
+//     return THREAD_FUNCTION_RETURN_VALUE;
+// }
 
 /// TODO: fixme 
-int main(int argc, char **argv)
+int main(int, char **)
 {
     // Hardware hardware;
 

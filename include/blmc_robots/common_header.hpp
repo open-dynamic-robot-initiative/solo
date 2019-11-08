@@ -8,8 +8,7 @@
  * bench with 8 motors.
  */
 
-#ifndef COMMON_HEADER_HPP
-#define COMMON_HEADER_HPP
+#pragma once
 
 // read some parameters
 #include "yaml_cpp_catkin/yaml_cpp_fwd.hpp"
@@ -96,75 +95,4 @@ typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
  */
 typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
 
-/**
- * @brief This boolean is here to kill cleanly the application upon ctrl+c
- */
-std::atomic_bool StopControl(false);
-
-/**
- * @brief This function is the callback upon a ctrl+c call from the terminal.
- *
- * @param s is the id of the signal
- */
-void my_handler(int)
-{
-    StopControl = true;
-}
-
-/**
- * @brief Enable to kill the demos cleanly with a ctrl+c
- */
-void enable_ctrl_c()
-{
-    // make sure we catch the ctrl+c signal to kill the application properly.
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = my_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, NULL);
-    StopControl = false;
-}
-
-/**
- * @brief Usefull tool for the demos and programs in order to print data in
- * real time.
- * 
- * @param v_name  is a string defining the data to print.
- * @param v the vector to print.
- */
-void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
-{
-    v_name += ": [";
-    rt_printf("%s", v_name.c_str());
-    for (int i = 0; i < v.size(); ++i)
-    {
-        rt_printf("%f, ", v(i));
-    }
-    rt_printf("]\n");
-}
-
-/**
- * @brief This small structure is used for reading the calibration parameters
- * for the calibrations demos.
- * 
- * @tparam ROBOT_TYPE 
- */
-template<class ROBOT_TYPE>
-struct ThreadCalibrationData{
-  ROBOT_TYPE* robot;
-  Eigen::Vector2d joint_index_to_zero;
-
-  ThreadCalibrationData(ROBOT_TYPE* robot_in){
-    robot = robot_in;
-    std::cout << "Loading paramters from "
-              << YAML_PARAMS
-              << std::endl;
-    YAML::Node param = YAML::LoadFile(YAML_PARAMS);
-    YAML::ReadParameter(param["hardware_communication"]["calibration"],
-                        "index_to_zero_angle", joint_index_to_zero);
-  }
-}
-
 } // namespace blmc_robots
-
-#endif // COMMON_HEADER_HPP

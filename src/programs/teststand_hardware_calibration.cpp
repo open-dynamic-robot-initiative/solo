@@ -35,10 +35,8 @@
  * This file uses the Teststand class in a small demo.
  */
 
-
 #include "blmc_robots/teststand.hpp"
-#include "blmc_robots/common_header.hpp"
-
+#include "blmc_robots/common_programs_header.hpp"
 
 using namespace blmc_robots;
 
@@ -48,8 +46,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
 
     Eigen::Vector2d joint_index_to_zero;
-    joint_index_to_zero[0] = -0.354043;
-    joint_index_to_zero[1] = -0.243433;
+    joint_index_to_zero.setZero();
     robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
@@ -65,6 +62,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
+
 
 int main(int, char**)
 {

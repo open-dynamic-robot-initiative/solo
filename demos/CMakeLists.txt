@@ -37,11 +37,11 @@ endmacro(create_demo demo_name)
 ###############
 
 create_demo(test_bench_8_motors test_bench_8_motors)
-create_demo(solo quadruped)
+create_demo(solo solo)
 create_demo(teststand teststand)
 create_demo(stuggihop stuggihop)
 
-create_demo(solo_calibration teststand)
+create_demo(solo_calibration solo)
 create_demo(teststand_calibration teststand)
 
 create_demo(finger_position_control "")

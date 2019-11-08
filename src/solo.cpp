@@ -6,19 +6,16 @@ namespace blmc_robots{
 Solo::Solo()
 {
   /**
-    * Motor data
+    * Hardware properties
     */
-  motor_positions_.setZero();
-  motor_velocities_.setZero();
-  motor_currents_.setZero();
-  motor_torques_.setZero();
   motor_inertias_.setZero();
-  motor_encoder_indexes_.setZero();
-  motor_target_currents_.setZero();
-  motor_target_torques_.setZero();
   motor_torque_constants_.setZero();
-  target_motor_current_tmp_.setZero();
-
+  joint_gear_ratios_.setZero();
+  motor_max_current_.setZero();
+  joint_zero_positions_.setZero();
+  /**
+   * Hardware status
+   */
   for(unsigned i=0 ; i<motor_enabled_.size(); ++i)
   {
     motor_enabled_[i] = false;
@@ -26,7 +23,6 @@ Solo::Solo()
     motor_to_card_index_[i] = 0;
     motor_to_card_port_index_[i] = 0;
   }
-
   for(unsigned i=0 ; i<motor_board_enabled_.size(); ++i)
   {
     motor_board_enabled_[0] = false;
@@ -40,36 +36,28 @@ Solo::Solo()
   joint_velocities_.setZero();
   joint_torques_.setZero();
   joint_target_torques_.setZero();
-  joint_gear_ratios_.setZero();
-  joint_hardstop2zero_offsets_.setZero();
-  joint_start2hardstop_offsets_.setZero();
+  joint_encoder_index_.setZero();
 
   /**
     * Additional data
     */
   slider_positions_.setZero();
   contact_sensors_states_.setZero();
-  motor_max_current_.setZero();
 
   /**
     * Setup some known data
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(10.0);
+  motor_max_current_.fill(16.0); // TODO: set as paramters?
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
-  joint_max_torque_ = motor_max_current_.array() *
-                      motor_torque_constants_.array() *
-                      joint_gear_ratios_.array();
-
   for(unsigned i=0; i<polarity_.size(); ++i)
   {
     polarity_[i] = 0.0;
   }
 }
-
 
 void Solo::initialize()
 {
@@ -142,6 +130,11 @@ void Solo::initialize()
       motor_max_current_[6]
     );
   }
+  
+  // Create the joint module objects
+  joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
+                          joint_zero_positions_, motor_max_current_);
+
   // wait until all board are ready and connected
   for(unsigned i=0 ; i<can_buses_.size() ; ++i)
   {
@@ -152,50 +145,18 @@ void Solo::initialize()
 void Solo::acquire_sensors()
 {
   /**
-    * Motor data
-    */
-  for (unsigned i=0 ; i<motors_.size() ; ++i)
-  {
-    // acquire the motors positions
-    motor_positions_(i) =
-        polarity_[i] *
-        (motors_[i]->get_measurement(mi::position)->newest_element()
-        + (joint_start2hardstop_offsets_(i) - joint_hardstop2zero_offsets_(i))
-           *joint_gear_ratios_(i));
-    // acquire the motors velocities
-    motor_velocities_(i) =
-        polarity_[i] * motors_[i]->get_measurement(mi::velocity)->newest_element();
-    // acquire the motors current
-    motor_currents_(i) =
-        polarity_[i] * motors_[i]->get_measurement(mi::current)->newest_element();
-    // acquire the last sent current sent
-    motor_target_currents_(i) =
-        polarity_[i] * motors_[i]->get_sent_current_target()->newest_element();
-    // acquire the encoder indexes
-    motor_encoder_indexes_(i) =
-        polarity_[i] *
-        (motors_[i]->get_measurement(mi::encoder_index)->length() > 0 ?
-          motors_[i]->get_measurement(mi::encoder_index)->newest_element() :
-          std::nan(""));
-  }
-  // acquire the actual motor torques
-  motor_torques_ = motor_currents_.array() * motor_torque_constants_.array();
-  // acquire the last sent motor torques
-  motor_target_torques_ = motor_target_currents_.array() *
-                          motor_torque_constants_.array();
-
-  /**
     * Joint data
     */
   // acquire the joint position
-  joint_positions_ = motor_positions_.array() / joint_gear_ratios_.array();
+  joint_positions_ = joints_.get_measured_angles();
   // acquire the joint velocities
-  joint_velocities_ = motor_velocities_.array() / joint_gear_ratios_.array();
+  joint_velocities_ = joints_.get_measured_velocities();
   // acquire the joint torques
-  joint_torques_ = motor_torques_.array() * joint_gear_ratios_.array();
-  // acquire the tqrget joint torques
-  joint_target_torques_ = motor_target_torques_.array() *
-                          joint_gear_ratios_.array();
+  joint_torques_ = joints_.get_measured_torques();
+  // acquire the joint index
+  joint_encoder_index_ = joints_.get_measured_index_angles();
+  // acquire the target joint torques
+  joint_target_torques_ = joints_.get_sent_torques();
 
   /**
     * Additional data
@@ -213,7 +174,6 @@ void Solo::acquire_sensors()
   /**
    * The different status.
    */
-
   blmc_drivers::MotorBoardStatus FL_status =
       can_motor_boards_[3]->get_status()->newest_element();
   blmc_drivers::MotorBoardStatus FR_status =
@@ -252,42 +212,23 @@ void Solo::acquire_sensors()
   motor_ready_[7] = static_cast<bool>(HR_status.motor1_ready); // HR_KFE
 }
 
-void Solo::set_hardstop2zero_offsets(const Eigen::Ref<Vector8d> hardstop2zero_offsets)
-{
-  joint_hardstop2zero_offsets_ = hardstop2zero_offsets;
-}
-
-void Solo::set_start2hardstop_offsets(const Eigen::Ref<Vector8d> start2hardstop_offsets)
-{
-  joint_start2hardstop_offsets_ = start2hardstop_offsets;
-}
-
-
-void Solo::send_target_motor_current(
-    const Eigen::Ref<Vector8d> target_motor_current)
-{
-  // set up the target current
-  for(unsigned i=0 ; i<motors_.size() ; ++i)
-  {
-    motors_[i]->set_current_target(polarity_[i] * target_motor_current(i));
-  }
-
-  // actually send the torques to the robot
-  for(unsigned i=0 ; i<motors_.size() ; ++i)
-  {
-    motors_[i]->send_if_input_changed();
-  }
-}
-
 void Solo::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
-  target_motor_current_tmp_ = target_joint_torque.array() /
-                              joint_gear_ratios_.array() /
-                              motor_torque_constants_.array();
-  // we do not use the polarity here because it is used in
-  // send_target_motor_current
-  send_target_motor_current(target_motor_current_tmp_);
+  joints_.set_torques(target_joint_torque);
+  joints_.send_torques();
+}
+
+bool Solo::calibrate(const Vector8d& home_offset_rad)
+{
+  // Maximum distance is twice the angle between joint indexes
+  double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
+  double profile_step_size_rad=0.001;
+  joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
+                         profile_step_size_rad);
+  Vector8d zero_pose = Vector8d::Zero();
+  joints_.go_to(zero_pose);
+  return true; 
 }
 
 } // namespace blmc_robots
