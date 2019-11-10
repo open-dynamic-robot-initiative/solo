@@ -32,6 +32,11 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
+# search for the robot_properties package for the demos calibration data
+find_package(robot_properties_solo QUIET)
+find_package(robot_properties_teststand QUIET)
+find_package(robot_properties_stuggihop QUIET)
+
 search_for_eigen()
 
 catkin_python_setup()
