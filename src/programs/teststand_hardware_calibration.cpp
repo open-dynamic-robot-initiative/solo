@@ -50,7 +50,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
-    while(!StopControl)
+    while(!CTRL_C_DETECTED)
     {
       if(count % 200 == 0)
       {
@@ -59,7 +59,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
       }
     }
 
-    StopControl = true;
+    CTRL_C_DETECTED = true;
 
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop

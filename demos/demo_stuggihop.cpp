@@ -36,7 +36,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     //   sliders_filt_buffer[i].clear();
     // }
     size_t count = 0;
-    while (!StopControl)
+    while (!CTRL_C_DETECTED)
     {
         // acquire the sensors
         robot.acquire_sensors();

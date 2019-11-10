@@ -47,7 +47,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     // real_time_tools::Spinner spinner;
     // spinner.set_period(0.1);
-    // while(!StopControl)
+    // while(!CTRL_C_DETECTED)
     // {
     //   rt_printf("current measurement = %f, current index = %f\n",
     //   robot.joint_module->get_measured_angle(),

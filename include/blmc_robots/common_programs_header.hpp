@@ -18,7 +18,7 @@ namespace blmc_robots
 /**
  * @brief This boolean is here to kill cleanly the application upon ctrl+c
  */
-std::atomic_bool StopControl(false);
+std::atomic_bool CTRL_C_DETECTED(false);
 
 /**
  * @brief This function is the callback upon a ctrl+c call from the terminal.
@@ -27,7 +27,7 @@ std::atomic_bool StopControl(false);
  */
 void my_handler(int)
 {
-    StopControl = true;
+    CTRL_C_DETECTED = true;
 }
 
 /**
@@ -41,7 +41,7 @@ void enable_ctrl_c()
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
     sigaction(SIGINT, &sigIntHandler, NULL);
-    StopControl = false;
+    CTRL_C_DETECTED = false;
 }
 
 /**

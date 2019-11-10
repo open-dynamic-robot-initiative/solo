@@ -23,7 +23,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
       thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot.calibrate(joint_index_to_zero);
 
-    StopControl = true;
+    CTRL_C_DETECTED = true;
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 

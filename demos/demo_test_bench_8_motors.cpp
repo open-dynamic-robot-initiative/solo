@@ -30,7 +30,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     real_time_tools::Spinner spinner;
     spinner.set_period(0.001);
     size_t count = 0;
-    while (!StopControl)
+    while (!CTRL_C_DETECTED)
     {
         // acquire the sensors
         robot.acquire_sensors();
@@ -86,7 +86,7 @@ int main(int, char**)
     rt_printf("control loop started \n");
 
     // Wait until the application is killed.
-    while (!StopControl)
+    while (!CTRL_C_DETECTED)
     {
         real_time_tools::Timer::sleep_sec(0.01);
     }

@@ -40,7 +40,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     size_t count = 0;
     bool success_acquiring_sensor = true;
     bool success_sending_torques = true;
-    while (!StopControl && success_acquiring_sensor && success_sending_torques)
+    while (!CTRL_C_DETECTED && success_acquiring_sensor && success_sending_torques)
     {
         // acquire the sensors
         success_acquiring_sensor = robot.acquire_sensors();
@@ -108,7 +108,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     // send zero torques after the control loop.
     desired_torque.fill(0.0);
     robot.send_target_joint_torque(desired_torque);
-    StopControl = true;
+    CTRL_C_DETECTED = true;
 
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
@@ -128,7 +128,7 @@ int main(int, char**)
     thread.create_realtime_thread(&control_loop, &robot);
 
     // Wait until the application is killed.
-    while (!StopControl)
+    while (!CTRL_C_DETECTED)
     {
         real_time_tools::Timer::sleep_sec(0.01);
     }
