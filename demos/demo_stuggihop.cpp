@@ -7,25 +7,13 @@
  * This file uses the Stuggihop class in a small demo.
  */
 
-#include <Eigen/Eigen>
-#include <cmath>
-#include <deque>
-#include <numeric>
+
 #include "blmc_robots/stuggihop.hpp"
-#include "real_time_tools/timer.hpp"
+#include "blmc_robots/common_programs_header.hpp"
+
 
 using namespace blmc_robots;
 
-void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
-{
-    v_name += ": [";
-    rt_printf("%s", v_name.c_str());
-    for (int i = 0; i < v.size(); ++i)
-    {
-        rt_printf("%f, ", v(i));
-    }
-    rt_printf("]\n");
-}
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
@@ -48,7 +36,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     //   sliders_filt_buffer[i].clear();
     // }
     size_t count = 0;
-    while (true)
+    while (!CTRL_C_DETECTED)
     {
         // acquire the sensors
         robot.acquire_sensors();
@@ -97,10 +85,14 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
         }
         ++count;
     }  // endwhile
+
+    return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
+    enable_ctrl_c();
+
     real_time_tools::RealTimeThread thread;
 
     Stuggihop robot;

@@ -8,12 +8,28 @@
  * bench with 8 motors.
  */
 
-#ifndef COMMON_HEADER_HPP
-#define COMMON_HEADER_HPP
+#pragma once
 
+// read some parameters
+#include "yaml_cpp_catkin/yaml_cpp_fwd.hpp"
+
+// For mathematical operation
 #include <Eigen/Eigen>
+
+// manage the exit of the program with ctrl+c
+#include <signal.h> // manage the ctrl+c signal
+#include <atomic> // thread safe flag for application shutdown management
+
+// some real_time_tools in order to have a real time control
+#include "real_time_tools/iostream.hpp"
+#include "real_time_tools/timer.hpp"
+#include "real_time_tools/spinner.hpp"
+#include "real_time_tools/thread.hpp"
+
+// The robot drivers for building the robot wrapper around.
 #include <blmc_drivers/devices/motor.hpp>
 #include <blmc_drivers/devices/analog_sensor.hpp>
+
 
 namespace blmc_robots
 {
@@ -80,5 +96,3 @@ typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
 typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
 
 } // namespace blmc_robots
-
-#endif // COMMON_HEADER_HPP

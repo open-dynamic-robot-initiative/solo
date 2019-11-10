@@ -28,8 +28,14 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   mpi_cmake_modules
   robot_interfaces
   pybind11_catkin
+  yaml_cpp_catkin
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
+
+# search for the robot_properties package for the demos calibration data
+find_package(robot_properties_solo QUIET)
+find_package(robot_properties_teststand QUIET)
+find_package(robot_properties_stuggihop QUIET)
 
 search_for_eigen()
 
@@ -44,19 +50,27 @@ include_directories(
     ${Eigen_INCLUDE_DIRS}
 )
 
+##########################################
+# export the package as a catkin package #
+##########################################
+set(exported_libraries
+  test_bench_8_motors
+  solo
+  teststand
+  stuggihop
+  single_motor
+  single_leg
+)
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${exported_libraries}
+  CATKIN_DEPENDS ${CATKIN_PKGS}
+)
+
 ########################################################
 # manage the creation of the libraries and executables #
 ########################################################
 add_subdirectory(src)
-
-##########################################
-# export the package as a catkin package #
-##########################################
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${EXPORTED_LIBRAIRIES}
-  CATKIN_DEPENDS ${CATKIN_PKGS}
-)
 
 #########################
 # manage the unit tests #

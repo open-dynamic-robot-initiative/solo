@@ -648,6 +648,12 @@ public:
                          
         } while(current_time < (final_time + sampling_period));
 
+        for(unsigned i = 0; i < COUNT; i++)
+        {
+            modules_[i]->set_torque(0.0);
+            modules_[i]->send_torque();
+        }
+
         Vector final_pos = get_measured_angles();
         if ( (angle_to_reach_rad - final_pos).isMuchSmallerThan(1.0, 1e-3) )
         {

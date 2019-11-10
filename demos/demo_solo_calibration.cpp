@@ -1,25 +1,27 @@
 /**
- * \file demo_test_bench_8_motors.cpp
- * \brief The use of the wrapper implementing a small pid controller.
- * \author Maximilien Naveau
- * \date 2018
- *
- * This file uses the Teststand class in a small demo.
+ * @file demo_solo_calibration.cpp
+ * @author Maximilien Naveau (maximilien.naveau@gmail.com)
+ * @brief Small demo to test the calibration on the real robot.
+ * @version 0.1
+ * @date 2019-11-08
+ * 
+ * @copyright Copyright (c) 2019
+ * 
  */
 
 
-#include "blmc_robots/teststand.hpp"
+#include "blmc_robots/solo.hpp"
 #include "common_demo_header.hpp"
 
 using namespace blmc_robots;
-typedef ThreadCalibrationData<Teststand> ThreadCalibrationData_t;
+typedef ThreadCalibrationData<Solo> ThreadCalibrationData_t;
 
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
     ThreadCalibrationData_t* thread_data_ptr =
       (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
-    blmc_robots::Vector2d joint_index_to_zero = 
+    blmc_robots::Vector8d joint_index_to_zero = 
       thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 
@@ -31,8 +33,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 int main(int, char**)
 {
     enable_ctrl_c();
-    
-    std::shared_ptr<Teststand> robot = std::make_shared<Teststand>();
+
+    std::shared_ptr<Solo> robot = std::make_shared<Solo>();
     robot->initialize();
 
     ThreadCalibrationData_t thread_data(robot);

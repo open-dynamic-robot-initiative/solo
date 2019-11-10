@@ -56,7 +56,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(
     }
 }
 
-int main(int argc, char **argv)
+/// TODO: fixme 
+int main(int, char **)
 {
     // // set up motor boards
     // ----------------------------------------------------- auto motor_boards =

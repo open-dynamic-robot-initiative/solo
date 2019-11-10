@@ -78,10 +78,8 @@ void Teststand::initialize()
   
   // The the control gains in order to perform the calibration
   Eigen::Vector2d kp, kd;
-  kp[0] = 2.0;
-  kd[0] = 0.05;
-  kp[1] = 2.0;
-  kd[1] = 0.05;
+  kp.fill(2.0);
+  kd.fill(0.05);
   joints_.set_position_control_gains(kp, kd);
 
   // can 1

@@ -4,32 +4,20 @@
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Quadruped class in a small demo.
+ * This file uses the Solo class in a small demo.
  */
 
-#include <Eigen/Eigen>
-#include <cmath>
-#include <deque>
-#include <numeric>
-#include "blmc_robots/quadruped.hpp"
-#include "real_time_tools/timer.hpp"
+
+#include "blmc_robots/solo.hpp"
+#include "blmc_robots/common_programs_header.hpp"
+
 
 using namespace blmc_robots;
 
-void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
-{
-    v_name += ": [";
-    rt_printf("%s", v_name.c_str());
-    for (int i = 0; i < v.size(); ++i)
-    {
-        rt_printf("%f, ", v(i));
-    }
-    rt_printf("]\n");
-}
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Quadruped& robot = *(static_cast<Quadruped*>(robot_void_ptr));
+    Solo& robot = *(static_cast<Solo*>(robot_void_ptr));
 
     double kp = 5.0;
     double kd = 1.0;
@@ -42,13 +30,13 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     std::vector<std::deque<double> > sliders_filt_buffer(
         robot.get_slider_positions().size());
-    int max_filt_dim = 200;
+    size_t max_filt_dim = 200;
     for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
     {
         sliders_filt_buffer[i].clear();
     }
     size_t count = 0;
-    while (true)
+    while (!CTRL_C_DETECTED)
     {
         // acquire the sensors
         robot.acquire_sensors();
@@ -97,13 +85,16 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
         }
         ++count;
     }  // endwhile
+    return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
+    enable_ctrl_c();
+
     real_time_tools::RealTimeThread thread;
 
-    Quadruped robot;
+    Solo robot;
 
     robot.initialize();
 
