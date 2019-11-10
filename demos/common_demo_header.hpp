@@ -22,10 +22,10 @@ namespace blmc_robots
  */
 template<class ROBOT_TYPE>
 struct ThreadCalibrationData{
-  ROBOT_TYPE& robot;
+  std::shared_ptr<ROBOT_TYPE> robot;
   Eigen::VectorXd joint_index_to_zero;
 
-  ThreadCalibrationData(ROBOT_TYPE& robot_in):robot(robot_in){
+  ThreadCalibrationData(std::shared_ptr<ROBOT_TYPE> robot_in):robot(robot_in){
     std::cout << "Loading paramters from "
               << YAML_PARAMS
               << std::endl;
