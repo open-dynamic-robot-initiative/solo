@@ -119,6 +119,13 @@ public:
     void set_zero_angle(const double& zero_angle);
 
     /**
+     * @brief reverse the joint polarity rotation axis
+     * 
+     * @param reverse_polarity true:reverse rotation axis, false:do nothing
+     */
+    void reverse_joint_polarity(const bool& reverse_polarity);
+
+    /**
      * @brief send the joint torque to the motor. The conversion between joint
      * torque and motor current is done automatically.
      */
@@ -402,9 +409,21 @@ public:
     }
 
     /**
+     * @brief Set the polarities of the joints
+     * 
+     * @param polarities 
+     */
+    void reverse_joint_polarities(std::array<bool, COUNT> polarities)
+    {
+        for(size_t i = 0; i < COUNT; i++)
+        {
+            modules_[i]->reverse_joint_polarity(polarities[i]);
+        }
+    }
+    /**
      * @brief Register the joint torques to be sent for all modules.
      * 
-     * @param desired_torques 
+     * @param desired_torques
      */
     void set_torques(const Vector& desired_torques)
     {

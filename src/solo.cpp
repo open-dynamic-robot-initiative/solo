@@ -13,6 +13,7 @@ Solo::Solo()
   joint_gear_ratios_.setZero();
   motor_max_current_.setZero();
   joint_zero_positions_.setZero();
+  reverse_polarities_.fill(false);
   /**
    * Hardware status
    */
@@ -53,10 +54,6 @@ Solo::Solo()
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
-  for(unsigned i=0; i<polarity_.size(); ++i)
-  {
-    polarity_[i] = 0.0;
-  }
 }
 
 void Solo::initialize()
@@ -112,14 +109,15 @@ void Solo::initialize()
   motor_to_card_port_index_[7] = 0; // HR_KFE
 
   // fix the polarity to be the same as the urdf model.
-  polarity_[0] = -1.0; // FL_HFE
-  polarity_[1] = -1.0; // FL_KFE
-  polarity_[2] =  1.0; // FR_HFE
-  polarity_[3] =  1.0; // FR_KFE
-  polarity_[4] = -1.0; // HL_HFE
-  polarity_[5] = -1.0; // HL_KFE
-  polarity_[6] =  1.0; // HR_HFE
-  polarity_[7] =  1.0; // HR_KFE
+  reverse_polarities_[0] = true;  // FL_HFE
+  reverse_polarities_[1] = true;  // FL_KFE
+  reverse_polarities_[2] = false; // FR_HFE
+  reverse_polarities_[3] = false; // FR_KFE
+  reverse_polarities_[4] = true;  // HL_HFE
+  reverse_polarities_[5] = true;  // HL_KFE
+  reverse_polarities_[6] = false; // HR_HFE
+  reverse_polarities_[7] = false; // HR_KFE
+  joints_.reverse_joint_polarities(reverse_polarities_);
 
   // Create the motors object.
   for(unsigned i=0; i<motors_.size() ; ++i)

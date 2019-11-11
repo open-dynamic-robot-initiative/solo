@@ -334,7 +334,7 @@ private:
   /**
    * @brief Address the rotation direction of the motor
    */
-  std::array<double, 8> polarity_;
+  std::array<bool, 8> reverse_polarities_;
 
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
