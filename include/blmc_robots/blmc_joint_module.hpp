@@ -119,11 +119,11 @@ public:
     void set_zero_angle(const double& zero_angle);
 
     /**
-     * @brief reverse the joint polarity rotation axis
+     * @brief Define if the motor should turn clock-wize or counter clock-wize
      * 
-     * @param reverse_polarity true:reverse rotation axis, false:do nothing
+     * @param should_reverse true:reverse rotation axis, false:do nothing
      */
-    void reverse_joint_polarity(const bool& reverse_polarity);
+    void set_joint_polarity(const bool& should_reverse);
 
     /**
      * @brief send the joint torque to the motor. The conversion between joint
@@ -410,14 +410,15 @@ public:
 
     /**
      * @brief Set the polarities of the joints
+     * (see BlmcJointModule::set_joint_polarity)
      * 
-     * @param polarities 
+     * @param should_reverse
      */
-    void reverse_joint_polarities(std::array<bool, COUNT> polarities)
+    void set_joint_polarities(std::array<bool, COUNT> should_reverse)
     {
         for(size_t i = 0; i < COUNT; i++)
         {
-            modules_[i]->reverse_joint_polarity(polarities[i]);
+            modules_[i]->set_joint_polarity(should_reverse[i]);
         }
     }
     /**

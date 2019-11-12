@@ -117,7 +117,7 @@ void Solo::initialize()
   reverse_polarities_[5] = true;  // HL_KFE
   reverse_polarities_[6] = false; // HR_HFE
   reverse_polarities_[7] = false; // HR_KFE
-  joints_.reverse_joint_polarities(reverse_polarities_);
+  joints_.set_joint_polarities(reverse_polarities_);
 
   // Create the motors object.
   for(unsigned i=0; i<motors_.size() ; ++i)
