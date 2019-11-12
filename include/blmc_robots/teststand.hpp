@@ -331,9 +331,12 @@ private:
 
   /**
    * @brief max_joint_torques_ (N/m)
-   * 
    */
   Eigen::Array2d max_joint_torques_;
+  /**
+   * @brief Security margin on the saturation of the control.
+   */
+  static const double max_joint_torque_security_margin_;
 
   /**
    * @brief This gives the status (enabled/disabled) of each motors using the

@@ -3,6 +3,8 @@
 
 namespace blmc_robots{
 
+const double Solo::max_joint_torque_security_margin_ = 0.99;
+
 Solo::Solo()
 {
   /**
@@ -135,7 +137,8 @@ void Solo::initialize()
                           joint_zero_positions_, motor_max_current_);
 
   // Set the maximum joint torque available
-  max_joint_torques_ = 0.99 * joints_.get_max_joint_torques().array();
+  max_joint_torques_ = max_joint_torque_security_margin_ *
+                       joints_.get_max_torques().array();
 
   // The the control gains in order to perform the calibration
   blmc_robots::Vector8d kp, kd;
