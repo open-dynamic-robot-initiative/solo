@@ -132,6 +132,13 @@ public:
     void send_torque();
 
     /**
+     * @brief Get the max joint torque that can be safely applied
+     * 
+     * @return double 
+     */
+    double get_max_torque() const;
+
+    /**
      * @brief Get the sent joint torque.
      * 
      * @return double (Nm).
@@ -432,6 +439,17 @@ public:
         {
             modules_[i]->set_torque(desired_torques(i));
         }
+    }
+
+
+    Vector get_max_joint_torques()
+    {
+        Vector max_torques;
+        for(size_t i = 0 ; i < COUNT ; ++i)
+        {
+            max_torques[i] = modules_[i]->get_max_torque();
+        }
+        return max_torques;
     }
 
     /**

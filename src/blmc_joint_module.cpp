@@ -60,10 +60,14 @@ void BlmcJointModule::set_joint_polarity(const bool& reverse_polarity)
 {
     polarity_ = reverse_polarity ? -1.0 : 1.0;
 }
-
 void BlmcJointModule::send_torque()
 {
     motor_->send_if_input_changed();
+}
+
+double BlmcJointModule::get_max_torque() const
+{
+    return motor_current_to_joint_torque(max_current_);
 }
 
 double BlmcJointModule::get_sent_torque() const
