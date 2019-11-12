@@ -106,7 +106,7 @@ public:
     /**
      * @brief Set the joint torque to be sent.
      * 
-     * @param desired_torque 
+     * @param desired_torque (N/m)
      */
     void set_torque(const double& desired_torque);
 
@@ -114,14 +114,14 @@ public:
      * @brief Set the zero_angle. The zero_angle is the angle between the
      * closest positive motor index and the zero configuration.
      * 
-     * @param zero_angle 
+     * @param zero_angle (rad)
      */
     void set_zero_angle(const double& zero_angle);
 
     /**
-     * @brief Define if the motor should turn clock-wize or counter clock-wize
+     * @brief Define if the motor should turn clock-wize or counter clock-wize.
      * 
-     * @param should_reverse true:reverse rotation axis, false:do nothing
+     * @param should_reverse true:reverse rotation axis, false:do nothing.
      */
     void set_joint_polarity(const bool& should_reverse);
 
@@ -134,21 +134,21 @@ public:
     /**
      * @brief Get the sent joint torque.
      * 
-     * @return double 
+     * @return double (N/m).
      */
     double get_sent_torque() const;
 
     /**
      * @brief Get the measured joint torque.
      * 
-     * @return double 
+     * @return double (N/m).
      */
     double get_measured_torque() const;
 
     /**
      * @brief Get the measured angle of the joint.
      * 
-     * @return double 
+     * @return double (rad).
      */
     double get_measured_angle() const;
 
@@ -156,7 +156,7 @@ public:
      * @brief Get the measured velocity of the joint. This data is computed on
      * board of the control card.
      * 
-     * @return double 
+     * @return double (rad/s).
      */
     double get_measured_velocity() const;
 
@@ -164,7 +164,7 @@ public:
      * @brief Get the measured index angle. There is one index per motor rotation so
      * there are gear_ratio indexes per joint rotation.
      * 
-     * @return double 
+     * @return double (rad).
      */
     double get_measured_index_angle() const;
 
@@ -172,36 +172,37 @@ public:
      * @brief Get the zero_angle_. These are the angle between the starting pose
      * and the theoretical zero pose.
      * 
-     * @return double 
+     * @return double (rad).
      */
     double get_zero_angle() const;
 
     /**
      * @brief Set control gains for PD position controller.
      *
-     * @param kp P gain.
-     * @param kd D gain.
+     * @param kp P gain ( (N/m) / rad ).
+     * @param kd D gain ( (N/m) / (rad/s) ).
      */
     void set_position_control_gains(double kp, double kd);
 
     /**
      * @brief Execute one iteration of the position controller.
      *
-     * @param target_position_rad  Target position.
+     * @param target_position_rad  Target position (rad).
      *
-     * @return Torque command.
+     * @return Torque command (N/m).
      */
     double execute_position_controller(double target_position_rad) const;
 
     /**
+     * @deprecated !!!!!!!
      * @brief This method calibrate the joint position knowing the angle between
      * the closest (in positive torque) motor index and the theoretical zero
      * pose. Warning, this method should be called in a real time thread!
      * 
-     * @param[in][out] angle_zero_to_index this is the angle between the closest (in 
-     * positive torque) motor index and the theoretical zero pose. 
-     * @param[out] index_angle is the angle where we met the index. This angle
-     * is relative to the configuration when the robot booted.
+     * @param[in][out] angle_zero_to_index (rad) this is the angle between the
+     * closest (in positive torque) motor index and the theoretical zero pose. 
+     * @param[out] index_angle (rad) is the angle where we met the index. This
+     * angle is relative to the configuration when the robot booted.
      * @param[in] mechanical_calibration defines if the leg started in the zero
      * configuration or not
      * @return true if success.
@@ -210,7 +211,6 @@ public:
     bool calibrate(double& angle_zero_to_index,
                    double& index_angle,
                    bool mechanical_calibration = false);
-
 
     /**
      * @brief Initialize the homing procedure.
