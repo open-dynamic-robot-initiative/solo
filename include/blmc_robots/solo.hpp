@@ -160,6 +160,8 @@ public:
   /**
    * @brief get_contact_sensors_states
    * @return the state of the contacts states
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
    * prior to any getter to have up to date data.
    */
   const Eigen::Ref<Eigen::Vector4d> get_contact_sensors_states()
@@ -170,7 +172,9 @@ public:
   /**
    * @brief get_slider_positions
    * @return the current sliders positions.
-   * prior to any getter to have up to date data.   
+   * WARNING !!!!
+   * The method <acquire_sensors>"()" has to be called
+   * prior to any getter to have up to date data.
    */
   const Eigen::Ref<Eigen::Vector4d> get_slider_positions()
   {
@@ -203,7 +207,7 @@ public:
 
   /**
    * @brief get_motor_board_enabled
-   * @return This gives the status (enabled/disabled of the onboard control cards)
+   * @return This gives the status (enabled/disabled of the onboard control cards).
    */
   const std::array<bool, 4>& get_motor_board_enabled()
   {
@@ -212,7 +216,7 @@ public:
 
   /**
    * @brief get_motor_board_errors
-   * @return This gives the status (enabled/disabled of the onboard control cards)
+   * @return This gives the status (enabled/disabled of the onboard control cards).
    */
   const std::array<int, 4>& get_motor_board_errors()
   {
@@ -229,7 +233,7 @@ private:
   /**
    * Joint properties
    */
-  Vector8d motor_inertias_; /**< motors inertia */
+  Vector8d motor_inertias_; /**< motors inertia. */
   Vector8d motor_torque_constants_; /**< DCM motor torque constants. */
   Vector8d joint_gear_ratios_; /**< joint gear ratios (9). */
   Vector8d motor_max_current_; /**< Max appliable current before the robot shutdown. */
@@ -251,12 +255,12 @@ private:
   std::array<bool, 8> motor_ready_;
 
   /**
-   * @brief This gives the status (enabled/disabled of the onboard control cards)
+   * @brief This gives the status (enabled/disabled of the onboard control cards).
    */
   std::array<bool, 4> motor_board_enabled_;
 
   /**
-   * @brief This gives the status (enabled/disabled of the onboard control cards)
+   * @brief This gives the status (enabled/disabled of the onboard control cards).
    */
   std::array<int, 4> motor_board_errors_;
 
@@ -305,12 +309,12 @@ private:
     */
 
   /**
-   * @brief This map for every motor the card number
+   * @brief This map for every motor the card number.
    */
   std::array<int, 8> motor_to_card_index_;
 
   /**
-   * @brief This map for every motor the card port
+   * @brief This map for every motor the card port.
    */
   std::array<int, 8> motor_to_card_port_index_;
 
@@ -325,16 +329,16 @@ private:
 
   /**
    * @brief motors_ are the objects allowing us to send motor commands and
-   * receive data
+   * receive data.
    */
   std::array<MotorInterface_ptr, 8> motors_;
 
   BlmcJointModules<8> joints_;
 
   /**
-   * @brief Address the rotation direction of the motor
+   * @brief Address the rotation direction of the motor.
    */
-  std::array<double, 8> polarity_;
+  std::array<bool, 8> reverse_polarities_;
 
   /**
    * @brief sliders_ these are analogue input from linear potentiometers.
