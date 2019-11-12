@@ -132,7 +132,7 @@ public:
     void send_torque();
 
     /**
-     * @brief Get the max joint torque that can be safely applied
+     * @brief Get the maximum admissible joint torque that can be applied.
      * 
      * @return double 
      */
@@ -441,8 +441,12 @@ public:
         }
     }
 
-
-    Vector get_max_joint_torques()
+    /**
+     * @brief Get the maximum admissible joint torque that can be applied.
+     * 
+     * @return Vector (N/m)
+     */
+    Vector get_max_torques()
     {
         Vector max_torques;
         for(size_t i = 0 ; i < COUNT ; ++i)
