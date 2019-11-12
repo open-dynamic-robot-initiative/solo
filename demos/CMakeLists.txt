@@ -46,5 +46,3 @@ create_demo(teststand_calibration teststand)
 
 create_demo(finger_position_control "")
 create_demo(finger_torque_control "")
-create_demo(disentanglement_platform "")
-
