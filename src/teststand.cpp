@@ -3,6 +3,8 @@
 
 namespace blmc_robots{
 
+const double Teststand::max_joint_torque_security_margin_ = 0.99;
+
 Teststand::Teststand()
 {
   /**
@@ -78,7 +80,8 @@ void Teststand::initialize()
                           joint_zero_positions_, motor_max_current_);
 
   // set the max torque we saturate to
-  max_joint_torques_ = 0.99 * joints_.get_max_joint_torques().array();
+  max_joint_torques_ = max_joint_torque_security_margin_ *
+                       joints_.get_max_torques().array();
   
   // The the control gains in order to perform the calibration
   Eigen::Vector2d kp, kd;
