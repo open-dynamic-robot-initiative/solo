@@ -111,17 +111,6 @@ void Solo::initialize()
   motor_to_card_port_index_[6] = 1; // HR_HFE
   motor_to_card_port_index_[7] = 0; // HR_KFE
 
-  // fix the polarity to be the same as the urdf model.
-  reverse_polarities_[0] = true;  // FL_HFE
-  reverse_polarities_[1] = true;  // FL_KFE
-  reverse_polarities_[2] = false; // FR_HFE
-  reverse_polarities_[3] = false; // FR_KFE
-  reverse_polarities_[4] = true;  // HL_HFE
-  reverse_polarities_[5] = true;  // HL_KFE
-  reverse_polarities_[6] = false; // HR_HFE
-  reverse_polarities_[7] = false; // HR_KFE
-  joints_.set_joint_polarities(reverse_polarities_);
-
   // Create the motors object.
   for(unsigned i=0; i<motors_.size() ; ++i)
   {
@@ -139,6 +128,17 @@ void Solo::initialize()
   // Set the maximum joint torque available
   max_joint_torques_ = max_joint_torque_security_margin_ *
                        joints_.get_max_torques().array();
+
+  // fix the polarity to be the same as the urdf model.
+  reverse_polarities_[0] = true;  // FL_HFE
+  reverse_polarities_[1] = true;  // FL_KFE
+  reverse_polarities_[2] = false; // FR_HFE
+  reverse_polarities_[3] = false; // FR_KFE
+  reverse_polarities_[4] = true;  // HL_HFE
+  reverse_polarities_[5] = true;  // HL_KFE
+  reverse_polarities_[6] = false; // HR_HFE
+  reverse_polarities_[7] = false; // HR_KFE
+  joints_.set_joint_polarities(reverse_polarities_);
 
   // The the control gains in order to perform the calibration
   blmc_robots::Vector8d kp, kd;
