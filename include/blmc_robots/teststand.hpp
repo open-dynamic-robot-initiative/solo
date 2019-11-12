@@ -330,7 +330,7 @@ private:
   Vector2d motor_max_current_;
 
   /**
-   * @brief max_joint_torques_ (N/m)
+   * @brief max_joint_torques_ (Nm)
    */
   Eigen::Array2d max_joint_torques_;
   /**
