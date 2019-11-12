@@ -238,6 +238,7 @@ private:
   Vector8d joint_gear_ratios_; /**< joint gear ratios (9). */
   Vector8d motor_max_current_; /**< Max appliable current before the robot shutdown. */
   Vector8d joint_zero_positions_; /**< Offset to the theoretical "0" pose. */
+  Eigen::Array<double, 8, 1> max_joint_torques_; /**< Max joint torques (N/m) */
   
   /**
    * Hardware status
