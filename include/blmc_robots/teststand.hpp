@@ -330,6 +330,12 @@ private:
   Vector2d motor_max_current_;
 
   /**
+   * @brief max_joint_torques_ (N/m)
+   * 
+   */
+  Eigen::Array2d max_joint_torques_;
+
+  /**
    * @brief This gives the status (enabled/disabled) of each motors using the
    * joint ordering convention.
    */

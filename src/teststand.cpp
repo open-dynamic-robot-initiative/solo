@@ -39,6 +39,7 @@ Teststand::Teststand()
   contact_sensors_states_.setZero();
   slider_positions_.setZero();
   motor_max_current_.setZero();
+  max_joint_torques_.setZero();
 
   /**
     * Setup some known data
@@ -75,6 +76,9 @@ void Teststand::initialize()
   // Create the joint module objects
   joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
                           joint_zero_positions_, motor_max_current_);
+
+  // set the max torque we saturate to
+  max_joint_torques_ = 0.99 * joints_.get_max_joint_torques().array();
   
   // The the control gains in order to perform the calibration
   Eigen::Vector2d kp, kd;
@@ -167,7 +171,10 @@ bool Teststand::acquire_sensors()
 bool Teststand::send_target_joint_torque(
     const Eigen::Ref<Vector2d> target_joint_torque)
 {
-  joints_.set_torques(target_joint_torque);
+  Vector2d ctrl_torque = target_joint_torque;
+  ctrl_torque = ctrl_torque.array().min(max_joint_torques_);
+  ctrl_torque = ctrl_torque.array().max(- max_joint_torques_);
+  joints_.set_torques(ctrl_torque);
   joints_.send_torques();
   return true;
 }
