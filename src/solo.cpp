@@ -12,6 +12,7 @@ Solo::Solo()
   motor_torque_constants_.setZero();
   joint_gear_ratios_.setZero();
   motor_max_current_.setZero();
+  max_joint_torques_.setZero();
   joint_zero_positions_.setZero();
   reverse_polarities_.fill(false);
   /**
@@ -132,6 +133,10 @@ void Solo::initialize()
   // Create the joint module objects
   joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
                           joint_zero_positions_, motor_max_current_);
+
+  // Set the maximum joint torque available
+  max_joint_torques_ = 0.99 * joints_.get_max_joint_torques().array();
+
   // The the control gains in order to perform the calibration
   blmc_robots::Vector8d kp, kd;
   kp.fill(3.0);
@@ -218,7 +223,10 @@ void Solo::acquire_sensors()
 void Solo::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
-  joints_.set_torques(target_joint_torque);
+  Vector8d ctrl_torque = target_joint_torque;
+  ctrl_torque = ctrl_torque.array().min(max_joint_torques_);
+  ctrl_torque = ctrl_torque.array().max(- max_joint_torques_);
+  joints_.set_torques(ctrl_torque);
   joints_.send_torques();
 }
 
