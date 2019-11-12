@@ -56,9 +56,9 @@ void BlmcJointModule::set_zero_angle(const double& zero_angle)
     zero_angle_ = zero_angle;
 }
 
-void BlmcJointModule::set_joint_polarity(const bool& should_reverse)
+void BlmcJointModule::set_joint_polarity(const bool& reverse_polarity)
 {
-    polarity_ = should_reverse ? -1.0 : 1.0;
+    polarity_ = reverse_polarity ? -1.0 : 1.0;
 }
 
 void BlmcJointModule::send_torque()

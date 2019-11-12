@@ -106,7 +106,7 @@ public:
     /**
      * @brief Set the joint torque to be sent.
      * 
-     * @param desired_torque (N/m)
+     * @param desired_torque (Nm)
      */
     void set_torque(const double& desired_torque);
 
@@ -121,9 +121,9 @@ public:
     /**
      * @brief Define if the motor should turn clock-wize or counter clock-wize.
      * 
-     * @param should_reverse true:reverse rotation axis, false:do nothing.
+     * @param reverse_polarity true:reverse rotation axis, false:do nothing.
      */
-    void set_joint_polarity(const bool& should_reverse);
+    void set_joint_polarity(const bool& reverse_polarity);
 
     /**
      * @brief send the joint torque to the motor. The conversion between joint
@@ -134,14 +134,14 @@ public:
     /**
      * @brief Get the sent joint torque.
      * 
-     * @return double (N/m).
+     * @return double (Nm).
      */
     double get_sent_torque() const;
 
     /**
      * @brief Get the measured joint torque.
      * 
-     * @return double (N/m).
+     * @return double (Nm).
      */
     double get_measured_torque() const;
 
@@ -179,8 +179,8 @@ public:
     /**
      * @brief Set control gains for PD position controller.
      *
-     * @param kp P gain ( (N/m) / rad ).
-     * @param kd D gain ( (N/m) / (rad/s) ).
+     * @param kp P gain ( (Nm) / rad ).
+     * @param kd D gain ( (Nm) / (rad/s) ).
      */
     void set_position_control_gains(double kp, double kd);
 
@@ -189,7 +189,7 @@ public:
      *
      * @param target_position_rad  Target position (rad).
      *
-     * @return Torque command (N/m).
+     * @return Torque command (Nm).
      */
     double execute_position_controller(double target_position_rad) const;
 
@@ -348,7 +348,7 @@ public:
     typedef Eigen::Matrix<double, COUNT, 1> Vector;
 
     /**
-     * @brief Construct a new BlmcJointModules object
+     * @brief Construct a new BlmcJointModules object.
      * 
      * @param motors 
      * @param motor_constants 
@@ -366,7 +366,7 @@ public:
         set_motor_array(motors, motor_constants, gear_ratios, zero_angles, max_currents);
     }
     /**
-     * @brief Construct a new BlmcJointModules object
+     * @brief Construct a new BlmcJointModules object.
      */
     BlmcJointModules()
     {
@@ -412,19 +412,19 @@ public:
      * @brief Set the polarities of the joints
      * (see BlmcJointModule::set_joint_polarity)
      * 
-     * @param should_reverse
+     * @param reverse_polarity
      */
-    void set_joint_polarities(std::array<bool, COUNT> should_reverse)
+    void set_joint_polarities(std::array<bool, COUNT> reverse_polarities)
     {
         for(size_t i = 0; i < COUNT; i++)
         {
-            modules_[i]->set_joint_polarity(should_reverse[i]);
+            modules_[i]->set_joint_polarity(reverse_polarities[i]);
         }
     }
     /**
      * @brief Register the joint torques to be sent for all modules.
      * 
-     * @param desired_torques
+     * @param desired_torques (Nm)
      */
     void set_torques(const Vector& desired_torques)
     {
@@ -437,7 +437,7 @@ public:
     /**
      * @brief Get the previously sent torques.
      * 
-     * @return Vector 
+     * @return Vector (Nm)
      */
     Vector get_sent_torques() const
     {
@@ -453,7 +453,7 @@ public:
     /**
      * @brief Get the measured joint torques.
      * 
-     * @return Vector 
+     * @return Vector (Nm)
      */
     Vector get_measured_torques() const
     {
@@ -469,7 +469,7 @@ public:
     /**
      * @brief Get the measured joint angles.
      * 
-     * @return Vector 
+     * @return Vector (rad)
      */
     Vector get_measured_angles() const
     {
@@ -485,7 +485,7 @@ public:
     /**
      * @brief Get the measured joint velocities.
      * 
-     * @return Vector 
+     * @return Vector (rad/s)
      */
     Vector get_measured_velocities() const
     {
@@ -502,7 +502,7 @@ public:
      * @brief Set the zero_angles. These are the joint angles between the
      * starting pose and the zero theoretical pose of the urdf.
      * 
-     * @param zero_angles 
+     * @param zero_angles (rad)
      */
     void set_zero_angles(const Vector& zero_angles)
     {
@@ -515,7 +515,7 @@ public:
      * @brief Get the zero_angles. These are the joint angles between the
      * starting pose and the zero theoretical pose of the urdf.
      * 
-     * @return Vector 
+     * @return Vector (rad)
      */
     Vector get_zero_angles() const
     {
@@ -531,7 +531,7 @@ public:
      * @brief Get the index_angles. There is one index per motor rotation so
      * there are gear_ratio indexes per joint rotation.
      * 
-     * @return Vector 
+     * @return Vector (rad)
      */
     Vector get_measured_index_angles() const
     {
@@ -628,6 +628,14 @@ public:
         return homing_status;
     }
 
+    /**
+     * @brief Allow the robot to go to a desired pose. Once the control done
+     * 0 torques is sent.
+     * 
+     * @param angle_to_reach_rad (rad)
+     * @param average_speed_rad_per_sec (rad/sec)
+     * @return GoToReturnCode 
+     */
     GoToReturnCode go_to(Vector angle_to_reach_rad,
                          double average_speed_rad_per_sec=1.0)
     {
