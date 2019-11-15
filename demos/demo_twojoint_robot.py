@@ -8,6 +8,8 @@ import rospkg
 from robot_interfaces import two_joint
 import blmc_robots
 
+import time
+
 
 def main():
 
@@ -36,7 +38,7 @@ def main():
 
     N_JOINTS = 2
 
-    def go_to(goal_position, steps, hold):
+    def go_to(goal_position, steps, hold, verbose=False):
         """Move with linear position profile.
 
         Move from the current position to the goal_position using a linear
@@ -59,6 +61,7 @@ def main():
         # Use current position as start position.
         # Copy the current position, so value in the variable can be modified
         # later.
+
         desired_step_position = copy.copy(robot.get_observation(t).position)
 
         stepsize = (goal_position - desired_step_position) / steps
@@ -67,11 +70,17 @@ def main():
         for step in range(steps):
             desired_step_position += stepsize
             action = two_joint.Action(torque=desired_torque)
+            # print("pass1")
             t = robot.append_desired_action(action)
+            # print("pass2")
             position_error = (desired_step_position -
                               robot.get_observation(t).position)
             desired_torque = (kp * position_error -
-                              kd * robot.get_observation(t).velocity)
+                              kd * robot.get_observation(t).velocity)*1.4
+            # time.sleep(0.01)
+            if verbose and step % 50 == 0 and step < steps:
+                print_on_terminal(desired_torque, t)
+
 
         # hold at goal position
         for step in range(hold):
@@ -81,6 +90,16 @@ def main():
             desired_torque = (kp * position_error -
                               kd * robot.get_observation(t).velocity)
 
+    def print_on_terminal(desired_torque, t):
+        try:
+            print("DT: {}, T: {}".format(desired_torque, robot.get_observation(t).torque))
+            # print("P: ", robot.get_observation(t).position)
+            # print("V: ", robot.get_observation(t).velocity)
+            # print("T: ", robot.get_observation(t).torque)
+        except:
+            print("Error")
+            pass
+
 
     def go_to_zero(steps, hold):
         go_to(np.zeros(N_JOINTS), steps, hold)
@@ -89,12 +108,12 @@ def main():
     robot_backend.initialize()
     print("homing finished")
     go_to_zero(1000, 2000)
-
-    goal_position = position_limit
+    # print("start")
+    goal_position = 1 #position_limit
     while True:
         goal_position *= -1
         # move to goal position within 2000 ms and wait there for 100 ms
-        go_to(goal_position, 2000, 100)
+        go_to(goal_position, 100, 100)
 
 
 if __name__ == "__main__":
