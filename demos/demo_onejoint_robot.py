@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Simple demo moving a single joint back and forth."""
-import numpy as np
+import os
 import copy
+import numpy as np
+import rospkg
 
 from robot_interfaces import one_joint
 import blmc_robots
@@ -12,11 +14,6 @@ def main():
     # Configuration
     # ========================================
 
-    # Offset between encoder index and zero-position (in radian).
-    # Set this such that the zero position is in the center between left and
-    # right end stop.
-    home_offset = 2.241742
-
     # Limit of the range in which the joint can move (i.e. should be a little
     # bit before hitting the end stop).
     position_limit = 2.7
@@ -25,14 +22,15 @@ def main():
     kp = 5
     kd = 0.04
 
-
     # ========================================
 
+    # load the default config file
+    config_file_path = os.path.join(
+        rospkg.RosPack().get_path("blmc_robots"), "config", "onejoint.yml")
 
     robot_data = one_joint.Data()
-    robot_backend = blmc_robots.create_one_joint_backend("can6",
-                                                         home_offset,
-                                                         robot_data)
+    robot_backend = blmc_robots.create_one_joint_backend(robot_data,
+                                                         config_file_path)
     robot = one_joint.Frontend(robot_data)
 
 

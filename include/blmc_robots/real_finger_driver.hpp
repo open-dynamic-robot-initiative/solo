@@ -1,5 +1,5 @@
 /**
- * \file test_bench_8_motors.hh
+ * \file
  * \brief The hardware wrapper of the real Finger robot.
  * \author Manuel Wuthrich
  * \date 2018
@@ -9,46 +9,30 @@
 
 #pragma once
 
-#include <math.h>
-#include <Eigen/Eigen>
-#include <blmc_robots/common_header.hpp>
-
-#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
+#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 
 namespace blmc_robots
 {
 class RealFingerDriver : public NJointBlmcRobotDriver<3, 2>
 {
 public:
-    RealFingerDriver(const std::string &can_0, const std::string &can_1)
-        : RealFingerDriver(create_motor_boards({can_0, can_1}))
+    RealFingerDriver(const Config &config)
+        : RealFingerDriver(create_motor_boards(config.can_ports), config)
     {
     }
 
 private:
-    RealFingerDriver(const MotorBoards &motor_boards)
+    RealFingerDriver(const MotorBoards &motor_boards, const Config &config)
         : NJointBlmcRobotDriver<3, 2>(motor_boards,
                                       create_motors(motor_boards),
                                       {
                                           // MotorParameters
-                                          .max_current_A = 2.0,
                                           .torque_constant_NmpA = 0.02,
                                           .gear_ratio = 9.0,
                                       },
-                                      {
-                                          // CalibrationParameters
-                                          .torque_ratio = 0.6,
-                                          .position_tolerance_rad = 0.05,
-                                          .move_timeout = 2000,
-                                      },
-                                      Vector(0.08, 0.08, 0.04),
-                                      Vector::Ones() * 3.0,
-                                      Vector::Ones() * 0.03,
-                                      true)
+                                      config)
     {
-        home_offset_rad_ << -0.54, -0.17, 0.0;
-        initial_position_rad_ << 1.5, 1.5, 3.0;
     }
 
     static Motors create_motors(const MotorBoards &motor_boards)
@@ -62,25 +46,5 @@ private:
         return motors;
     }
 };
-
-robot_interfaces::FingerTypes::BackendPtr create_real_finger_backend(
-    const std::string &can_0,
-    const std::string &can_1,
-    robot_interfaces::FingerTypes::DataPtr robot_data)
-{
-    constexpr double MAX_ACTION_DURATION_S = 0.003;
-    constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
-
-    std::shared_ptr<robot_interfaces::RobotDriver<
-        robot_interfaces::FingerTypes::Action,
-        robot_interfaces::FingerTypes::Observation>>
-        robot = std::make_shared<RealFingerDriver>(can_0, can_1);
-
-    auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
-        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
-    backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
-
-    return backend;
-}
 
 }  // namespace blmc_robots

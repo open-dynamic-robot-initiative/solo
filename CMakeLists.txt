@@ -32,6 +32,10 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
+find_package(yaml-cpp REQUIRED)
+# ${YAML_CPP_INCLUDE_DIR}
+# ${YAML_CPP_LIBRARIES}
+
 # search for the robot_properties package for the demos calibration data
 find_package(robot_properties_solo QUIET)
 find_package(robot_properties_teststand QUIET)
@@ -47,6 +51,7 @@ catkin_python_setup()
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${catkin_INCLUDE_DIRS}
+    ${YAML_CPP_INCLUDE_DIR}
     ${Eigen_INCLUDE_DIRS}
 )
 
@@ -63,7 +68,7 @@ set(exported_libraries
 )
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ${exported_libraries}
+  LIBRARIES ${exported_libraries} ${YAML_CPP_LIBRARIES}
   CATKIN_DEPENDS ${CATKIN_PKGS}
 )
 
@@ -103,7 +108,7 @@ set(py_real_finger_SRC_FILES
   srcpy/py_real_finger.cpp
 )
 pybind11_add_module(py_real_finger ${py_real_finger_SRC_FILES})
-target_link_libraries(py_real_finger PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(py_real_finger PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
 set_target_properties(py_real_finger PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
 install(TARGETS py_real_finger DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
@@ -113,7 +118,7 @@ set(py_one_joint_SRC_FILES
   srcpy/py_one_joint.cpp
 )
 pybind11_add_module(py_one_joint ${py_one_joint_SRC_FILES})
-target_link_libraries(py_one_joint PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(py_one_joint PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
 set_target_properties(py_one_joint PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
 install(TARGETS py_one_joint DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
@@ -123,7 +128,7 @@ set(py_two_joint_SRC_FILES
   srcpy/py_two_joint.cpp
 )
 pybind11_add_module(py_two_joint ${py_two_joint_SRC_FILES})
-target_link_libraries(py_two_joint PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(py_two_joint PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
 set_target_properties(py_two_joint PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
 install(TARGETS py_two_joint DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})

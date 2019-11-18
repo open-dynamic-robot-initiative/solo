@@ -6,9 +6,8 @@ import copy
 import sys
 from os import path
 
-import threading
-import ipdb
 import progressbar
+import rospkg
 
 from robot_interfaces import one_joint
 import blmc_robots
@@ -21,14 +20,6 @@ N_JOINTS = 1
 
 # Configuration
 # ========================================
-
-# launchpad: can7, custom board: can6
-CAN_PORT = "can6"
-
-# Offset between encoder index and zero-position (in radian).
-# Set this such that the zero position is in the center between left and
-# right end stop.
-HOME_OFFSET = 2.24
 
 # Limit of the range in which the joint can move (i.e. should be a little
 # bit before hitting the end stop).
@@ -261,11 +252,13 @@ def main():
     def log_path(filename):
         return path.join(log_directory, filename)
 
+    # load the default config file
+    config_file_path = path.join(
+        rospkg.RosPack().get_path("blmc_robots"), "config", "onejoint.yml")
 
     robot_data = one_joint.Data()
-    finger_backend = blmc_robots.create_one_joint_backend(CAN_PORT,
-                                                          HOME_OFFSET,
-                                                          robot_data)
+    finger_backend = blmc_robots.create_one_joint_backend(robot_data,
+                                                          config_file_path)
     robot = one_joint.Frontend(robot_data)
     logger = Logger()
 

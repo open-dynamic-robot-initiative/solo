@@ -1,34 +1,21 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>blmc_robots</name>
   <version>1.0.0</version>
-  <description>
-    This project implements a small example when using the dynamic graph
-  </description>
+  <description>Interfaces to the BLMC robots.</description>
   <author email="mnaveau@tue.mpg.de">Maximilien Naveau</author>
   <maintainer email="mnaveau@tue.mpg.de">Maximilien Naveau</maintainer>
-  <license>TODO</license>
+  <maintainer email="felix.widmaier@tuebingen.mpg.de">Felix Widmaier</maintainer>
+  <license>BSD 3-clause</license>
+
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend> ati_ft_sensor </build_depend>
-  <run_depend>   ati_ft_sensor </run_depend>
-
-  <build_depend> blmc_drivers </build_depend>
-  <run_depend>   blmc_drivers </run_depend>
-
-  <build_depend> real_time_tools </build_depend>
-  <run_depend>   real_time_tools </run_depend>
-
-  <build_depend> mpi_cmake_modules </build_depend>
-  <run_depend>   mpi_cmake_modules </run_depend>
-
-  <build_depend> robot_interfaces </build_depend>
-  <run_depend>   robot_interfaces </run_depend>
-
-  <build_depend>pybind11_catkin</build_depend>
-  <run_depend>pybind11_catkin</run_depend>
-
-  <build_depend>yaml_cpp_catkin</build_depend>
-  <run_depend>yaml_cpp_catkin</run_depend>
+  <depend>ati_ft_sensor</depend>
+  <depend>blmc_drivers</depend>
+  <depend>real_time_tools</depend>
+  <depend>mpi_cmake_modules</depend>
+  <depend>robot_interfaces</depend>
+  <depend>pybind11_catkin</depend>
+  <depend>yaml_cpp_catkin</depend>
 
 </package>
