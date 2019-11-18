@@ -13,8 +13,8 @@ import blmc_robots
 
 def get_random_position():
     """Generate a random position within a save range."""
-    position_min = np.array([1, 0, 0])
-    position_max = np.array([3, 2, 5])
+    position_min = np.array([-1, -1, -2])
+    position_max = np.array([1, 1, 2])
 
     position_range = position_max - position_min
 
