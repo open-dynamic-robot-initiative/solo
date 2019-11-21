@@ -16,7 +16,7 @@ def main():
     desired_torque = np.zeros(3)
 
     block_size = 100
-    filename = "log.csv";
+    filename = "log.csv"
 
     finger_logger = finger.Logger(finger_data, block_size)
     finger_logger.start(filename)
