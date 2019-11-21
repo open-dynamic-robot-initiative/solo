@@ -1,3 +1,5 @@
+from blmc_robots.robot import Robot, demo_print_position
+
 from blmc_robots.blmc_single_leg import *
 from blmc_robots.py_real_finger import *
 from blmc_robots.py_trifinger import *

@@ -4,9 +4,9 @@ import robot_interfaces
 import blmc_robots
 
 if __name__ == "__main__":
-    robot = blmc_robots.Robot(robot_interfaces.finger,
-                              blmc_robots.create_real_finger_backend,
-                              "finger.yml")
+    robot = blmc_robots.Robot(robot_interfaces.trifinger,
+                              blmc_robots.create_trifinger_backend,
+                              "trifinger.yml")
     robot.initialize()
 
     blmc_robots.demo_print_position(robot)
