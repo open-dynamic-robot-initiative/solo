@@ -18,8 +18,8 @@ def main():
     block_size = 100
     filename = "log.csv";
 
-    finger_logger = finger.FingerLogger(finger_data, block_size, filename)
-    finger_logger.run()
+    finger_logger = finger.Logger(finger_data, block_size)
+    finger_logger.start(filename)
 
     while True:
         for _ in range(1000):
