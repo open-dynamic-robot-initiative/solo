@@ -6,15 +6,10 @@
 
  */
 
-#pragma once
+#pragma onces
 
 #include "blmc_robots/common_header.hpp"
 #include <master_board_sdk/master_board_interface.h>
-
-/**
- * @brief Vector12d shortcut for the eigen vector of size 12.
- */
-  typedef Eigen::Matrix<double, 12, 1> Vector12d;
 
 namespace blmc_robots {
 
@@ -30,8 +25,9 @@ public:
   /**
    * @brief initialize the robot by setting aligning the motors and calibrate the
    * sensors to 0
+   * @param if_name Interface for connection to hardware.
    */
-  void initialize();
+  void initialize(const std::string &if_name);
 
   /**
    * @brief send_target_torques sends the target currents to the motors
