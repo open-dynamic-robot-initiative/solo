@@ -3,9 +3,9 @@
 
 namespace blmc_robots{
 
-const double Solo::max_joint_torque_security_margin_ = 0.99;
+const double Solo12::max_joint_torque_security_margin_ = 0.99;
 
-Solo::Solo()
+Solo12::Solo12()
 {
   /**
     * Hardware properties
@@ -17,6 +17,7 @@ Solo::Solo()
   max_joint_torques_.setZero();
   joint_zero_positions_.setZero();
   reverse_polarities_.fill(false);
+
   /**
    * Hardware status
    */
@@ -53,63 +54,59 @@ Solo::Solo()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(16.0); // TODO: set as paramters?
+  motor_max_current_.fill(4.0); // TODO: set as paramters?
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
 }
 
-void Solo::initialize()
+void Solo12::initialize(const std::string &if_name)
 {
-  // initialize the communication with the can cards
-  for(unsigned i=0 ; i<can_buses_.size() ; ++i)
-  {
-    std::ostringstream oss;
-    oss << "can" << i;
-    can_buses_[i] = std::make_shared<blmc_drivers::CanBus>(oss.str());
-    can_motor_boards_[i] =
-        std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[i]);
-    sliders_[i] =
-        std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[i], 1);
-  }
+  // Initialize the communication with the main board.
+  main_board_ptr = std::make_shared<MasterBoardInterface>(if_name);
+  main_board_ptr->Init();
 
-  // mapping contact sensor in the right sequence (FL, FR, HL, HR)
-  contact_sensors_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[3], 0);
-  contact_sensors_[1] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
-  contact_sensors_[2] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[2], 0);
-  contact_sensors_[3] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
   /**
-   * Mapping between the can and the motor
-   * FL_HFE - motor 0 - can 3 - port 1
-   * FL_KFE - motor 1 - can 3 - port 0
-   * FR_HFE - motor 2 - can 0 - port 1
-   * FR_KFE - motor 3 - can 0 - port 0
-   * HL_HFE - motor 4 - can 2 - port 1
-   * HL_KFE - motor 5 - can 2 - port 0
-   * HR_HFE - motor 6 - can 1 - port 1
-   * HR_KFE - motor 7 - can 1 - port 0
-   */
-  motor_to_card_index_[0] = 3; // FL_HFE
-  motor_to_card_index_[1] = 3; // FL_KFE
-  motor_to_card_index_[2] = 0; // FR_HFE
-  motor_to_card_index_[3] = 0; // FR_KFE
-  motor_to_card_index_[4] = 2; // HL_HFE
-  motor_to_card_index_[5] = 2; // HL_KFE
-  motor_to_card_index_[6] = 1; // HR_HFE
-  motor_to_card_index_[7] = 1; // HR_KFE
+   * Mapping between the DOF and driver boards + motor ports
 
-  motor_to_card_port_index_[0] = 1; // FL_HFE
-  motor_to_card_port_index_[1] = 0; // FL_KFE
-  motor_to_card_port_index_[2] = 1; // FR_HFE
-  motor_to_card_port_index_[3] = 0; // FR_KFE
-  motor_to_card_port_index_[4] = 1; // HL_HFE
-  motor_to_card_port_index_[5] = 0; // HL_KFE
-  motor_to_card_port_index_[6] = 1; // HR_HFE
-  motor_to_card_port_index_[7] = 0; // HR_KFE
+   * FL_HAA - driver 0, motor port 0
+   * FL_HFE - driver 1, motor port 1
+   * FL_KFE - driver 1, motor port 0
+   * FR_HAA - driver 0, motor port 1
+   * FR_HFE - driver 2, motor port 1
+   * FR_KFE - driver 2, motor port 0
+   * HL_HAA - driver 3, motor port 0
+   * HL_HFE - driver 4, motor port 1
+   * HL_KFE - driver 4, motor port 0
+   * HR_HAA - driver 3, motor port 1
+   * HR_HFE - driver 5, motor port 1
+   * HR_KFE - driver 5, motor port 0
+   */
+  motor_to_card_index_[0] = 0; // FL_HAA
+  motor_to_card_index_[1] = 1; // FL_HFE
+  motor_to_card_index_[2] = 1; // FL_KFE
+  motor_to_card_index_[3] = 0; // FR_HAA
+  motor_to_card_index_[4] = 2; // FR_HFE
+  motor_to_card_index_[5] = 2; // FR_KFE
+  motor_to_card_index_[6] = 3; // HL_HAA
+  motor_to_card_index_[7] = 4; // HL_HFE
+  motor_to_card_index_[8] = 4; // HL_KFE
+  motor_to_card_index_[9] = 3; // HR_HAA
+  motor_to_card_index_[10] = 5; // HR_HFE
+  motor_to_card_index_[11] = 5; // HR_KFE
+
+  motor_to_card_port_index_[0] = 1; // FL_HAA
+  motor_to_card_port_index_[1] = 1; // FL_HFE
+  motor_to_card_port_index_[2] = 0; // FL_KFE
+  motor_to_card_port_index_[3] = 1; // FR_HAA
+  motor_to_card_port_index_[4] = 1; // FR_HFE
+  motor_to_card_port_index_[5] = 0; // FR_KFE
+  motor_to_card_port_index_[6] = 1; // HL_HAA
+  motor_to_card_port_index_[7] = 1; // HL_HFE
+  motor_to_card_port_index_[8] = 0; // HL_KFE
+  motor_to_card_port_index_[9] = 1; // HL_HAA
+  motor_to_card_port_index_[10] = 1; // HR_HFE
+  motor_to_card_port_index_[11] = 0; // HR_KFE
 
   // Create the motors object.
   for(unsigned i=0; i<motors_.size() ; ++i)
@@ -153,7 +150,7 @@ void Solo::initialize()
   }
 }
 
-void Solo::acquire_sensors()
+void Solo12::acquire_sensors()
 {
   /**
     * Joint data
@@ -223,7 +220,7 @@ void Solo::acquire_sensors()
   motor_ready_[7] = static_cast<bool>(HR_status.motor1_ready); // HR_KFE
 }
 
-void Solo::send_target_joint_torque(
+void Solo12::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
   Vector8d ctrl_torque = target_joint_torque;
@@ -233,7 +230,7 @@ void Solo::send_target_joint_torque(
   joints_.send_torques();
 }
 
-bool Solo::calibrate(const Vector8d& home_offset_rad)
+bool Solo12::calibrate(const Vector8d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
   double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
