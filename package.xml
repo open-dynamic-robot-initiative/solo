@@ -12,6 +12,7 @@
 
   <depend>ati_ft_sensor</depend>
   <depend>blmc_drivers</depend>
+  <depend>master_board_sdk_catkin</depend>
   <depend>real_time_tools</depend>
   <depend>mpi_cmake_modules</depend>
   <depend>robot_interfaces</depend>

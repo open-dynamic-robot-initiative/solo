@@ -20,19 +20,17 @@ set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${PROJECT_NAME})
 ###############################################
 
 macro(create_robots_library lib_name)
+  add_library(${lib_name} SHARED
+    ${lib_name}.cpp
+  )
 
-add_library(${lib_name} SHARED
-  ${lib_name}.cpp
-)
+  target_link_libraries(${lib_name} ${catkin_LIBRARIES} ${PROJECT_NAME})
 
-target_link_libraries(${lib_name} ${catkin_LIBRARIES} ${PROJECT_NAME})
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_link_libraries(${lib_name} rt pthread)
+  endif()
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(${lib_name} rt pthread)
-endif()
-
-set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${lib_name})
-
+  set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${lib_name})
 endmacro()
 
 ####################
@@ -41,6 +39,7 @@ endmacro()
 
 create_robots_library(test_bench_8_motors)
 create_robots_library(solo)
+create_robots_library(solo12)
 create_robots_library(teststand)
 create_robots_library(stuggihop)
 create_robots_library(single_motor)

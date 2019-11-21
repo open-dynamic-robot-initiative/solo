@@ -49,6 +49,11 @@ typedef Eigen::Matrix<double, 2, 1> Vector2d;
 typedef Eigen::Matrix<double, 8, 1> Vector8d;
 
 /**
+ * @brief Vector8d shortcut for the eigen vector of size 12.
+ */
+typedef Eigen::Matrix<double, 12, 1> Vector12d;
+
+/**
  * @brief CanBus_ptr shortcut for the shared pointer CanBus type
  */
 typedef std::shared_ptr<blmc_drivers::CanBus> CanBus_ptr;
@@ -79,7 +84,7 @@ typedef std::shared_ptr<blmc_drivers::SafeMotor> SafeMotor_ptr;
 typedef std::shared_ptr<blmc_drivers::AnalogSensor> Slider_ptr;
 
 /**
- * @brief ContactSensor_ptr shortcut for the contact sensor. It is also an 
+ * @brief ContactSensor_ptr shortcut for the contact sensor. It is also an
  * analog sensor
  */
 typedef std::shared_ptr<blmc_drivers::AnalogSensor> ContactSensor_ptr;
