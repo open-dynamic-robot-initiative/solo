@@ -9,6 +9,7 @@
 #pragma onces
 
 #include "blmc_robots/common_header.hpp"
+#include <blmc_robots/blmc_joint_module.hpp>
 #include <master_board_sdk/master_board_interface.h>
 
 namespace blmc_robots {
@@ -27,7 +28,7 @@ public:
    * sensors to 0
    * @param if_name Interface for connection to hardware.
    */
-  void initialize(const std::string &if_name);
+  void initialize(const std::string &if_name, const int n_active_motors=12);
 
   /**
    * @brief send_target_torques sends the target currents to the motors
@@ -224,10 +225,15 @@ public:
   }
 
 private:
+  /**
+   * Maps the adc index to the board and adc port and returns its value.
+   */
+  double get_adc_by_index_(unsigned int adc_index);
 
   /**
     * Motor data
     */
+  int n_active_motors_;
 
 
   /**
@@ -309,14 +315,18 @@ private:
   Eigen::Vector4d contact_sensors_states_;
 
   /**
-   * @brief This map for every motor the card number.
+   * @brief Maps each joint to a motor index.
    */
-  std::array<int, 12> motor_to_card_index_;
+  std::array<int, 12> joint_to_motor_index_;
+
 
   /**
-   * @brief This map for every motor the card port.
+   * @brief motors_ are the objects allowing us to send motor commands and
+   * receive data.
    */
-  std::array<int, 12> motor_to_card_port_index_;
+  std::array<MotorInterface_ptr, 12> motors_;
+
+  BlmcJointModules<12> joints_;
 
   /**
    * @brief Address the rotation direction of the motor.
