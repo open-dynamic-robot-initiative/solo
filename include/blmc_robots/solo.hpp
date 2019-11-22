@@ -12,7 +12,7 @@
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 
-namespace blmc_robots{
+namespace blmc_robots {
 
 class Solo
 {
@@ -43,18 +43,18 @@ public:
 
   /**
    * @brief Calibrate the joints by moving to the next joint index position.
-   * 
+   *
    * @param home_offset_rad This is the angle between the index and the zero
    * pose.
-   * @return true 
-   * @return false 
+   * @return true
+   * @return false
    */
   bool calibrate(const Vector8d& home_offset_rad);
 
   /**
    * Joint properties
    */
-  
+
   /**
    * @brief get_motor_inertias
    * @return the motor inertias
@@ -156,7 +156,7 @@ public:
   {
     return joint_encoder_index_;
   }
-  
+
   /**
    * @brief get_contact_sensors_states
    * @return the state of the contacts states
@@ -290,7 +290,7 @@ private:
    * @brief joint_encoder_index_
    */
   Vector8d joint_encoder_index_;
-  
+
   /**
     * Additional data
     */
@@ -346,7 +346,7 @@ private:
    * @brief sliders_ these are analogue input from linear potentiometers.
    */
   std::array<Slider_ptr, 4> sliders_;
-  
+
   /**
    * @brief contact_sensors_ is the contact sensors at each foot tips. They also
    * are analogue inputs.
