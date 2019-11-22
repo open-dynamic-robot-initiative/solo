@@ -19,94 +19,85 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
     // TODO: Forward commandline argument here.
     robot.initialize("ens4", 4);
 
-    Eigen::Vector4d sliders;
-    Vector12d desired_torque;
-    int counter = 0;
-
     rt_printf("control loop started \n");
-    while (!CTRL_C_DETECTED)
-    {
-        robot.acquire_sensors();
-        sliders = robot.get_slider_positions();
-        robot.send_target_joint_torque(desired_torque);
 
-        counter += 1;
-        if (counter % 1000 == 0)
-        {
-            print_vector("sliders", sliders);
-        }
+    double kp = 5.0;
+    double kd = 1.0;
+    double max_range = M_PI;
+    Vector12d desired_joint_position;
+    Vector12d desired_torque;
+
+    desired_torque.setZero();
+
+    Eigen::Vector4d sliders;
+    Eigen::Vector4d sliders_filt;
+    Eigen::Vector4d sliders_zero;
+
+    std::vector<std::deque<double> > sliders_filt_buffer(
+        robot.get_slider_positions().size());
+    size_t max_filt_dim = 200;
+    for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
+    {
+        sliders_filt_buffer[i].clear();
     }
 
-    // // double kp = 5.0;
-    // // double kd = 1.0;
-    // // double max_range = M_PI;
-    // Vector12d desired_joint_position;
-    // Vector12d desired_torque;
+    robot.acquire_sensors();
+    sliders_zero = robot.get_slider_positions();
 
-    // desired_torque.setZero();
+    size_t count = 0;
+    while (!CTRL_C_DETECTED)
+    {
+        // acquire the sensors
+        robot.acquire_sensors();
 
-    // Eigen::Vector4d sliders;
-    // Eigen::Vector4d sliders_filt;
+        // aquire the slider signal
+        sliders = robot.get_slider_positions();
 
-    // std::vector<std::deque<double> > sliders_filt_buffer(
-    //     robot.get_slider_positions().size());
-    // size_t max_filt_dim = 200;
-    // for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
-    // {
-    //     sliders_filt_buffer[i].clear();
-    // }
-    // size_t count = 0;
-    // while (!CTRL_C_DETECTED)
-    // {
-    //     // acquire the sensors
-    //     robot.acquire_sensors();
+        // filter it
+        for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
+        {
+            if (sliders_filt_buffer[i].size() >= max_filt_dim)
+            {
+                sliders_filt_buffer[i].pop_front();
+            }
+            sliders_filt_buffer[i].push_back(sliders(i));
+            sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
+                                              sliders_filt_buffer[i].end(),
+                                              0.0) /
+                              (double)sliders_filt_buffer[i].size();
+        }
 
-    //     // aquire the slider signal
-    //     sliders = robot.get_slider_positions();
+        // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
+        for (unsigned i = 0; i < 4; ++i)
+        {
+            // desired_pose[i].push_back
+            desired_joint_position(2 * i) =
+                max_range * (sliders_filt(i) - sliders_zero(i));
+            desired_joint_position(2 * i + 1) = desired_joint_position(2 * i);
+        }
 
-    //     // filter it
-    //     for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
-    //     {
-    //         if (sliders_filt_buffer[i].size() >= max_filt_dim)
-    //         {
-    //             sliders_filt_buffer[i].pop_front();
-    //         }
-    //         sliders_filt_buffer[i].push_back(sliders(i));
-    //         sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
-    //                                           sliders_filt_buffer[i].end(),
-    //                                           0.0) /
-    //                           (double)sliders_filt_buffer[i].size();
-    //     }
+        // we implement here a small pd control at the current level
+        desired_torque =
+            kp * (desired_joint_position - robot.get_joint_positions()) -
+            kd * robot.get_joint_velocities();
 
-    //     // // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
-    //     // for (unsigned i = 0; i < 4; ++i)
-    //     // {
-    //     //     // desired_pose[i].push_back
-    //     //     desired_joint_position(2 * i) = max_range * (sliders_filt(i) - 0.5);
-    //     //     desired_joint_position(2 * i + 1) =
-    //     //         max_range * (sliders_filt(i) - 0.5);
-    //     // }
 
-    //     // // we implement here a small pd control at the current level
-    //     // desired_torque =
-    //     //     kp * (desired_joint_position - robot.get_joint_positions()) -
-    //     //     kd * robot.get_joint_velocities();
+        // print -----------------------------------------------------------
+        if ((count % 1000) == 0)
+        {
+            print_vector("sliders_filt", sliders);
+            print_vector("des_joint_tau", desired_torque);
+            print_vector("    joint_pos", robot.get_joint_positions());
+            print_vector("des_joint_pos", desired_joint_position);
+        }
+        ++count;
 
-    //     // Send the current to the motor
-    //     robot.send_target_joint_torque(desired_torque);
+        // Send the current to the motor
+        // desired_torque.setZero();
+        robot.send_target_joint_torque(desired_torque);
 
-    //     // print -----------------------------------------------------------
-    //     real_time_tools::Timer::sleep_sec(0.001);
-
-    //     if ((count % 1000) == 0)
-    //     {
-    //         print_vector("sliders_filt", sliders);
-    //         // print_vector("des_joint_tau", desired_torque);
-    //         // print_vector("    joint_pos", robot.get_joint_positions());
-    //         // print_vector("des_joint_pos", desired_joint_position);
-    //     }
-    //     ++count;
-    // }  // endwhile
+        real_time_tools::Timer::sleep_sec(0.001);
+    }  // endwhile
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
