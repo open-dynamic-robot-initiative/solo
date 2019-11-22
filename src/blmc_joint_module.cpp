@@ -250,7 +250,7 @@ bool BlmcJointModule::calibrate(double& angle_zero_to_index,
       // desired pose
       double alpha = 1.0 - (double)((double)counter/(double)traj_time);
       double des_angle = alpha * init_pose + (1.0-alpha) * final_pose;
-      // compute the error 
+      // compute the error
       double current_angle = get_measured_angle();
       double err = des_angle - current_angle;
       // small saturation in intensity
