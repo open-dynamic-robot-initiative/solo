@@ -13,9 +13,11 @@
 
 using namespace blmc_robots;
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
 {
-    Solo12& robot = *(static_cast<Solo12*>(robot_void_ptr));
+    Solo12 robot;
+    // TODO: Forward commandline argument here.
+    robot.initialize("ens4", 4);
 
     Eigen::Vector4d sliders;
     Vector12d desired_torque;
@@ -118,11 +120,8 @@ int main(int argc, char** argv)
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
-    Solo12 robot;
-    robot.initialize(std::string(argv[1]), 4);
-
     rt_printf("controller is set up \n");
-    thread.create_realtime_thread(&control_loop, &robot);
+    thread.create_realtime_thread(&control_loop);
 
     Eigen::Vector4d sliders;
     Vector12d desired_torque;
@@ -131,17 +130,6 @@ int main(int argc, char** argv)
     rt_printf("control loop started \n");
     while (!CTRL_C_DETECTED)
     {
-        // robot.acquire_sensors();
-        // sliders = robot.get_slider_positions();
-        // robot.send_target_joint_torque(desired_torque);
-
-        // counter += 1;
-        // if (counter % 1000 == 0)
-        // {
-        //     print_vector("sliders", sliders);
-        // }
-
-
         real_time_tools::Timer::sleep_sec(0.001);
     }
 
