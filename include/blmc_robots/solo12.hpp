@@ -31,6 +31,11 @@ public:
   void initialize(const std::string &if_name, const int n_active_motors=12);
 
   /**
+   * @brief Sets the maximum joint torques.
+   */
+  void set_max_joint_torques(const double& max_joint_torques);
+
+  /**
    * @brief send_target_torques sends the target currents to the motors
    */
   void send_target_joint_torque(

@@ -191,7 +191,7 @@ void Solo12::acquire_sensors()
     * Additional data
     */
   // acquire the slider positions
-  for (unsigned i=0 ; i<slider_positions_.size() ; ++i)
+  for (unsigned i = 0; i < slider_positions_.size(); ++i)
   {
     // acquire the slider
     slider_positions_(i) = get_adc_by_index_(i);
@@ -216,6 +216,11 @@ void Solo12::acquire_sensors()
       motor_board_enabled_[i] = main_board_ptr->motor_drivers[i].is_enabled;
       motor_board_errors_[i] = main_board_ptr->motor_drivers[i].error_code;
   }
+}
+
+void Solo12::set_max_joint_torques(const double& max_joint_torques)
+{
+  max_joint_torques_.fill(max_joint_torques);
 }
 
 void Solo12::send_target_joint_torque(
