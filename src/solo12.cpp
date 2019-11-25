@@ -1,5 +1,6 @@
 #include <cmath>
 #include "real_time_tools/spinner.hpp"
+#include "blmc_robots/common_programs_header.hpp"
 #include "blmc_robots/solo12.hpp"
 
 namespace blmc_robots{
@@ -141,7 +142,7 @@ void Solo12::initialize(const std::string &if_name, const int n_active_motors)
 
   int c = 0;
   bool is_ready = false;
-  while (!is_ready)
+  while (!is_ready && !CTRL_C_DETECTED)
   {
     is_ready = true;
     main_board_ptr->ParseSensorData();
