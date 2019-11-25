@@ -23,11 +23,11 @@ void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders, Eigen::Ref<Vector12d> slid
     }
 }
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 {
     Solo12 robot;
-    // TODO: Forward commandline argument here.
-    robot.initialize("ens4", 6);
+    char** argv = (char**)args;
+    robot.initialize(std::string(argv[1]), atoi(argv[2]));
     rt_printf("control loop started \n");
 
     robot.set_max_joint_torques(0.5);
@@ -135,8 +135,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
-        rt_printf("Usage: demo_solo12 interface_name\n");
+    if (argc < 3) {
+        rt_printf("Usage: demo_solo12 interface_name number_degress(e.g. 6/12)\n");
         return -1;
     }
 
@@ -144,11 +144,7 @@ int main(int argc, char** argv)
     enable_ctrl_c();
 
     rt_printf("controller is set up \n");
-    thread.create_realtime_thread(&control_loop);
-
-    Eigen::Vector4d sliders;
-    Vector12d desired_torque;
-    int counter = 0;
+    thread.create_realtime_thread(&control_loop, (void*)argv);
 
     rt_printf("control loop started \n");
     while (!CTRL_C_DETECTED)
