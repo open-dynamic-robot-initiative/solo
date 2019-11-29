@@ -229,6 +229,21 @@ public:
     return motor_board_errors_;
   }
 
+  /**
+   * @brief has_error
+   * @return Returns true if the robot hardware has an error, false otherwise.
+   */
+  const bool has_error()
+  {
+    for (const auto& error_code : motor_board_errors_)
+    {
+      if (error_code != 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 private:
   /**
    * Maps the adc index to the board and adc port and returns its value.
