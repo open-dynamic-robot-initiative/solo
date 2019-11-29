@@ -147,21 +147,28 @@ void Solo12::initialize(const std::string &if_name, const int n_active_motors)
     is_ready = true;
     main_board_ptr->ParseSensorData();
     main_board_ptr->SendCommand(); // To keep boards alive.
+
+    if (c % 500 == 0) {
+      rt_printf("\n");
+    }
     for(unsigned i = 0; i < n_active_motors_; ++i)
     {
       if (!main_board_ptr->motors[i].IsReady())
       {
         is_ready = false;
-        if (c % 1000 == 0) {
-            rt_printf("motor %d not ready.\n", i);
+        if (c % 500 == 0) {
+          rt_printf("motor %d ready: no\n", i);
         }
-        break;
+      } else {
+        if (c % 500 == 0) {
+          rt_printf("motor %d ready: yes\n", i);
+        }
       }
     }
     c += 1;
     spinner.spin();
   }
-  rt_printf("All motors and boards are ready.");
+  rt_printf("All motors and boards are ready.\n");
 }
 
 double Solo12::get_adc_by_index_(unsigned int adc_index)
