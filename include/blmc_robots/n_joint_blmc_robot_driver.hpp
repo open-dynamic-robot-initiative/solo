@@ -327,6 +327,7 @@ public:
                          Vector::Zero(),
                          config.max_current_A * Vector::Ones()),
           motor_boards_(motor_boards),
+          motor_parameters_(motor_parameters),
           max_torque_Nm_(config.max_current_A *
                          motor_parameters.torque_constant_NmpA *
                          motor_parameters.gear_ratio),
@@ -515,9 +516,9 @@ protected:
         Vector home_offset_rad = Vector::Zero())
     {
         //! Distance after which encoder index search is aborted.
-        constexpr double SEARCH_DISTANCE_LIMIT_RAD = 2.0;
-        // TODO distance limit could be set based on gear ratio to be 1.5 motor
-        // revolutions
+        //! Computed based on gear ratio to be 1.5 motor revolutions.
+        const double SEARCH_DISTANCE_LIMIT_RAD =
+            (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
 
         rt_printf("Start homing.\n");
         if (has_endstop_)
@@ -654,7 +655,10 @@ protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
 
-    // TODO: this should probably go away
+    //! \brief Fixed motor parameters (assuming all joints use same setup).
+    MotorParameters motor_parameters_;
+
+    //! \brief Maximum torque allowed on each joint.
     double max_torque_Nm_;
 
     /**
