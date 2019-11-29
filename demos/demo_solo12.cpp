@@ -20,7 +20,15 @@ void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders, Eigen::Ref<Vector12d> slid
         sliders_out(3 * i + 0) = sliders(0);
         sliders_out(3 * i + 1) = sliders(1);
         sliders_out(3 * i + 2) = 2. * (1. - sliders(1));
+
+        if (i >= 2) {
+            sliders_out(3 * i + 1) *= -1;
+            sliders_out(3 * i + 2) *= -1;
+        }
     }
+    // Swap the hip direction.
+    sliders_out(3) *= -1;
+    sliders_out(9) *= -1;
 }
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
