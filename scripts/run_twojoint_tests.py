@@ -22,7 +22,7 @@ N_JOINTS = 2
 # ========================================
 
 # launchpad: can7, custom board: can6
-CAN_PORT = "can6"
+CAN_PORT = "can7"
 
 # Offset between encoder index and zero-position (in radian).
 # Set this such that the zero position is in the center between left and
@@ -47,7 +47,7 @@ NUM_FIXED_VELOCITY_MOVEMENT_STEPS = 5 #150
 
 # Number of times the complete scenario is repeated
 #NUM_ITERATIONS = 20
-NUM_ITERATIONS = 2
+NUM_ITERATIONS = 50000
 
 
 # ========================================
@@ -210,8 +210,8 @@ def validate_position(robot):
     Hit the end stop from both sites to check if expected and actual
     position match.
     """
-    tolerance = 0.1
-    desired_torque = np.ones(N_JOINTS) * 0.15  # 0.3
+    tolerance = 0.2
+    desired_torque = np.ones(N_JOINTS) * 0.3  # 0.3
 
     position = [None, None]
 
@@ -224,7 +224,7 @@ def validate_position(robot):
 
     if np.all(np.abs(center) > tolerance):
         raise RuntimeError("Unexpected center position."
-                           "Expected 0.0, actual is %f" % center)
+                           "Expected 0.0, actual is {}".format(center))
     else:
         print("Position is okay.")
 
@@ -277,11 +277,16 @@ def main():
         return path.join(log_directory, filename)
 
     robot_data = two_joint.Data()
-    finger_backend = blmc_robots.create_two_joint_backend(CAN_PORT,
-                                                          HOME_OFFSET,
-                                                          robot_data)
+    finger_backend = blmc_robots.create_two_joint_backend(robot_data, "/home/vagrawal/blmc_ei/workspace/src/catkin/robots/blmc_robots/config/twojoint.yml")
     robot = two_joint.Frontend(robot_data)
     logger = Logger()
+
+    # Logging with new logger
+    block_size = 100
+    filename = "log1.csv"
+    finger_logger = two_joint.Logger(robot_data, block_size)
+    finger_logger.start(filename)
+
 
     # dump logger data in case the script is killed with SIGINT or SIGQUIT
     def signal_handler(signum, stack):
@@ -304,6 +309,7 @@ def main():
 
     go_to_zero(robot, 1000, 2000)
 
+    start_time = time.time()
     for iteration in range (NUM_ITERATIONS):
         print("START TEST ITERATION %d" % iteration)
 
@@ -318,22 +324,23 @@ def main():
             #low_trq = 0.36
             low_trq = 0.2
             #currents = range(5, 19)
-            currents = range(5, 15)
+            # currents = range(5, 15)
+            currents = [10] * 10
             for current in currents:
                 trq = current * (0.02 * 9)
                 print("A = %d (trq = %f)" % (current, trq))
                 go_to(robot, -POSITION_LIMIT, 500, 10, logger)
                 logger.start_new_recording(log_path("hard_switch_directions_%dA_%d"
                                                     % (current, iteration)))
-                hard_direction_change(robot, 6, trq, logger)
+                hard_direction_change(robot, 20, trq, logger)
 
                 t = robot.get_current_time_index()
                 if np.any(np.abs(robot.get_observation(t).position) >
                           POSITION_LIMIT):
                     print("ERROR: Position limit exceeded!")
                     return
-
-                hard_direction_change(robot, 6, low_trq, logger)
+                print(time.time() - start_time)
+                hard_direction_change(robot, 3, low_trq, logger)
                 logger.dump()
 
             print("position validation after switch directions")
