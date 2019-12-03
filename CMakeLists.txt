@@ -29,6 +29,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   robot_interfaces
   pybind11_catkin
   yaml_cpp_catkin
+  imu_core
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 

@@ -17,7 +17,9 @@ using namespace blmc_robots;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
+    // Teststand& robot = *(static_cast<Teststand*>(robot_void_ptr));
+    Teststand robot;
+    robot.initialize();
 
     rt_printf("control loop started \n");
 
@@ -101,6 +103,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
             print_vector("ati_torque     ", robot.get_ati_torque());
             print_vector("contact_sensors", robot.get_contact_sensors_states());
             print_vector("height_sensors ", robot.get_height_sensors());
+            print_vector("imu_sensors    ", robot.get_imu_linear_acceleration());
             rt_printf("\n");
         }
         ++count;
@@ -119,13 +122,13 @@ int main(int, char**)
 
     real_time_tools::RealTimeThread thread;
 
-    Teststand robot;
-
-    robot.initialize();
-
+    // Teststand robot;
+    // robot.initialize();
+    // thread.create_realtime_thread(&control_loop, &robot);
+    // Teststand robot;
+    // robot.initialize();
+    thread.create_realtime_thread(&control_loop);
     rt_printf("controller is set up \n");
-
-    thread.create_realtime_thread(&control_loop, &robot);
 
     // Wait until the application is killed.
     while (!CTRL_C_DETECTED)

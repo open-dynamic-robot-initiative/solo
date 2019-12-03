@@ -62,14 +62,14 @@ void Teststand::initialize()
   can_buses_[0] = std::make_shared<blmc_drivers::CanBus>("can0");
   can_motor_boards_[0] = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[0]);
 
-  can_buses_[1] = std::make_shared<blmc_drivers::CanBus>("can1");
-  can_motor_boards_[1] = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[1]);
+  // can_buses_[1] = std::make_shared<blmc_drivers::CanBus>("can1");
+  // can_motor_boards_[1] = std::make_shared<blmc_drivers::CanBusMotorBoard>(can_buses_[1]);
 
   // can 0
-  contact_sensors_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
-  height_sensors_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
+  // contact_sensors_[0] =
+  //     std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
+  // height_sensors_[0] =
+  //     std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
   // MOTOR_HFE
   motors_[0] = std::make_shared<blmc_drivers::Motor> (can_motor_boards_[0], 1);
   // MOTOR_KFE
@@ -91,24 +91,30 @@ void Teststand::initialize()
 
   // can 1
   sliders_[0] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 0);
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 0);
   sliders_[1] =
-      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[1], 1);
+      std::make_shared<blmc_drivers::AnalogSensor>(can_motor_boards_[0], 1);
 
   // ATI sensor initialization.
-  ati_sensor_.initialize();
+  // ati_sensor_.initialize();
+
+  // IMU sensor initialise
+  bool stream_data = true;
+  std::string device = "/dev/ttyACM0";
+  imu_ = std::make_shared<imu_core::imu_3DM_GX5_25::Imu3DM_GX5_25>(device, stream_data);
+  imu_->initialize();
 
   // Wait to make sure there is a first package when acquire_sensors() later.
   real_time_tools::Timer::sleep_sec(0.5);
 
   // Calibrate the zeros of the ati sensor given the current measurement.
-  ati_sensor_.setBias();
+  // ati_sensor_.setBias();
 
   // wait until all board are ready and connected
   // can 2
   can_motor_boards_[0]->wait_until_ready();
   // can 3
-  can_motor_boards_[1]->wait_until_ready();
+  // can_motor_boards_[1]->wait_until_ready();
 }
 
 bool Teststand::acquire_sensors()
@@ -141,27 +147,32 @@ bool Teststand::acquire_sensors()
     for (unsigned i=0 ; i < contact_sensors_states_.size() ; ++i)
     {
       // acquire the current contact states
-      contact_sensors_states_(i) =
-          contact_sensors_[i]->get_measurement()->newest_element();
+      // contact_sensors_states_(i) =
+      //     contact_sensors_[i]->get_measurement()->newest_element();
       // acquire the height sensor.
       // Transforms the measurement into a rough height measurement of the hip
       // mounting point above the table.
-      height_sensors_states_(i) = 
-          1.0701053378814493 - 1.0275690598232334 *
-          height_sensors_[i]->get_measurement()->newest_element();
+      // height_sensors_states_(i) = 
+      //     1.0701053378814493 - 1.0275690598232334 *
+      //     height_sensors_[i]->get_measurement()->newest_element();
     }
 
     /**
      * Ati sensor readings.
      */
-    ati_sensor_.getFT(&ati_force_(0), &ati_torque_(0));
+    // ati_sensor_.getFT(&ati_force_(0), &ati_torque_(0));
 
     // Rotate the force and torque values, such that pressing on the force
     // sensor creates a positive force.
-    ati_force_(0) *= -1;
-    ati_force_(2) *= -1;
-    ati_torque_(0) *= -1;
-    ati_torque_(2) *= -1;
+    // ati_force_(0) *= -1;
+    // ati_force_(2) *= -1;
+    // ati_torque_(0) *= -1;
+    // ati_torque_(2) *= -1;
+
+    // // IMU sensor reading
+    imu_acceleration_ = imu_->get_acceleration().transpose();     
+    imu_ang_acceleration_ = imu_->get_angular_rate().transpose();
+
   }catch(std::exception ex)
   {
     rt_printf("HARDWARE: Something went wrong during the sensor reading.\n");

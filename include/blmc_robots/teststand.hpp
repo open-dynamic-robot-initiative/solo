@@ -12,6 +12,8 @@
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <AtiFTSensor.h>
+#include <imu-core/imu_3DM_GX5_25.hpp>
+#include <stdio.h> 
 
 namespace blmc_robots{
 
@@ -39,6 +41,14 @@ public:
    * @brief This type define the torqes from the ati-FT sensors
    */
   typedef Eigen::Matrix<double, 3, 1> VectorAtiTorque;
+  /**
+   * @brief This type define the acceleration from the imu sensors
+   */
+  typedef Eigen::Matrix<double, 3, 1> VectorImuLinearAcceleration;
+  /**
+   * @brief This type define the Angular acceleration from the imu sensors
+   */
+  typedef Eigen::Matrix<double, 3, 1> VectorImuAngularAcceleration;
 
   /**
    * @brief Teststand is the constructor of the class.
@@ -235,12 +245,43 @@ public:
     return ati_torque_;
   }
 
+
+  /**
+   * @brief Get the imu_acceleration_ object
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
+   * 
+   * @return const Eigen::Ref<VectorImutAcceleration> 
+   */
+  const Eigen::Ref<VectorImuLinearAcceleration> get_imu_linear_acceleration()
+  {
+    return imu_acceleration_;
+  }
+
+    /**
+   * @brief Get the imu_acceleration_ object
+   * WARNING !!!! The method acquire_sensors() has to be called prior to
+   * any getter to have up to date data.
+   * 
+   * @return const Eigen::Ref<VectorImuAngularAcceleration> 
+   */
+  const Eigen::Ref<VectorImuAngularAcceleration> get_imu_angular_acceleration()
+  {
+    return imu_ang_acceleration_;
+  }
+
 private:
 
   /**
    * @brief ATI sensor.
    */
   ati_ft_sensor::AtiFTSensor ati_sensor_;
+
+  /**
+   * @brief IMU sensor.
+   */
+  std::shared_ptr<imu_core::imu_3DM_GX5_25::Imu3DM_GX5_25> imu_;
+
 
   /**
    * @brief 3D linear force from the ATI FT sensor
@@ -251,7 +292,15 @@ private:
    * @brief 3D torque measured from the ATI FT sensor
    */
   VectorAtiTorque ati_torque_;
-
+  /**
+   * @brief 3D Acceleration measured from the IMU sensor
+   */
+  VectorImuLinearAcceleration imu_acceleration_;
+  /**
+   * @brief 3D Anguular Acceleration measured from the IMU sensor
+   */
+  VectorImuAngularAcceleration imu_ang_acceleration_;
+ 
   /**
     * Motor data
     */

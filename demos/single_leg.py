@@ -16,7 +16,7 @@ leg.disable_can_recv_timeout()
 try:
     while True:
         leg.acquire_sensors()
-        des_pos = leg.get_slider_positions()
+        des_pos = leg.get_slider_positions() - 0.5
         pos = leg.get_joint_positions()
         vel = leg.get_joint_velocities()
          
