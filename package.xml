@@ -18,4 +18,7 @@
   <depend>pybind11_catkin</depend>
   <depend>yaml_cpp_catkin</depend>
 
+  <depend>eigen</depend>
+  <depend>yaml-cpp</depend>
+
 </package>

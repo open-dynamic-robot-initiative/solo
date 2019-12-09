@@ -59,6 +59,7 @@ include_directories(
 # export the package as a catkin package #
 ##########################################
 set(exported_libraries
+  ${PROJECT_NAME}
   test_bench_8_motors
   solo
   teststand
@@ -68,8 +69,9 @@ set(exported_libraries
 )
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ${exported_libraries} ${YAML_CPP_LIBRARIES}
+  LIBRARIES ${exported_libraries}
   CATKIN_DEPENDS ${CATKIN_PKGS}
+  DEPENDS yaml-cpp
 )
 
 ########################################################
