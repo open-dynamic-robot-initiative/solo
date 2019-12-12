@@ -21,7 +21,6 @@ public:
     typedef robot_interfaces::FingerTypes::Action Action;
     typedef robot_interfaces::FingerTypes::Observation Observation;
     typedef robot_interfaces::FingerTypes::Vector Vector;
-    typedef robot_interfaces::FingerTypes::Status Status;
 
     int data_generating_index_ = 0;
 
