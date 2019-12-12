@@ -1,5 +1,5 @@
 /**
- * @file demo_solo_calibration.cpp
+ * @file demo_solo8_calibration.cpp
  * @author Maximilien Naveau (maximilien.naveau@gmail.com)
  * @brief Small demo to test the calibration on the real robot.
  * @version 0.1
@@ -10,11 +10,11 @@
  */
 
 
-#include "blmc_robots/solo.hpp"
+#include "blmc_robots/solo8.hpp"
 #include "common_demo_header.hpp"
 
 using namespace blmc_robots;
-typedef ThreadCalibrationData<Solo> ThreadCalibrationData_t;
+typedef ThreadCalibrationData<Solo8> ThreadCalibrationData_t;
 
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
@@ -34,7 +34,7 @@ int main(int, char**)
 {
     enable_ctrl_c();
 
-    std::shared_ptr<Solo> robot = std::make_shared<Solo>();
+    std::shared_ptr<Solo8> robot = std::make_shared<Solo8>();
     robot->initialize();
 
     ThreadCalibrationData_t thread_data(robot);

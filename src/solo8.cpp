@@ -1,5 +1,5 @@
 #include <cmath>
-#include "blmc_robots/solo88.hpp"
+#include "blmc_robots/solo8.hpp"
 
 namespace blmc_robots{
 

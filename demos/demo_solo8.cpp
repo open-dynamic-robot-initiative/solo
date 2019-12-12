@@ -1,14 +1,14 @@
 /**
- * \file demo_solo.cpp
+ * \file demo_solo8.cpp
  * \brief The use of the wrapper implementing a small pid controller.
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Solo class in a small demo.
+ * This file uses the Solo8 class in a small demo.
  */
 
 
-#include "blmc_robots/solo.hpp"
+#include "blmc_robots/solo8.hpp"
 #include "blmc_robots/common_programs_header.hpp"
 
 
@@ -17,7 +17,7 @@ using namespace blmc_robots;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Solo& robot = *(static_cast<Solo*>(robot_void_ptr));
+    Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
 
     double kp = 5.0;
     double kd = 1.0;
@@ -94,7 +94,7 @@ int main(int, char**)
 
     real_time_tools::RealTimeThread thread;
 
-    Solo robot;
+    Solo8 robot;
 
     robot.initialize();
 
