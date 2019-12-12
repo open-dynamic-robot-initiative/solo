@@ -60,38 +60,43 @@ Solo12::Solo12()
   joint_gear_ratios_.fill(9.0);
 }
 
-void Solo12::initialize(const std::string &if_name, const int n_active_motors)
+void Solo12::initialize(const std::string &network_id)
 {
+  network_id_ = network_id;
+  
+  // Create the different mapping
+  map_joint_id_to_motor_board_id_ = {0, 1, 1, 0, 2, 2, 3, 4, 4, 3, 5, 5};
+  map_joint_id_to_motor_port_id_ = {0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+
   // Initialize the communication with the main board.
-  main_board_ptr = std::make_shared<MasterBoardInterface>(if_name);
-  main_board_ptr->Init();
+  main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
+  main_board_ptr_->Init();
 
-  n_active_motors_ = n_active_motors;
+  // create the SpiBus (blmc_drivers wrapper around the MasterBoardInterface)
+  spi_bus_ = std::make_shared<blmc_drivers::SpiBus>(main_board_ptr_,
+                                                    motor_boards_.size());
 
-  /**
-   * Mapping between the DOF and driver boards + motor ports
-   *
-   * FL_HAA - driver 0, motor port 0, motor index 0
-   * FL_HFE - driver 1, motor port 1, motor index 3
-   * FL_KFE - driver 1, motor port 0, motor index 2
-   * FR_HAA - driver 0, motor port 1, motor index 1
-   * FR_HFE - driver 2, motor port 1, motor index 5
-   * FR_KFE - driver 2, motor port 0, motor index 4
-   * HL_HAA - driver 3, motor port 0, motor index 6
-   * HL_HFE - driver 4, motor port 1, motor index 9
-   * HL_KFE - driver 4, motor port 0, motor index 8
-   * HR_HAA - driver 3, motor port 1, motor index 7
-   * HR_HFE - driver 5, motor port 1, motor index 11
-   * HR_KFE - driver 5, motor port 0, motor index 10
-   */
-  joint_to_motor_index_ = {0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10};
-
-  // Create the motors object.
-  for(unsigned i = 0; i < motors_.size(); ++i)
+  // create the motor board objects:
+  for(size_t mb_id = 0 ; mb_id < motor_boards_.size() ; ++mb_id)
   {
-    motors_[i] = std::make_shared<blmc_drivers::SPIMotor> (
-      main_board_ptr, joint_to_motor_index_[i]);
+      motor_boards_[mb_id] =
+          std::make_shared<blmc_drivers::SpiMotorBoard>(spi_bus_, mb_id);
   }
+
+  // Create the motors object. j_id is the joint_id
+  for(unsigned j_id = 0; j_id < motors_.size(); ++j_id)
+  {
+      motors_[j_id] = std::make_shared<blmc_drivers::Motor> (
+          motor_boards_[map_joint_id_to_motor_board_id_[j_id]],
+          map_joint_id_to_motor_port_id_[j_id]);
+  }
+
+  // These are the sliders plugged on the first motor board.
+  sliders_[0] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 0);
+  sliders_[1] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 1);
+  // These data ar the copy of the first ones.
+  sliders_[2] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 0);
+  sliders_[3] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 1);
 
   // Create the joint module objects
   joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
@@ -123,63 +128,14 @@ void Solo12::initialize(const std::string &if_name, const int n_active_motors)
   joints_.set_position_control_gains(kp, kd);
 
 
-  // Enable all the motors and boards.
-  for (unsigned i = 0; i < n_active_motors / 2; i++)
-  {
-    main_board_ptr->motor_drivers[i].motor1->SetCurrentReference(0);
-    main_board_ptr->motor_drivers[i].motor2->SetCurrentReference(0);
-    main_board_ptr->motor_drivers[i].motor1->Enable();
-    main_board_ptr->motor_drivers[i].motor2->Enable();
-    main_board_ptr->motor_drivers[i].EnablePositionRolloverError();
-    main_board_ptr->motor_drivers[i].SetTimeout(5);
-    main_board_ptr->motor_drivers[i].Enable();
-    rt_printf("Enabled motor_driver %d\n", i);
-  }
-
-  // wait until all board are ready and connected.
-  real_time_tools::Spinner spinner;
-  spinner.set_frequency(100);
-
-  int c = 0;
-  bool is_ready = false;
-  while (!is_ready && !CTRL_C_DETECTED)
-  {
-    is_ready = true;
-    main_board_ptr->ParseSensorData();
-    main_board_ptr->SendCommand(); // To keep boards alive.
-
-    if (c % 500 == 0) {
-      rt_printf("\n");
-    }
-    for(unsigned i = 0; i < n_active_motors_; ++i)
-    {
-      if (!main_board_ptr->motors[i].IsReady())
-      {
-        is_ready = false;
-        if (c % 500 == 0) {
-          rt_printf("motor %d ready: no\n", i);
-        }
-      } else {
-        if (c % 500 == 0) {
-          rt_printf("motor %d ready: yes\n", i);
-        }
-      }
-    }
-    c += 1;
-    spinner.spin();
-  }
+  // Wait until all the motors are ready.
+  spi_bus_->wait_until_ready();
+  
   rt_printf("All motors and boards are ready.\n");
-}
-
-double Solo12::get_adc_by_index_(unsigned int adc_index)
-{
-  return main_board_ptr->motor_drivers[adc_index / 2].adc[adc_index % 2];
 }
 
 void Solo12::acquire_sensors()
 {
-  main_board_ptr->ParseSensorData();
-
   /**
     * Joint data
     */
@@ -202,27 +158,34 @@ void Solo12::acquire_sensors()
   for (unsigned i = 0; i < slider_positions_.size(); ++i)
   {
     // acquire the slider
-    slider_positions_(i) = get_adc_by_index_(i);
-
-    // acquire the current contact states
-    // TODO: Implement me.
-    // contact_sensors_states_(i) =
-    //     contact_sensors_[i]->get_measurement()->newest_element();
+    slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
   }
 
   /**
    * The different status.
    */
-  for(unsigned i = 0; i < n_active_motors_; ++i)
-  {
-      motor_enabled_[i] = main_board_ptr->motors[i].IsEnabled();
-      motor_ready_[i] = main_board_ptr->motors[i].IsReady();
-  }
 
-  for(unsigned i = 0; i < n_active_motors_ / 2; ++i)
+  // motor board status
+  for(size_t i = 0; i < motor_boards_.size(); ++i)
   {
-      motor_board_enabled_[i] = main_board_ptr->motor_drivers[i].is_enabled;
-      motor_board_errors_[i] = main_board_ptr->motor_drivers[i].error_code;
+      const blmc_drivers::MotorBoardStatus& motor_board_status =
+          motor_boards_[i]->get_status()->newest_element();
+      motor_board_enabled_[i] = motor_board_status.system_enabled;
+      motor_board_errors_[i] = motor_board_status.error_code;
+  }
+  // motors status
+  for(size_t j_id = 0; j_id < motors_.size(); ++j_id)
+  {
+      const blmc_drivers::MotorBoardStatus& motor_board_status =
+          motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
+          ->get_status()->newest_element();
+      
+      motor_enabled_[j_id] = map_joint_id_to_motor_port_id_[j_id] ?
+                             motor_board_status.motor2_enabled:
+                             motor_board_status.motor1_enabled;
+      motor_enabled_[j_id] = map_joint_id_to_motor_port_id_[j_id] ?
+                             motor_board_status.motor2_ready:
+                             motor_board_status.motor1_ready;
   }
 }
 
@@ -238,12 +201,19 @@ void Solo12::send_target_joint_torque(
   ctrl_torque = ctrl_torque.array().min(max_joint_torques_);
   ctrl_torque = ctrl_torque.array().max(- max_joint_torques_);
   joints_.set_torques(ctrl_torque);
-  main_board_ptr->SendCommand();
+  joints_.send_torques();
 }
 
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
-    throw std::invalid_argument("Calibration is not supported yet.");
+  // Maximum distance is twice the angle between joint indexes
+  double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
+  double profile_step_size_rad=0.001;
+  joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
+                         profile_step_size_rad);
+  Vector12d zero_pose = Vector12d::Zero();
+  joints_.go_to(zero_pose);
+  return true;
 }
 
 } // namespace blmc_robots

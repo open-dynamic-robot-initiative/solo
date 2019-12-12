@@ -33,12 +33,7 @@ void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders, Eigen::Ref<Vector12d> slid
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 {
-    Solo12 robot;
-    char** argv = (char**)args;
-    robot.initialize(std::string(argv[1]), atoi(argv[2]));
-    rt_printf("control loop started \n");
-
-    robot.set_max_joint_torques(0.5);
+    Solo12& robot = *static_cast<Solo12*>(args);
 
     // Using conversion from PD gains from example.cpp
     double kp = 3.0 * 9 * 0.025;
@@ -64,6 +59,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 
     robot.acquire_sensors();
     map_sliders(robot.get_slider_positions(), sliders_zero);
+
+    rt_printf("control loop started \n");
 
     size_t count = 0;
     while (!CTRL_C_DETECTED)
@@ -143,16 +140,20 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 
 int main(int argc, char** argv)
 {
-    if (argc < 3) {
-        rt_printf("Usage: demo_solo12 interface_name number_degress(e.g. 6/12)\n");
+    if (argc < 2) {
+        rt_printf("Usage: demo_solo12 interface_name \n");
         return -1;
     }
 
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
+    Solo12 robot;
+    robot.initialize( std::string(argv[1]) );
+    robot.set_max_joint_torques(0.5);
+    
     rt_printf("controller is set up \n");
-    thread.create_realtime_thread(&control_loop, (void*)argv);
+    thread.create_realtime_thread(&control_loop, &robot);
 
     rt_printf("control loop started \n");
     while (!CTRL_C_DETECTED)

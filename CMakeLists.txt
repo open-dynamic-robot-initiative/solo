@@ -62,7 +62,8 @@ include_directories(
 set(exported_libraries
   ${PROJECT_NAME}
   test_bench_8_motors
-  solo
+  solo8
+  solo12
 
   teststand
   stuggihop

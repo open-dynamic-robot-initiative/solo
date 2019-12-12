@@ -1,10 +1,10 @@
 /**
- * \file demo_test_bench_8_motors.cpp
- * \brief The use of the wrapper implementing a small pid controller.
+ * \file solo12_hardware_calibration.cpp
+ * \brief ...
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Solo class in a small demo.
+ * This file uses the Solo12 class in a small demo.
  */
 
 #include "blmc_robots/solo12.hpp"
@@ -15,9 +15,9 @@ using namespace blmc_robots;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Solo& robot = *(static_cast<Solo*>(robot_void_ptr));
+    Solo12& robot = *(static_cast<Solo12*>(robot_void_ptr));
 
-    blmc_robots::Vector8d joint_index_to_zero;
+    blmc_robots::Vector12d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
     robot.calibrate(joint_index_to_zero);
 
@@ -34,15 +34,17 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    assert(argc == 2 && "Wrong number of argument: ./demo_solo12_calibration network_id");
+
     enable_ctrl_c();
 
     real_time_tools::RealTimeThread thread;
 
-    Solo robot;
+    Solo12 robot;
 
-    robot.initialize();
+    robot.initialize(argv[1]);
 
     rt_printf("controller is set up \n");
     rt_printf("Press enter to launch the calibration \n");

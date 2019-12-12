@@ -19,33 +19,33 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-#include <blmc_robots/solo12.hpp>
+#include <blmc_robots/solo8.hpp>
 
 namespace py = pybind11;
 using namespace blmc_robots;
 
-PYBIND11_MODULE(py_solo12, m)
+PYBIND11_MODULE(py_solo8, m)
 {
     // binding of stl containers
     // py::bind_vector<std::vector<Eigen::Vector3d>>(m, "ArrayVector3d");
     // py::bind_vector<std::vector<KinematicsState>>(m, "KinStateVector");
     // py::bind_vector<std::vector<Eigen::MatrixXd>>(m, "JacobianVector");
 
-    py::class_<Solo12>(m, "Solo12")
+    py::class_<Solo8>(m, "Solo8")
         .def(py::init<>())
-        .def("initialize", &Solo12::initialize, py::arg("interface_name"))
-        .def("acquire_sensors", &Solo12::acquire_sensors)
+        .def("initialize", &Solo8::initialize)
+        .def("acquire_sensors", &Solo8::acquire_sensors)
         .def("send_target_joint_torque",
-            &Solo12::send_target_joint_torque,
+            &Solo8::send_target_joint_torque,
             py::arg("target_joint_torque"))
         .def("set_max_joint_torques",
-            &Solo12::set_max_joint_torques,
+            &Solo8::set_max_joint_torques,
             py::arg("max_joint_torques"))
-        .def("get_motor_board_errors", &Solo12::get_motor_board_errors)
-        .def("get_motor_board_enabled", &Solo12::get_motor_board_enabled)
-        .def("get_motor_enabled", &Solo12::get_motor_enabled)
-        .def("get_motor_ready", &Solo12::get_motor_ready)
-        .def("get_slider_positions", &Solo12::get_slider_positions)
-        .def("get_joint_positions", &Solo12::get_joint_positions)
-        .def("get_joint_velocities", &Solo12::get_joint_velocities);
+        .def("get_motor_board_errors", &Solo8::get_motor_board_errors)
+        .def("get_motor_board_enabled", &Solo8::get_motor_board_enabled)
+        .def("get_motor_enabled", &Solo8::get_motor_enabled)
+        .def("get_motor_ready", &Solo8::get_motor_ready)
+        .def("get_slider_positions", &Solo8::get_slider_positions)
+        .def("get_joint_positions", &Solo8::get_joint_positions)
+        .def("get_joint_velocities", &Solo8::get_joint_velocities);
 }
