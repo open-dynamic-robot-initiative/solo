@@ -1,11 +1,11 @@
 #include <cmath>
-#include "blmc_robots/solo.hpp"
+#include "blmc_robots/solo88.hpp"
 
 namespace blmc_robots{
 
-const double Solo::max_joint_torque_security_margin_ = 0.99;
+const double Solo8::max_joint_torque_security_margin_ = 0.99;
 
-Solo::Solo()
+Solo8::Solo8()
 {
   /**
     * Hardware properties
@@ -59,7 +59,7 @@ Solo::Solo()
   joint_gear_ratios_.fill(9.0);
 }
 
-void Solo::initialize()
+void Solo8::initialize()
 {
   // initialize the communication with the can cards
   for(unsigned i=0 ; i<can_buses_.size() ; ++i)
@@ -153,7 +153,7 @@ void Solo::initialize()
   }
 }
 
-void Solo::acquire_sensors()
+void Solo8::acquire_sensors()
 {
   /**
     * Joint data
@@ -223,7 +223,7 @@ void Solo::acquire_sensors()
   motor_ready_[7] = static_cast<bool>(HR_status.motor1_ready); // HR_KFE
 }
 
-void Solo::send_target_joint_torque(
+void Solo8::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
   Vector8d ctrl_torque = target_joint_torque;
@@ -233,7 +233,7 @@ void Solo::send_target_joint_torque(
   joints_.send_torques();
 }
 
-bool Solo::calibrate(const Vector8d& home_offset_rad)
+bool Solo8::calibrate(const Vector8d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
   double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);

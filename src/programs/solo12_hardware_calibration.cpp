@@ -7,7 +7,7 @@
  * This file uses the Solo class in a small demo.
  */
 
-#include "blmc_robots/solo.hpp"
+#include "blmc_robots/solo12.hpp"
 #include "blmc_robots/common_programs_header.hpp"
 
 using namespace blmc_robots;
