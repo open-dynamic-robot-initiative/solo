@@ -161,5 +161,7 @@ int main(int argc, char** argv)
         real_time_tools::Timer::sleep_sec(0.001);
     }
 
+    thread.join();
+
     return 0;
 }
