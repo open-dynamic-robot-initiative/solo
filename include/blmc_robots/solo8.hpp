@@ -335,6 +335,9 @@ private:
    */
   std::array<MotorInterface_ptr, 8> motors_;
 
+  /**
+   * @brief This is the collection of joints that compose the robot.
+   */
   BlmcJointModules<8> joints_;
 
   /**

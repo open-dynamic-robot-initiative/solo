@@ -6,14 +6,35 @@
 
  */
 
-#pragma onces
+#pragma once
 
+#include <blmc_drivers/devices/spi_motor_board.hpp>
 #include "blmc_robots/common_header.hpp"
-#include <blmc_robots/blmc_joint_module.hpp>
-#include <master_board_sdk/master_board_interface.h>
+#include "blmc_robots/blmc_joint_module.hpp"
+
 
 namespace blmc_robots {
 
+/**
+ * @brief Definition and drivers for the Solo12 robot.
+ * 
+ *
+ * Mapping between the DOF and driver boards + motor ports:
+ * FL_HAA - motor board 0, motor port 0, motor index 0
+ * FL_HFE - motor board 1, motor port 1, motor index 3
+ * FL_KFE - motor board 1, motor port 0, motor index 2
+ * FR_HAA - motor board 0, motor port 1, motor index 1
+ * FR_HFE - motor board 2, motor port 1, motor index 5
+ * FR_KFE - motor board 2, motor port 0, motor index 4
+ * HL_HAA - motor board 3, motor port 0, motor index 6
+ * HL_HFE - motor board 4, motor port 1, motor index 9
+ * HL_KFE - motor board 4, motor port 0, motor index 8
+ * HR_HAA - motor board 3, motor port 1, motor index 7
+ * HR_HFE - motor board 5, motor port 1, motor index 11
+ * HR_KFE - motor board 5, motor port 0, motor index 10
+ * 
+ * 
+ */
 class Solo12
 {
 public:
@@ -28,7 +49,7 @@ public:
    * sensors to 0
    * @param if_name Interface for connection to hardware.
    */
-  void initialize(const std::string &if_name, const int n_active_motors=12);
+  void initialize(const std::string &network_id);
 
   /**
    * @brief Sets the maximum joint torques.
@@ -62,7 +83,7 @@ public:
    */
 
   /**
-   * @brief get_motor_inertias
+   * @brief get_motor_inertias in [kg m^2]
    * @return the motor inertias
    */
   const Eigen::Ref<Vector12d> get_motor_inertias()
@@ -71,7 +92,7 @@ public:
   }
 
   /**
-   * @brief get_motor_torque_constants
+   * @brief get_motor_torque_constants in []
    * @return the torque constants of each motor
    */
   const Eigen::Ref<Vector12d> get_motor_torque_constants()
@@ -233,7 +254,7 @@ public:
    * @brief has_error
    * @return Returns true if the robot hardware has an error, false otherwise.
    */
-  const bool has_error()
+  bool has_error() const
   {
     for (const auto& error_code : motor_board_errors_)
     {
@@ -246,26 +267,23 @@ public:
 
 private:
   /**
-   * Maps the adc index to the board and adc port and returns its value.
-   */
-  double get_adc_by_index_(unsigned int adc_index);
-
-  /**
-    * Motor data
-    */
-  int n_active_motors_;
-
-
-  /**
    * Joint properties
    */
-  Vector12d motor_inertias_; /**< motors inertia. */
-  Vector12d motor_torque_constants_; /**< DCM motor torque constants. */
-  Vector12d joint_gear_ratios_; /**< joint gear ratios (9). */
-  Vector12d motor_max_current_; /**< Max appliable current before the robot shutdown. */
-  Vector12d joint_zero_positions_; /**< Offset to the theoretical "0" pose. */
-  Eigen::Array<double, 12, 1> max_joint_torques_; /**< Max joint torques (Nm) */
-  static const double max_joint_torque_security_margin_; /**<  Security margin on the saturation of the control. */
+
+  /** @brief Motors inertia. */
+  Vector12d motor_inertias_;
+  /** @brief DCM motor torque constants. */
+  Vector12d motor_torque_constants_;
+  /** @brief joint gear ratios (9). */
+  Vector12d joint_gear_ratios_;
+  /** @brief Max appliable current before the robot shutdown. */
+  Vector12d motor_max_current_;
+  /** @brief Offset to the theoretical "0" pose. */
+  Vector12d joint_zero_positions_;
+  /** @brief Max joint torques (Nm) */
+  Eigen::Array<double, 12, 1> max_joint_torques_;
+  /** @brief  Security margin on the saturation of the control. */
+  static const double max_joint_torque_security_margin_;
 
   /**
    * --------------------------------------------------------------------------
@@ -334,30 +352,46 @@ private:
    */
   Eigen::Vector4d contact_sensors_states_;
 
-  /**
-   * @brief Maps each joint to a motor index.
-   */
-  std::array<int, 12> joint_to_motor_index_;
+  /** @brief This is the name of the network: Left column in ifconfig output */
+  std::string network_id_;
 
-
-  /**
-   * @brief motors_ are the objects allowing us to send motor commands and
-   * receive data.
-   */
-  std::array<MotorInterface_ptr, 12> motors_;
-
-  BlmcJointModules<12> joints_;
+  /** @brief Map the joint id to the motor board id, @see Solo12 description. */
+  std::array<int, 12> map_joint_id_to_motor_board_id_;
+  /** @brief Map the joint id to the motor port id, @see Solo12 description. */
+  std::array<int, 12> map_joint_id_to_motor_port_id_;
 
   /**
-   * @brief Address the rotation direction of the motor.
-   */
-  std::array<bool, 12> reverse_polarities_;
-
-  /**
-    * --------------------------------------------------------------------------
     * Drivers communication objects
     */
-  std::shared_ptr<MasterBoardInterface> main_board_ptr;
+  
+  /** @brief Main board drivers.
+   * 
+   * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board  */
+  std::shared_ptr<MasterBoardInterface> main_board_ptr_;
+
+  /** @brief Main board blmc_drivers overlay.
+   * 
+   * This object contains the API compatible with the blmc_drivers and
+   * BLMCJointModule(s).
+   */
+  std::shared_ptr<blmc_drivers::SpiBus> spi_bus_;
+
+  /** @brief These are the 6 motor boards of the robot. */
+  std::array<std::shared_ptr<blmc_drivers::SpiMotorBoard>, 6> motor_boards_;
+
+  /** @brief motors_ are the objects allowing us to send motor commands and
+   * receive data. */
+  std::array<MotorInterface_ptr, 12> motors_;
+
+  /** @brief sliders_ these are analogue input, typically from linear
+   * potentiometers. */
+  std::array<Slider_ptr, 4> sliders_;
+
+  /** @brief Joint modules containing the driving system paramters */
+  BlmcJointModules<12> joints_;
+
+  /** @brief Address the rotation direction of the motor. */
+  std::array<bool, 12> reverse_polarities_;
 };
 
 } // namespace blmc_robots

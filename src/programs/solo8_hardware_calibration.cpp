@@ -1,10 +1,10 @@
 /**
- * \file demo_test_bench_8_motors.cpp
- * \brief The use of the wrapper implementing a small pid controller.
+ * \file solo8_hardware_calibration.cpp
+ * \brief ...
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Solo class in a small demo.
+ * This file uses the Solo8 class in a small demo.
  */
 
 #include "blmc_robots/solo8.hpp"
@@ -15,7 +15,7 @@ using namespace blmc_robots;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Solo& robot = *(static_cast<Solo*>(robot_void_ptr));
+    Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
 
     blmc_robots::Vector8d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
@@ -40,7 +40,7 @@ int main(int, char**)
 
     real_time_tools::RealTimeThread thread;
 
-    Solo robot;
+    Solo8 robot;
 
     robot.initialize();
 
