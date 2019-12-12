@@ -38,7 +38,7 @@ endmacro()
 ####################
 
 create_robots_library(test_bench_8_motors)
-create_robots_library(solo)
+create_robots_library(solo8)
 create_robots_library(solo12)
 create_robots_library(teststand)
 create_robots_library(stuggihop)
@@ -64,7 +64,8 @@ endmacro(build_programs program_name robot_name)
 # Build the programs #
 ######################
 
-build_programs(solo_hardware_calibration solo)
+build_programs(solo8_hardware_calibration solo8)
+build_programs(solo12_hardware_calibration solo12)
 build_programs(teststand_hardware_calibration teststand)
 
 ######################################################

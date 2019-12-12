@@ -14,14 +14,14 @@
 
 namespace blmc_robots {
 
-class Solo
+class Solo8
 {
 public:
 
   /**
-   * @brief Solo is the constructor of the class.
+   * @brief Solo8 is the constructor of the class.
    */
-  Solo();
+  Solo8();
 
   /**
    * @brief initialize the robot by setting aligning the motors and calibrate the
