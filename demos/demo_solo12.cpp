@@ -15,11 +15,13 @@ using namespace blmc_robots;
 
 void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders, Eigen::Ref<Vector12d> sliders_out)
 {
+    double slider_A = sliders(0) - 0.5;
+    double slider_B = sliders(1);
     for (int i = 0; i < 4; i++)
     {
-        sliders_out(3 * i + 0) = sliders(0);
-        sliders_out(3 * i + 1) = sliders(1);
-        sliders_out(3 * i + 2) = 2. * (1. - sliders(1));
+        sliders_out(3 * i + 0) = slider_A;
+        sliders_out(3 * i + 1) = slider_B;
+        sliders_out(3 * i + 2) = 2. * (1. - slider_B);
 
         if (i >= 2) {
             sliders_out(3 * i + 1) *= -1;
