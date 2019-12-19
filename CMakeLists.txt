@@ -34,8 +34,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
 find_package(yaml-cpp REQUIRED)
-# ${YAML_CPP_INCLUDE_DIR}
-# ${YAML_CPP_LIBRARIES}
+set(yaml-cpp_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR})
 
 # search for the robot_properties package for the demos calibration data
 find_package(robot_properties_solo QUIET)

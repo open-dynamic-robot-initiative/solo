@@ -207,10 +207,15 @@ void Solo12::send_target_joint_torque(
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
-  double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
+  double search_distance_limit_rad = 3.0 * (2.0 * M_PI / 9.0);
   double profile_step_size_rad=0.001;
-  joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
-                         profile_step_size_rad);
+  HomingReturnCode homing_return_code =
+    joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
+                           profile_step_size_rad);
+  if(homing_return_code == HomingReturnCode::FAILED)
+  {
+      return false;
+  }
   Vector12d zero_pose = Vector12d::Zero();
   joints_.go_to(zero_pose);
   return true;

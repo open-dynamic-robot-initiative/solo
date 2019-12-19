@@ -19,10 +19,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
     blmc_robots::Vector12d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
-    robot.calibrate(joint_index_to_zero);
+    bool good_calibration = robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
-    while(!CTRL_C_DETECTED)
+    while(!CTRL_C_DETECTED and good_calibration)
     {
       if(count % 200 == 0)
       {
