@@ -23,38 +23,38 @@ typedef std::tuple<std::shared_ptr<FingerTypes::Frontend>,
                    std::shared_ptr<Sliders<3>>>
     FingerAndSliders;
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(
-    void *finger_and_sliders_void_ptr)
-{
-    // cast input arguments to the right format --------------------------------
-    FingerAndSliders &finger_and_sliders =
-        *(static_cast<FingerAndSliders *>(finger_and_sliders_void_ptr));
+// static THREAD_FUNCTION_RETURN_TYPE control_loop(
+//     void *finger_and_sliders_void_ptr)
+// {
+//     // cast input arguments to the right format --------------------------------
+//     FingerAndSliders &finger_and_sliders =
+//         *(static_cast<FingerAndSliders *>(finger_and_sliders_void_ptr));
 
-    auto finger = std::get<0>(finger_and_sliders);
-    auto sliders = std::get<1>(finger_and_sliders);
+//     auto finger = std::get<0>(finger_and_sliders);
+//     auto sliders = std::get<1>(finger_and_sliders);
 
-    // position controller -----------------------------------------------------
-    double kp = 0.2;
-    double kd = 0.0025;
+//     // position controller -----------------------------------------------------
+//     double kp = 0.2;
+//     double kd = 0.0025;
 
-    FingerTypes::Action desired_action = FingerTypes::Action::Zero();
-    while (true)
-    {
-        TimeIndex t = finger->append_desired_action(desired_action);
-        desired_action.torque = kp * (sliders->get_positions() -
-                                      finger->get_observation(t).position) -
-                                kd * finger->get_observation(t).velocity;
+//     FingerTypes::Action desired_action = FingerTypes::Action::Zero();
+//     while (true)
+//     {
+//         TimeIndex t = finger->append_desired_action(desired_action);
+//         desired_action.torque = kp * (sliders->get_positions() -
+//                                       finger->get_observation(t).position) -
+//                                 kd * finger->get_observation(t).velocity;
 
-        // print ---------------------------------------------------------------
-        if ((t % 1000) == 0)
-        {
-            std::cout << "desired_torque: "
-                      << finger->get_desired_action(t).torque << std::endl;
-            std::cout << "angles: " << finger->get_observation(t).position
-                      << std::endl;
-        }
-    }
-}
+//         // print ---------------------------------------------------------------
+//         if ((t % 1000) == 0)
+//         {
+//             std::cout << "desired_torque: "
+//                       << finger->get_desired_action(t).torque << std::endl;
+//             std::cout << "angles: " << finger->get_observation(t).position
+//                       << std::endl;
+//         }
+//     }
+// }
 
 /// TODO: fixme 
 int main(int, char **)
