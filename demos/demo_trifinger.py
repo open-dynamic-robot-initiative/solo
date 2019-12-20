@@ -30,6 +30,8 @@ def run_choreography(robot):
     pose_side_2 = [0, -deg45, 0]
     pose_side_3 = [deg45, -deg45, -deg45]
 
+    start = time.time()
+    last_time_print = 0
 
     while True:
         # initial pose
@@ -47,6 +49,14 @@ def run_choreography(robot):
         perform_step(pose_side_1 + pose_side_2 + pose_side_3)
         perform_step(pose_side_3 + pose_side_1 + pose_side_2)
         perform_step(pose_side_2 + pose_side_3 + pose_side_1)
+
+        # print current date/time every hour, so we can roughly see how long it
+        # ran in case it crashes during a long-run-test.
+        now = time.time()
+        if (now - last_time_print > 3600):
+            print(time.strftime("%F %T"))
+            last_time_print = now
+
 
 
 def main():
