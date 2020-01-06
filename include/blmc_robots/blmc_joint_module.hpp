@@ -243,7 +243,9 @@ public:
      * Searches for the next encoder index in positive direction and, when
      * found, sets it as home position.
      *
-     * Only performs one step, so this method needs to be called in a loop.
+     * Only performs one step, so this method needs to be called in a loop. This
+     * method only set the control, one *MUST* send the control for the motor
+     * after calling this method.
      *
      * The motor is moved with a position profile until either the encoder index
      * is reached or the search distance limit is exceeded.  The position is
@@ -639,6 +641,13 @@ public:
                     break;
                 }
             }
+            if(homing_status == HomingReturnCode::RUNNING)
+            {
+              for(unsigned i = 0 ; i < COUNT ; ++i)
+              {
+                  modules_[i]->send_torque();
+              }
+            }
 
             if (all_succeeded) {
                 homing_status = HomingReturnCode::SUCCEEDED;
@@ -687,8 +696,11 @@ public:
             {
                 double desired_pose = min_jerk_trajs[i].compute(current_time);
                 double desired_torque = 
-                  modules_[i]->execute_position_controller(desired_pose);
+                    modules_[i]->execute_position_controller(desired_pose);
                 modules_[i]->set_torque(desired_torque);
+            }
+            for(unsigned i = 0 ; i < COUNT ; ++i)
+            {
                 modules_[i]->send_torque();
             }
             go_to_status = GoToReturnCode::RUNNING;
@@ -698,9 +710,13 @@ public:
                          
         } while(current_time < (final_time + sampling_period));
 
+        // Stop all motors (0 torques) after the destination achieved
         for(unsigned i = 0; i < COUNT; i++)
         {
             modules_[i]->set_torque(0.0);
+        }
+        for(unsigned i = 0 ; i < COUNT ; ++i)
+        {
             modules_[i]->send_torque();
         }
 

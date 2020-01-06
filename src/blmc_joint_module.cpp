@@ -318,7 +318,6 @@ HomingReturnCode BlmcJointModule::update_homing()
         case HomingReturnCode::FAILED:
             // when failed, send zero-torque commands
             set_torque(0.0);
-            send_torque();
             break;
 
         case HomingReturnCode::SUCCEEDED: {
@@ -327,7 +326,6 @@ HomingReturnCode BlmcJointModule::update_homing()
                     homing_state_.target_position_rad);
 
             set_torque(desired_torque);
-            send_torque();
             break;
         }
 
@@ -341,11 +339,10 @@ HomingReturnCode BlmcJointModule::update_homing()
             // abort if distance limit is reached
             if (homing_state_.step_count >= max_step_count) {
                 set_torque(0.0);
-                send_torque();
-
                 homing_state_.status = HomingReturnCode::FAILED;
 
-                rt_printf("[%d] ERROR: Failed to find index\n",
+                rt_printf("BlmcJointModule::update_homing(): "
+                          "ERROR: Failed to find index with joint [%d].\n",
                           homing_state_.joint_id);
                 break;
             }
@@ -369,7 +366,6 @@ HomingReturnCode BlmcJointModule::update_homing()
             const double desired_torque = execute_position_controller(
                     homing_state_.target_position_rad);
             set_torque(desired_torque);
-            send_torque();
 
             // Check if new encoder index was observed
             const long int actual_index_time = get_motor_measurement_index(
