@@ -107,24 +107,14 @@ void Solo12::initialize(const std::string &network_id)
                        joints_.get_max_torques().array();
 
   // fix the polarity to be the same as the urdf model.
-  reverse_polarities_[0] = true;  // FL_HAA
-  reverse_polarities_[1] = true;  // FL_HFE
-  reverse_polarities_[2] = true;  // FL_KFE
-  reverse_polarities_[3] = false; // FR_HAA
-  reverse_polarities_[4] = false; // FR_HFE
-  reverse_polarities_[5] = false; // FR_KFE
-  reverse_polarities_[6] = true;  // HL_HAA
-  reverse_polarities_[7] = true;  // HL_HFE
-  reverse_polarities_[8] = true;  // HL_KFE
-  reverse_polarities_[9] = false;  // HL_HAA
-  reverse_polarities_[10] = false; // HR_HFE
-  reverse_polarities_[11] = false; // HR_KFE
+  reverse_polarities_ = {true, true, true, false, false, false,
+                         true, true, true, false, false, false};
   joints_.set_joint_polarities(reverse_polarities_);
 
   // The the control gains in order to perform the calibration
   blmc_robots::Vector12d kp, kd;
   kp.fill(3.0);
-  kd.fill(0.05);
+  kd.fill(0.1);
   joints_.set_position_control_gains(kp, kd);
 
 
@@ -149,7 +139,7 @@ void Solo12::acquire_sensors()
   joint_target_torques_ = joints_.get_sent_torques();
 
   // The index angle is not transmitted.
-  //joint_encoder_index_ = joints_.get_measured_index_angles();
+  joint_encoder_index_ = joints_.get_measured_index_angles();
 
   /**
     * Additional data
@@ -180,12 +170,12 @@ void Solo12::acquire_sensors()
           motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
           ->get_status()->newest_element();
       
-      motor_enabled_[j_id] = map_joint_id_to_motor_port_id_[j_id] ?
+      motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
                              motor_board_status.motor2_enabled:
                              motor_board_status.motor1_enabled;
-      motor_enabled_[j_id] = map_joint_id_to_motor_port_id_[j_id] ?
-                             motor_board_status.motor2_ready:
-                             motor_board_status.motor1_ready;
+      motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
+                           motor_board_status.motor2_ready:
+                           motor_board_status.motor1_ready;
   }
 }
 
@@ -207,8 +197,8 @@ void Solo12::send_target_joint_torque(
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
-  double search_distance_limit_rad = 3.0 * (2.0 * M_PI / 9.0);
-  double profile_step_size_rad=0.001;
+  double search_distance_limit_rad = 10.0 * (2.0 * M_PI / joint_gear_ratios_(0));
+  double profile_step_size_rad = 0.001;
   HomingReturnCode homing_return_code =
     joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
                            profile_step_size_rad);

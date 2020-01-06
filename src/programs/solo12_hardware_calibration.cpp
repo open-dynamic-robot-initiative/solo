@@ -22,7 +22,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     bool good_calibration = robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
-    while(!CTRL_C_DETECTED and good_calibration)
+    while(!CTRL_C_DETECTED && good_calibration)
     {
       if(count % 200 == 0)
       {
