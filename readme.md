@@ -1,4 +1,4 @@
-# BLMC-Robots
+# BLMC-Robots {#mainpage}
 
 ## What it is
 
