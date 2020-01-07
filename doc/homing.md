@@ -1,4 +1,4 @@
-# Homing {#homing}
+# Homing (Joint Position Calibration) {#homing}
 
 ## What is "Homing" and Why is it Needed?
 
@@ -17,7 +17,7 @@ can always be found, independent of where the joint is located when turned on
 (e.g. by having a switch that is triggered when the joint gets at that
 position).  Once this "home position" is found, it can be set as zero position.
 This way, the same physical position will always correspond to the same position
-value, even if the robot is turned of between runs.
+value, even if the robot is turned off between runs.
 
 ## How is the Homing Implemented for the BLMC Robots?
 
