@@ -117,7 +117,6 @@ void Solo12::initialize(const std::string &network_id)
   kd.fill(0.1);
   joints_.set_position_control_gains(kp, kd);
 
-
   // Wait until all the motors are ready.
   spi_bus_->wait_until_ready();
   

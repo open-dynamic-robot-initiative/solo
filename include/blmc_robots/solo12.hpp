@@ -17,7 +17,6 @@ namespace blmc_robots {
 
 /**
  * @brief Definition and drivers for the Solo12 robot.
- * 
  *
  * Mapping between the DOF and driver boards + motor ports:
  * FL_HAA - motor board 0, motor port 0, motor index 0
@@ -32,8 +31,6 @@ namespace blmc_robots {
  * HR_HAA - motor board 3, motor port 1, motor index 7
  * HR_HFE - motor board 5, motor port 1, motor index 11
  * HR_KFE - motor board 5, motor port 0, motor index 10
- * 
- * 
  */
 class Solo12
 {
@@ -45,8 +42,8 @@ public:
   Solo12();
 
   /**
-   * @brief initialize the robot by setting aligning the motors and calibrate the
-   * sensors to 0
+   * @brief Initialize the robot by setting aligning the motors and calibrate
+   * the sensors to 0.
    * @param if_name Interface for connection to hardware.
    */
   void initialize(const std::string &network_id);
@@ -57,7 +54,7 @@ public:
   void set_max_joint_torques(const double& max_joint_torques);
 
   /**
-   * @brief send_target_torques sends the target currents to the motors
+   * @brief send_target_torques sends the target currents to the motors.
    */
   void send_target_joint_torque(
       const Eigen::Ref<Vector12d> target_joint_torque);
@@ -73,8 +70,8 @@ public:
    *
    * @param home_offset_rad This is the angle between the index and the zero
    * pose.
-   * @return true
-   * @return false
+   * @return true in case of success.
+   * @return false in case of failure.
    */
   bool calibrate(const Vector12d& home_offset_rad);
 
@@ -84,7 +81,7 @@ public:
 
   /**
    * @brief get_motor_inertias in [kg m^2]
-   * @return the motor inertias
+   * @return Motor inertias.
    */
   const Eigen::Ref<Vector12d> get_motor_inertias()
   {
@@ -93,7 +90,7 @@ public:
 
   /**
    * @brief get_motor_torque_constants in []
-   * @return the torque constants of each motor
+   * @return Torque constants of each motor.
    */
   const Eigen::Ref<Vector12d> get_motor_torque_constants()
   {
@@ -102,7 +99,7 @@ public:
 
   /**
    * @brief get_joint_gear_ratios
-   * @return  the joint gear ratios
+   * @return Joint gear ratios
    */
   const Eigen::Ref<Vector12d> get_joint_gear_ratios()
   {
@@ -112,7 +109,7 @@ public:
   /**
    * @brief get_max_torque
    * @return the max torque that has been hardcoded in the constructor of this
-   * class. TODO: parametrize this via yaml or something else.
+   * class. @todo Parametrize the maximum current via yaml or something else.
    */
   const Eigen::Ref<Vector12d> get_motor_max_current()
   {
