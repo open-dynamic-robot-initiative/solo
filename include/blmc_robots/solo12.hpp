@@ -3,7 +3,6 @@
  * \author Julian Viereck
  * \date 21 November 2019
  * \copyright Copyright (c) 2019, New York University and Max Planck Gesellschaft.
-
  */
 
 #pragma once
