@@ -36,7 +36,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char** argv)
 {
-    assert(argc == 2 && "Wrong number of argument: ./demo_solo12_calibration network_id");
+    if(argc == 2)
+    {
+        throw std::runtime_error("Wrong number of argument: `./demo_solo12_calibration network_id`.");
+    }
 
     enable_ctrl_c();
 
@@ -46,8 +49,8 @@ int main(int argc, char** argv)
 
     robot.initialize(argv[1]);
 
-    rt_printf("controller is set up \n");
-    rt_printf("Press enter to launch the calibration \n");
+    rt_printf("Controller is set up.\n");
+    rt_printf("Press enter to launch the calibration.\n");
     char str[256];
     std::cin.get(str, 256);  // get c-string
 
@@ -56,7 +59,7 @@ int main(int argc, char** argv)
     // Wait until the application is killed.
     thread.join();
 
-    rt_printf("Exit cleanly \n");
+    rt_printf("Exit cleanly.\n");
 
     return 0;
 }
