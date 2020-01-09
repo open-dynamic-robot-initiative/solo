@@ -60,6 +60,11 @@ public:
         return desired_action;
     }
 
+    std::string get_error() override
+    {
+        return "";  // no errors
+    }
+
     void shutdown() override
     {
         return;
