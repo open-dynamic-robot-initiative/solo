@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 {
     enable_ctrl_c();
 
-    if(argc == 2)
+    if(argc != 2)
     {
         throw std::runtime_error("Wrong number of argument: `./demo_solo12_calibration network_id`.");
     }
