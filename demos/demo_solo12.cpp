@@ -142,9 +142,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
-        rt_printf("Usage: demo_solo12 interface_name \n");
-        return -1;
+    if(argc != 2)
+    {
+       throw std::runtime_error("Wrong number of argument: `./demo_solo12 network_id`.");
     }
 
     real_time_tools::RealTimeThread thread;

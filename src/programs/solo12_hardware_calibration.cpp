@@ -36,7 +36,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char** argv)
 {
-    if(argc == 2)
+    if(argc != 2)
     {
         throw std::runtime_error("Wrong number of argument: `./demo_solo12_calibration network_id`.");
     }
