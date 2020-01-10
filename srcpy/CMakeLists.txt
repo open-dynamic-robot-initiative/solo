@@ -44,6 +44,16 @@ set_target_properties(py_two_joint PROPERTIES
 install(TARGETS py_two_joint DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
 
 ##
+set(py_trifinger_SRC_FILES
+  py_trifinger.cpp
+)
+pybind11_add_module(py_trifinger ${py_trifinger_SRC_FILES})
+target_link_libraries(py_trifinger PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
+set_target_properties(py_trifinger PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
+install(TARGETS py_trifinger DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
+
+##
 set(py_solo12_SRC_FILES
   py_solo12.cpp
 )
