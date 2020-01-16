@@ -9,7 +9,6 @@ import rospkg
 
 import robot_interfaces
 import blmc_robots
-from robot_wrapper import Robot
 
 
 def get_random_position():
