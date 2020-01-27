@@ -380,12 +380,12 @@ HomingReturnCode BlmcJointModule::update_homing()
                 // adjust target_position according to the new zero
                 homing_state_.target_position_rad -= zero_angle_;
 
-#ifdef VERBOSE
+// #ifdef VERBOSE
                 rt_printf("[%d] Zero angle is=%f\n", homing_state_.joint_id,
                           zero_angle_);
                 rt_printf("[%d] Index angle is=%f\n", homing_state_.joint_id,
                           index_angle);
-#endif
+// #endif
 
                 homing_state_.status = HomingReturnCode::SUCCEEDED;
             }

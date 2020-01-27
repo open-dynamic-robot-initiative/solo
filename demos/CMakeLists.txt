@@ -58,6 +58,8 @@ create_demo(solo12 solo12)
 create_demo(teststand teststand)
 create_demo(stuggihop stuggihop)
 
+create_demo(arduino_slider)
+
 create_demo(solo8_calibration solo8 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo8.yaml")
 create_demo(solo12_calibration solo12 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo12.yaml")
 create_demo(teststand_calibration teststand "${robot_properties_teststand_SOURCE_PREFIX}/config/dgm_parameters.yaml")

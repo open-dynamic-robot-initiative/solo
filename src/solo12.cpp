@@ -19,6 +19,7 @@ Solo12::Solo12()
   max_joint_torques_.setZero();
   joint_zero_positions_.setZero();
   reverse_polarities_.fill(false);
+  slider_positions_vector_.resize(4);
 
   /**
    * Hardware status
@@ -60,10 +61,10 @@ Solo12::Solo12()
   joint_gear_ratios_.fill(9.0);
 }
 
-void Solo12::initialize(const std::string &network_id)
+void Solo12::initialize(const std::string &network_id, const std::string &serial_port)
 {
   network_id_ = network_id;
-  
+
   // Create the different mapping
   map_joint_id_to_motor_board_id_ = {0, 1, 1, 0, 2, 2, 3, 4, 4, 3, 5, 5};
   map_joint_id_to_motor_port_id_ = {0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
@@ -91,12 +92,8 @@ void Solo12::initialize(const std::string &network_id)
           map_joint_id_to_motor_port_id_[j_id]);
   }
 
-  // These are the sliders plugged on the first motor board.
-  sliders_[0] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 0);
-  sliders_[1] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 1);
-  // These data ar the copy of the first ones.
-  sliders_[2] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 0);
-  sliders_[3] = std::make_shared<blmc_drivers::AnalogSensor>(motor_boards_[0], 1);
+  // Use a serial port to read slider values.
+  serial_reader_ = std::make_shared<blmc_drivers::SerialReader>(serial_port, 4);
 
   // Create the joint module objects
   joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
@@ -107,8 +104,8 @@ void Solo12::initialize(const std::string &network_id)
                        joints_.get_max_torques().array();
 
   // fix the polarity to be the same as the urdf model.
-  reverse_polarities_ = {true, true, true, false, false, false,
-                         true, true, true, false, false, false};
+  reverse_polarities_ = {false, true, true, true, false, false,
+                         false, true, true, true, false, false};
   joints_.set_joint_polarities(reverse_polarities_);
 
   // The the control gains in order to perform the calibration
@@ -119,7 +116,7 @@ void Solo12::initialize(const std::string &network_id)
 
   // Wait until all the motors are ready.
   spi_bus_->wait_until_ready();
-  
+
   rt_printf("All motors and boards are ready.\n");
 }
 
@@ -144,10 +141,12 @@ void Solo12::acquire_sensors()
     * Additional data
     */
   // acquire the slider positions
+  // TODO: Handle case that no new values are arriving.
+  serial_reader_->fill_vector(slider_positions_vector_);
   for (unsigned i = 0; i < slider_positions_.size(); ++i)
   {
     // acquire the slider
-    slider_positions_(i) = sliders_[i]->get_measurement()->newest_element();
+    slider_positions_(i) = double(slider_positions_vector_[i]) / 1024.;
   }
 
   /**
@@ -168,7 +167,7 @@ void Solo12::acquire_sensors()
       const blmc_drivers::MotorBoardStatus& motor_board_status =
           motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
           ->get_status()->newest_element();
-      
+
       motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
                              motor_board_status.motor2_enabled:
                              motor_board_status.motor1_enabled;

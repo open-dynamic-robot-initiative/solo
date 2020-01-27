@@ -4,9 +4,9 @@
  * @brief Small demo to test the calibration on the real robot.
  * @version 0.1
  * @date 2019-11-08
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 
 
@@ -21,7 +21,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
     ThreadCalibrationData_t* thread_data_ptr =
       (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
-    blmc_robots::Vector12d joint_index_to_zero = 
+    blmc_robots::Vector12d joint_index_to_zero =
       thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     }
     
     std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
-    robot->initialize(argv[1]);
+    robot->initialize(argv[1], argv[2]);
 
     ThreadCalibrationData_t thread_data(robot);
 

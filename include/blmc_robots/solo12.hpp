@@ -9,6 +9,7 @@
 
 #include <blmc_drivers/devices/spi_motor_board.hpp>
 #include "blmc_robots/common_header.hpp"
+#include "blmc_drivers/serial_reader.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 
 
@@ -45,7 +46,7 @@ public:
    * the sensors to 0.
    * @param if_name Interface for connection to hardware.
    */
-  void initialize(const std::string &network_id);
+  void initialize(const std::string &network_id, const std::string &serial_port);
 
   /**
    * @brief Sets the maximum joint torques.
@@ -344,6 +345,11 @@ private:
   Eigen::Vector4d slider_positions_;
 
   /**
+   * @brief For reading the raw slider values from the serial port.
+   */
+  std::vector<int> slider_positions_vector_;
+
+  /**
    * @brief contact_sensors_ is contact sensors at each feet of teh quadruped.
    */
   Eigen::Vector4d contact_sensors_states_;
@@ -359,18 +365,23 @@ private:
   /**
     * Drivers communication objects
     */
-  
+
   /** @brief Main board drivers.
-   * 
+   *
    * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board  */
   std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
   /** @brief Main board blmc_drivers overlay.
-   * 
+   *
    * This object contains the API compatible with the blmc_drivers and
    * BLMCJointModule(s).
    */
   std::shared_ptr<blmc_drivers::SpiBus> spi_bus_;
+
+  /**
+   * @brief Reader for serial port to read arduino slider values.
+   */
+  std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
 
   /** @brief These are the 6 motor boards of the robot. */
   std::array<std::shared_ptr<blmc_drivers::SpiMotorBoard>, 6> motor_boards_;
