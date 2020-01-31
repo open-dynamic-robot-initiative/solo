@@ -399,6 +399,9 @@ private:
 
   /** @brief Address the rotation direction of the motor. */
   std::array<bool, 12> reverse_polarities_;
+
+  /** @brief If the physical estop is pressed or not. */
+  bool active_estop_;
 };
 
 } // namespace blmc_robots
