@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot name="box_ball">
+  <link name="box">
+    <inertial>
+      <mass value="0.05" />
+      <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+      <!-- give a little y-offset to make the top precess -->
+      <origin xyz="0 0 0" />
+      <inertia  ixx="3.520833333333334e-05" ixy="0.0"  ixz="0.0"  iyy="3.520833333333334e-05"  iyz="0.0"  izz="3.520833333333334e-05" />
+    </inertial>
+    <visual>
+      <!-- visual origin is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://meshes/box.stl" scale=".065 .065 .065"/>
+        <!-- <sphere radius=".065."/> -->
+      </geometry>
+    </visual>
+    <collision>
+      <!-- collision origin is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://meshes/box.stl" scale=".065 .065 .065"/>
+        <!-- <sphere radius="0.05"/> -->
+      </geometry>
+    </collision>
+  </link>
+</robot>
