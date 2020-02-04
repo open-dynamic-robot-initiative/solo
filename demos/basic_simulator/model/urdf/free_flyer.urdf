@@ -6,7 +6,7 @@
       <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
       <!-- give a little y-offset to make the top precess -->
       <origin xyz="0 0 0" />
-      <inertia  ixx="3.520833333333334e-05" ixy="0.0"  ixz="0.0"  iyy="3.520833333333334e-05"  iyz="0.0"  izz="3.520833333333334e-05" />
+      <inertia  ixx="5.351666666666667e-05" ixy="0.0"  ixz="0.0"  iyy="5.351666666666667e-05"  iyz="0.0"  izz="5.351666666666667e-05" />
     </inertial>
     <visual>
       <!-- visual origin is defined w.r.t. link local coordinate system -->

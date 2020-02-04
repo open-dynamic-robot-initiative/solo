@@ -21,7 +21,7 @@ import transformations as tf
 from py_blmc_kinect_camera import KinectCamera
 
 
-plt.axis([0,10, -1.5,1.5])
+# plt.axis([0,10, -1.5,1.5])
 TIME = 0
 
 
@@ -49,7 +49,7 @@ class Robot_Control:
 		self.plot_real_time = False
 		self.change_force_dynamically = False
 		self.t = 0
-		self.q2 = np.resize([0,0,0.25,0,0,0,1],(7,1))
+		self.q2 = np.resize([0,0,0.20,0,0,0,1],(7,1))
 		self.last_time_step = 0
 		self.global_time_controller = 0
 		self.block_mass = 0.076
@@ -85,39 +85,54 @@ class Robot_Control:
 
 
 	def box_state_from_tip_position(self):
-		self.end_effector_position = [self.robot_data.oMf[tip_id].translation for tip_id in self.finger_tip_ids]
-		self.box_com_position = [(self.end_effector_position[0][i] + 
-								self.end_effector_position[1][i] + 
-								self.end_effector_position[2][i])/3.0 for i in range(3)]
+		end_effector_position = [self.robot_data.oMf[tip_id].translation for tip_id in self.finger_tip_ids]
+		box_com_position = [(end_effector_position[0][i] + 
+								end_effector_position[1][i] + 
+								end_effector_position[2][i])/3.0 for i in range(3)]
 
-		self.box_com_position = np.resize(self.box_com_position, (3,1))
 
-		dir_x = np.resize((self.end_effector_position[1] - self.end_effector_position[0]),3)
-		dir_x = dir_x / np.linalg.norm(dir_x)
+		box_com_position = np.resize(box_com_position, (3,1))
 
-		a = np.resize((self.end_effector_position[2] - self.end_effector_position[0]),3)
-		b = np.resize((self.end_effector_position[1] - self.end_effector_position[0]),3)
+		dir_x = np.resize((end_effector_position[1] - end_effector_position[2]),3)
+		dir_x = dir_x / max(np.linalg.norm(dir_x),0.00000001)
+
+		a = np.resize((end_effector_position[2] - end_effector_position[0]),3)
+		a = a /  max(np.linalg.norm(a), 0.000000001)
+
+		b = np.resize((end_effector_position[1] - end_effector_position[0]),3)
+		b = b / max(np.linalg.norm(b), 0.000000001)
+
 		dir_z = np.cross(a,b)
-		dir_z = dir_z / np.linalg.norm(dir_z)
+		dir_z = dir_z / max(np.linalg.norm(dir_z), 0.0000000001)
 
-		dir_y = np.cross(dir_x, dir_z)
-		dir_y = dir_y / np.linalg.norm(dir_y)
+		dir_y = np.cross(dir_z, dir_x)
+		dir_y = dir_y / max(np.linalg.norm(dir_y), 0.000000001)
 
 		# print(dir_x, np.linalg.norm(dir_x))
 		# print(dir_y, np.linalg.norm(dir_y))
 		# print(dir_z, np.linalg.norm(dir_z))
 
-		self.dir_x = dir_x
-		self.dir_y = dir_y
-		self.dir_z = dir_z
+		dir_x = dir_x
+		dir_y = dir_y
+		dir_z = dir_z
 
-		self.rotation_matrix = np.matrix([self.dir_x, self.dir_y, self.dir_z]).T
+		self.rotation_matrix = np.matrix([dir_x, dir_y, dir_z]).T
 		self.quat = pinocchio.Quaternion(self.rotation_matrix).coeffs()
-		self.quat[:] = 0
-		self.quat[-1] = 1
-		# ipdb.set_trace()
 
-		return np.concatenate([self.box_com_position, self.quat])
+		# Setting the position offset
+		offset =  np.array([0,-0.0054, 0]).reshape(-1,1)
+
+		box_com_position = box_com_position + self.rotation_matrix.dot(offset)
+
+		# if self.t % 100 == 0:
+		# 	print("Block Position:", box_com_position)
+
+		# self.quat[:] = 0
+		# self.quat[-1] = 1
+		# ipdb.set_trace()
+		# print("Box State:", np.concatenate([box_com_position, self.quat]))
+
+		return np.concatenate([box_com_position, self.quat])
 
 
 		ipdb.set_trace()
@@ -193,13 +208,13 @@ class Robot_Control:
 
 	def get_desired_state(self):
 		# Calculating the desird position to reach
-		self.x_des = [np.matrix([self.object_position[0], self.object_position[1] + self.object_size/2, self.object_position[2]]).T,
-				 np.matrix([self.object_position[0] + self.object_size/2, self.object_position[1] - self.object_size/5, self.object_position[2]]).T,
-				 np.matrix([self.object_position[0] - self.object_size/2, self.object_position[1] - self.object_size/5, self.object_position[2]]).T]
+		self.x_des = [np.matrix([self.object_position[0], self.object_position[1] + self.object_size/2, self.object_position[2] + 0.004]).T,
+				 np.matrix([self.object_position[0] + self.object_size/2, self.object_position[1] - self.object_size/8, self.object_position[2]]).T,
+				 np.matrix([self.object_position[0] - self.object_size/2, self.object_position[1] - self.object_size/8, self.object_position[2]]).T]
 
-		self.x_des = [np.matrix([self.object_position[0], self.object_position[1] + self.object_size/2, self.object_position[2]]).T,
-				 np.matrix([self.object_position[0] + self.object_size/2, self.object_position[1], self.object_position[2]]).T,
-				 np.matrix([self.object_position[0] - self.object_size/2, self.object_position[1], self.object_position[2]]).T]
+		# self.x_des = [np.matrix([self.object_position[0], self.object_position[1] + self.object_size/2, self.object_position[2]]).T,
+		# 		 np.matrix([self.object_position[0] + self.object_size/2, self.object_position[1], self.object_position[2]]).T,
+		# 		 np.matrix([self.object_position[0] - self.object_size/2, self.object_position[1], self.object_position[2]]).T]
 
 		self.x_des = np.vstack(self.x_des)
 
@@ -398,29 +413,29 @@ class Robot_Control:
 		# Calculating desired_external_force to apply to grasp the object
 		desired_external_force = np.matrix(np.zeros(9)).T
 
-		if self.change_force_dynamically and self.is_grabbing and self.t % 1000 == 0:
-			global TIME
-			# self.f_applied[0] = (1 - math.cos(TIME/10)) * 1.5
-			# self.f_applied[1] = (1 - math.cos(TIME/10)) * 1.5
-			self.f_applied[0] += 0.1
-			self.f_applied[1] += 0.1
+		# if self.change_force_dynamically and self.is_grabbing and self.t % 1000 == 0:
+		# 	global TIME
+		# 	# self.f_applied[0] = (1 - math.cos(TIME/10)) * 1.5
+		# 	# self.f_applied[1] = (1 - math.cos(TIME/10)) * 1.5
+		# 	self.f_applied[0] += 0.1
+		# 	self.f_applied[1] += 0.1
 
-		# Force along x axis
-		# desired_external_force[0] = f_x
-		desired_external_force[3] = -self.f_applied[0]
-		desired_external_force[6] = self.f_applied[0]
+		# # Force along x axis
+		# # desired_external_force[0] = f_x
+		# desired_external_force[3] = -self.f_applied[0]
+		# desired_external_force[6] = self.f_applied[0]
 
-		# Force along y axis
-		desired_external_force[1] = -self.f_applied[1]
-		# desired_external_force[4] = self.f_applied[]
-		# desired_external_force[7] = self.f_applied[]
+		# # Force along y axis
+		# desired_external_force[1] = -self.f_applied[1]
+		# # desired_external_force[4] = self.f_applied[]
+		# # desired_external_force[7] = self.f_applied[]
 
-		# Force along z axis
-		desired_external_force[2] = self.f_applied[2]
-		desired_external_force[5] = self.f_applied[2]
-		desired_external_force[8] = self.f_applied[2]
+		# # Force along z axis
+		# desired_external_force[2] = self.f_applied[2]
+		# desired_external_force[5] = self.f_applied[2]
+		# desired_external_force[8] = self.f_applied[2]
 
-		self.desired_external_force = desired_external_force
+		self.desired_external_force = self.F
 
 
 
@@ -512,13 +527,15 @@ class Robot_Control:
 
 
 	def next_state(self):
-		seconds = 3
+		seconds = 6
 		if (self.t*self.dt) % seconds == 0:
 			self.q1 = self.cube_q1
 			self.q2 = pinocchio.se3ToXYZQUAT(pinocchio.SE3.Random())
-			self.q2[:3] = np.resize([0,0.,0.25], (3,1))
-			self.q2[:2] /= 10
+			self.q2[:3] = np.resize([0,0,0.20], (3,1))
+			if self.t == 2000:
+				self.q2[1] = -0.1
 			self.q2[3:] = np.resize([0,0,0,1], (4,1))
+
 
 			# print("Reach Q2:", self.q2)
 
@@ -535,7 +552,9 @@ class Robot_Control:
 			assert np.linalg.norm(self.q2-final_interpolation) <= 1.e-10
 
 
-		steps = 10
+
+
+		steps = 1
 		if self.t % steps == 0:
 			# print("Time:", self.t, self.last_time_step)
 			# state = self.get_cube_state()
@@ -558,7 +577,7 @@ class Robot_Control:
 
 
 	def present_state(self):
-		steps = 10
+		steps = 1
 		if self.t % steps == 0:
 			prev_state = self.cube_q1
 			present_state = self.get_cube_state()
@@ -591,16 +610,16 @@ class Robot_Control:
 
 		self.global_time_controller += 1
 
-		self._kc = np.matrix(np.diag(np.full(3,1))) # this already has mass multiplied
+		self._kc = np.matrix(np.diag(np.full(3,0.8))) # this already has mass multiplied
 		# self._kc[2] = 10
-		self._dc = np.matrix(np.diag(np.full(3, .5))) # this already has mass multiplied
+		self._dc = np.matrix(np.diag(np.full(3, .1))) # this already has mass multiplied
 
-		self._kb = np.matrix(np.diag(np.full(3,.4))) # this already has mass multiplied
-		self._db = np.matrix(np.diag(np.full(3,.0063))) # this already has mass multiplied
+		self._kb = np.matrix(np.diag(np.full(3,.01))) # this already has mass multiplied 0.4
+		self._db = np.matrix(np.diag(np.full(3,.0000))) # this already has mass multiplied 0.0063
 
 		# This is computed in the block's local frame
 		self.block_com_forces = np.vstack([
-            np.array([0,0,0.74]).reshape(-1,1) + self._kc * self.dx[:3] + self._dc *self.dx[6:9],
+            self.rotation_matrix.T.dot(np.array([0,0,0.74]).reshape(-1,1)) + self._kc * self.dx[:3] + self._dc *self.dx[6:9],
             self._kb * self.dx[3:6] + self._db * self.dx[9:]
         	])
 
@@ -625,6 +644,9 @@ class Robot_Control:
 			q = obs.position
 			w = obs.velocity
 			q = self.calculate_q_compensation() # for backlash and motorbelt timing error
+			tau = np.matrix(obs.torque).T
+			J_inv = np.linalg.inv(self.J.T)
+			self.F_observed = J_inv * tau
 
 		elif self.mode == "simulation" or self.mode == "pinocchio":
 			time_stamp = self.finger.append_desired_action(self.finger.Action(torque=self.torque))
@@ -645,6 +667,7 @@ class Robot_Control:
 
 		# Calculating x_observed (end effector's position)
 		self.x_obs = [self.robot_data.oMf[tip_id].translation - self.block_com_position for tip_id in self.finger_tip_ids]
+		self.v_obs = self.J * np.matrix(w).T
 		
 		if self.mode == "pinocchio":
 			self.x_obs = [np.array([[-0.00334082],[ 0.04888184],[-0.01672634]]),
@@ -718,7 +741,7 @@ class Robot_Control:
 		# Use the contact activation from the plan to determine which of the forces
 		# should be active.
 		N = (int)(np.sum(self.cnt_array))
-		self._mu = 1
+		self._mu = 0.9
 
 		# Setup the QP problem.
 		Q = 2. * np.eye(3 * N + 6)
@@ -740,7 +763,7 @@ class Robot_Control:
 		    A[3:, 3 * j:3 * (j + 1)] = pinocchio.utils.skew(self.x_obs[i])
 
 
-		    reduced_value = 0.8
+		    reduced_value = 0.7
 
 		    if i == 0:
 		    	G[3*j + 0, 3 * j + 1] = -1      # -Fy >= 0
@@ -793,6 +816,14 @@ class Robot_Control:
 
 		F = F.reshape(-1,1)
 
+
+		F_observed_local = np.zeros([9]).reshape(-1,1)
+
+		for i in range(3):
+			F_observed_local[3*i: 3*(i + 1)] = self.rotation_matrix.T.dot(self.F_observed[3*i: 3*(i + 1)])
+
+		self.observed_wrench = np.matrix(A[:,:-6]) * F_observed_local
+
 		# F[0] = 0
 		# F[1] = 0
 		# F[2] = 1
@@ -813,9 +844,53 @@ class Robot_Control:
 			# print("Forces On 3 fingers:",F)
 			# print("Required Block Force: ", self.block_com_forces)
 			pass
-		self.torque = np.array(torque).reshape(-1)
+
+		self.impedance_control_finger()
+
+		# self.torque = np.array(torque).reshape(-1)
 
 		# print("Troques:", self.torque)
+
+
+
+
+	def impedance_control_finger(self):	
+		object_state = np.resize(self.cube_q_last, 13)
+		self.end_eff_des_pos = [np.matrix([object_state[0], object_state[1] + self.object_size/2, object_state[2] + 0.004]).T,
+				 np.matrix([object_state[0] + self.object_size/2, object_state[1] - self.object_size/8, object_state[2]]).T,
+				 np.matrix([object_state[0] - self.object_size/2, object_state[1] - self.object_size/8, object_state[2]]).T]
+
+
+		self.end_eff_des_pos = [self.rotation_matrix.dot(i) for i in self.end_eff_des_pos]
+		self.end_eff_des_pos = np.vstack(self.end_eff_des_pos)
+
+		self.end_eff_des_vel = np.array([object_state[7:10]] * 3).reshape(-1,1)
+		# self.end_eff_des_vel = np.array([0]*9).reshape(-1,1)
+		for i in range(3):
+			self.end_eff_des_vel[i] += np.linalg.norm(self.x_obs[0]) * object_state[10+i]
+			self.end_eff_des_vel[i+3] += np.linalg.norm(self.x_obs[1]) * object_state[10+i]
+			self.end_eff_des_vel[i+6] += np.linalg.norm(self.x_obs[2]) * object_state[10+i]
+
+
+		self.end_eff_obs_pos = [self.robot_data.oMf[tip_id].translation for tip_id in self.finger_tip_ids]
+		self.end_eff_obs_pos = np.vstack(self.end_eff_obs_pos)
+		self.end_eff_obs_vel = self.J * np.matrix(self.obs.velocity).T
+		
+
+		# ipdb.set_trace()
+
+		
+
+		# Kp and Kd
+		self.Kp = np.diag(np.full(9,10)) # np.diag(np.full(9,81))
+		self.Kd = np.diag(np.full(9,0.09)) # np.diag(np.full(9,0.09))
+
+		force = self.Kp * (self.end_eff_des_pos - self.end_eff_obs_pos) + self.Kd * (self.end_eff_des_vel - self.end_eff_obs_vel)
+		total_force = self.F + force
+
+		torque = self.J.T * total_force
+		self.torque = np.array(torque).reshape(-1)
+
 
 
 
@@ -857,89 +932,154 @@ class Robot_Control:
 		self.cube_q_last = self.get_cube_state()
 
 		# simulation horizon 20 secs at 1.e-2 dt 
-		N = 3000
+		N = 6000
 
-		torques = np.zeros([N,9])
-		controls = np.zeros([N,9])
+		
+		optimised_forces = np.zeros([N,9])
+		observed_forces = np.zeros([N,9])
 
-		desired_block_forces = np.zeros([N,6])
-		observed_block_forces = np.zeros([N,6])
+		desired_contact_points = np.zeros([N,9])
+		observed_contact_points = np.zeros([N,9])
+
+		desired_contact_velocities = np.zeros([N,9])
+		observed_contact_velocities = np.zeros([N,9])
+
+		desired_wrench = np.zeros([N,6])
+		observed_wrench = np.zeros([N,6])
+
+
+
+		# torques = np.zeros([N,9])
+		# desired_block_forces = np.zeros([N,6])
+		# observed_block_forces = np.zeros([N,6])
+
 		desired_block_position = np.zeros([N,7])
 		observed_block_position = np.zeros([N,7])
+
 		differences = np.zeros([N,12])
 		
 		for t in range(N):
 			self.apply_controls()
+
 			desired_block_position[t,:] = np.resize(self.cube_q_last, 7)
 			observed_block_position[t,:] = np.resize(self.cube_q1, 7)
+
 			differences[t,:] = np.resize(self.dx, 12)
-			controls[t,:] = np.resize(self.F,9)
+
+			optimised_forces[t,:] = np.resize(self.F,9)
+			observed_forces[t,:] = np.resize(self.F_observed,9)
+
+			desired_contact_points[t,:] = np.resize(self.end_eff_des_pos, 9)
+			observed_contact_points[t,:] = np.resize(self.end_eff_obs_pos, 9)
+
+			desired_contact_velocities[t,:] = np.resize(self.end_eff_des_vel, 9)
+			observed_contact_velocities[t,:] = np.resize(self.end_eff_obs_vel, 9)
+
+			desired_wrench[t,:] = np.resize(self.block_com_forces, 6)
+			observed_wrench[t,:] = np.resize(self.observed_wrench, 6)
+
+
 			# torques[t,:] = np.resize(self.torque, 9)
-			desired_block_forces[t,:] = np.resize(self.block_com_forces, 6)
+			# desired_block_forces[t,:] = np.resize(self.block_com_forces, 6)
 			# observed_block_forces[t,:] = np.resize(self.observed_forces, 6)
 			# self.cube.robot.display(self.cube.state[:self.cube.nq])
 
 
-		# fig, ax = plt.subplots(18,1)
-		# for i in range(3):
-		# 		# Torques
-		# 		# ax[i].plot(1.e-2*np.arange(N), torques[:,i])
-		# 		# ax[i+3].plot(1.e-2*np.arange(N), torques[:,i+3])
-		# 		# ax[i+6].plot(1.e-2*np.arange(N), torques[:,i+6])
+		fig1, ax1 = plt.subplots(9,1)
+		fig1.suptitle('Contact Forces')
+		for i in range(3):
+				# Optimised Contact Forces (Desired)
+				ax1[i].plot(1.e-3*np.arange(N), optimised_forces[:,i], '--')
+				ax1[i+3].plot(1.e-3*np.arange(N), optimised_forces[:,i+3],'--')
+				ax1[i+6].plot(1.e-3*np.arange(N), optimised_forces[:,i+6],'--')
 
-		# 		# Forces of block
-		# 		ax[i+9].plot(1.e-2*np.arange(N), controls[:,i], '--')
-		# 		ax[i+12].plot(1.e-2*np.arange(N), controls[:,i+3])
-		# 		ax[i+15].plot(1.e-2*np.arange(N), controls[:,i+6],'--')
+				# Observed Contact Forces
+				ax1[i].plot(1.e-3*np.arange(N), observed_forces[:,i])
+				ax1[i+3].plot(1.e-3*np.arange(N), observed_forces[:,i+3])
+				ax1[i+6].plot(1.e-3*np.arange(N), observed_forces[:,i+6])
 
 
-		# fig, ax = plt.subplots(6,1)
-		# for i in range(3):
-		# 		# Block COM Forces
-		# 		ax[i].plot(1.e-2*np.arange(N), desired_block_forces[:,i],'--')
-		# 		# ax[i].plot(1.e-2*np.arange(N), observed_block_forces[:,i])
 
-		# 		# Block COM Moment
-		# 		ax[i+3].plot(1.e-2*np.arange(N), desired_block_forces[:,i+3],'--')
-		# 		# ax[i+3].plot(1.e-2*np.arange(N), observed_block_forces[:,i+3])
+
+		fig2, ax2 = plt.subplots(9,1)
+		fig2.suptitle('Contact Points')
+		for i in range(3):
+				# Optimised Contact Forces (Desired)
+				ax2[i].plot(1.e-3*np.arange(N), optimised_forces[:,i], '--')
+				ax2[i+3].plot(1.e-3*np.arange(N), optimised_forces[:,i+3],'--')
+				ax2[i+6].plot(1.e-3*np.arange(N), optimised_forces[:,i+6],'--')
+
+				# Observed Contact Forces
+				ax2[i].plot(1.e-3*np.arange(N), observed_forces[:,i])
+				ax2[i+3].plot(1.e-3*np.arange(N), observed_forces[:,i+3])
+				ax2[i+6].plot(1.e-3*np.arange(N), observed_forces[:,i+6])
+
+
+
+
+		fig2, ax2 = plt.subplots(9,1)
+		fig2.suptitle('Contact Velocities')
+		for i in range(3):
+				# Optimised Contact Forces (Desired)
+				ax2[i].plot(1.e-3*np.arange(N), optimised_forces[:,i], '--')
+				ax2[i+3].plot(1.e-3*np.arange(N), optimised_forces[:,i+3],'--')
+				ax2[i+6].plot(1.e-3*np.arange(N), optimised_forces[:,i+6],'--')
+
+				# Observed Contact Forces
+				ax2[i].plot(1.e-3*np.arange(N), observed_forces[:,i])
+				ax2[i+3].plot(1.e-3*np.arange(N), observed_forces[:,i+3])
+				ax2[i+6].plot(1.e-3*np.arange(N), observed_forces[:,i+6])
+
+
+
+
+		fig4, ax4 = plt.subplots(6,1)
+		fig4.suptitle('Wrench')
+		for i in range(3):
+				# Block COM Forces
+				ax4[i].plot(1.e-3*np.arange(N), desired_wrench[:,i],'--')
+				ax4[i].plot(1.e-3*np.arange(N), observed_wrench[:,i])
+
+				# Block COM Moment
+				ax4[i+3].plot(1.e-3*np.arange(N), desired_wrench[:,i+3],'--')
+				ax4[i+3].plot(1.e-3*np.arange(N), observed_wrench[:,i+3])
+
 
 
 
 
 		# Block COM position 
-		fig, ax = plt.subplots(13,1)
+		fig5, ax5 = plt.subplots(7,1)
+		fig5.suptitle('Block Position')
 		for i in range(4):
 			if i < 3:
-				# Block COM Forces
-				ax[i+7].plot(1.e-2*np.arange(N), desired_block_forces[:,i],'--')
-				# ax[i+10].plot(1.e-2*np.arange(N), observed_block_forces[:,i+3])
-
 				# Block Position
-				ax[i].plot(1.e-2*np.arange(N), desired_block_position[:,i],'--')
-				ax[i].plot(1.e-2*np.arange(N), observed_block_position[:,i])
+				ax5[i].plot(1.e-3*np.arange(N), desired_block_position[:,i],'--')
+				ax5[i].plot(1.e-3*np.arange(N), observed_block_position[:,i])
 
 			# Block Orientation
-			ax[i+3].plot(1.e-2*np.arange(N), desired_block_position[:,i+3],'--')
-			ax[i+3].plot(1.e-2*np.arange(N), observed_block_position[:,i+3])
+			ax5[i+3].plot(1.e-3*np.arange(N), desired_block_position[:,i+3],'--')
+			ax5[i+3].plot(1.e-3*np.arange(N), observed_block_position[:,i+3])
 
 
 
 
 
-		# # Differences
-		# fig, ax = plt.subplots(12,1)
-		# for i in range(3):
-		# 	# Block Position
-		# 	ax[i].plot(1.e-2*np.arange(N), differences[:,i],'--')
-		# 	# ax[i].plot(1.e-2*np.arange(N), observed_block_position[:,i])
+		# Differences
+		fig, ax = plt.subplots(12,1)
+		fig.suptitle('Differences')
+		for i in range(3):
+			# Block Position
+			ax[i].plot(1.e-2*np.arange(N), differences[:,i],'--')
+			# ax[i].plot(1.e-2*np.arange(N), observed_block_position[:,i])
 
-		# 	# Block Orientation
-		# 	ax[i+3].plot(1.e-2*np.arange(N), differences[:,i+3])
-		# 	# ax[i+3].plot(1.e-2*np.arange(N), observed_block_position[:,i+3])
+			# Block Orientation
+			ax[i+3].plot(1.e-2*np.arange(N), differences[:,i+3])
+			# ax[i+3].plot(1.e-2*np.arange(N), observed_block_position[:,i+3])
 
-		# 	ax[i+6].plot(1.e-2*np.arange(N), differences[:,i+6])
+			ax[i+6].plot(1.e-2*np.arange(N), differences[:,i+6])
 
-		# 	ax[i+9].plot(1.e-2*np.arange(N), differences[:,i+9])
+			ax[i+9].plot(1.e-2*np.arange(N), differences[:,i+9])
 
 		print(self.t)
 
