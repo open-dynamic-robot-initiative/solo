@@ -94,7 +94,7 @@ def main():
     while True:
         goal_position *= -1
         # move to goal position within 2000 ms and wait there for 100 ms
-        go_to(goal_position, 2000, 100)
+        go_to(goal_position, 200, 30)
 
 
 if __name__ == "__main__":

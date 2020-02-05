@@ -1,8 +1,8 @@
 # can6: MPI board
 # can7: TI Launchpad
-can_ports: ["can6"]
+can_ports: ["can7"]
 
-max_current_A: 2
+max_current_A: 10
 has_endstop: true
 calibration:
     endstop_search_torque_Nm: 0.22
