@@ -1,8 +1,8 @@
 /**
- * \file solo8.hpp
- * \author Julian Viereck
- * \date 2020
- * \copyright Copyright (c) 2020, New York University and Max Planck Gesellschaft.
+ * \file quadruped.hpp
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University and Max Planck Gesellschaft.
 
  */
 
@@ -14,7 +14,7 @@
 
 namespace blmc_robots {
 
-class Solo8
+class Solo8TI
 {
 public:
 
@@ -27,7 +27,7 @@ public:
    * @brief initialize the robot by setting aligning the motors and calibrate the
    * sensors to 0
    */
-  void initialize(const std::string &network_id)
+  void initialize();
 
   /**
    * @brief send_target_torques sends the target currents to the motors
@@ -306,26 +306,28 @@ private:
    */
   Eigen::Vector4d contact_sensors_states_;
 
-  /** @brief Map the joint id to the motor board id, @see Solo12 description. */
-  std::array<int, 12> map_joint_id_to_motor_board_id_;
-
-  /** @brief Map the joint id to the motor port id, @see Solo12 description. */
-  std::array<int, 12> map_joint_id_to_motor_port_id_;
-
   /**
     * Drivers communication objects
     */
 
-  /** @brief Main board blmc_drivers overlay.
-   *
-   * This object contains the API compatible with the blmc_drivers and
-   * BLMCJointModule(s).
-   */
-  std::shared_ptr<blmc_drivers::SpiBus> spi_bus_;
   /**
-   * @brief motor_boards_ are the 4 can motor board.
+   * @brief This map for every motor the card number.
    */
-  std::array<std::shared_ptr<blmc_drivers::SpiMotorBoard>, 4> motor_boards_;
+  std::array<int, 8> motor_to_card_index_;
+
+  /**
+   * @brief This map for every motor the card port.
+   */
+  std::array<int, 8> motor_to_card_port_index_;
+
+  /**
+   * @brief can_buses_ are the 4 can buses on the robot.
+   */
+  std::array<CanBus_ptr, 4> can_buses_;
+  /**
+   * @brief can_motor_boards_ are the 4 can motor board.
+   */
+  std::array<CanBusMotorBoard_ptr, 4> can_motor_boards_;
 
   /**
    * @brief motors_ are the objects allowing us to send motor commands and
