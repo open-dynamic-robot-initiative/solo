@@ -1,14 +1,14 @@
 /**
- * \file demo_solo8.cpp
+ * \file demo_Solo8TI.cpp
  * \brief The use of the wrapper implementing a small pid controller.
  * \author Maximilien Naveau
  * \date 2018
  *
- * This file uses the Solo8 class in a small demo.
+ * This file uses the Solo8TI class in a small demo.
  */
 
 
-#include "blmc_robots/solo8.hpp"
+#include "blmc_robots/solo8ti.hpp"
 #include "blmc_robots/common_programs_header.hpp"
 
 
@@ -17,10 +17,10 @@ using namespace blmc_robots;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
+    Solo8TI& robot = *(static_cast<Solo8TI*>(robot_void_ptr));
 
-    double kp = 3.0;
-    double kd = 0.05;
+    double kp = 5.0;
+    double kd = 1.0;
     double max_range = M_PI;
     Vector8d desired_joint_position;
     Vector8d desired_torque;
@@ -51,11 +51,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                 sliders_filt_buffer[i].pop_front();
             }
             sliders_filt_buffer[i].push_back(sliders(i));
-            // sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
-            //                                   sliders_filt_buffer[i].end(),
-            //                                   0.0) /
-            //                   (double)sliders_filt_buffer[i].size();
-            sliders_filt(i) = 0.5;
+            sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
+                                              sliders_filt_buffer[i].end(),
+                                              0.0) /
+                              (double)sliders_filt_buffer[i].size();
         }
 
         // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
@@ -89,19 +88,15 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
     enable_ctrl_c();
 
-    if(argc != 2)
-    {
-       throw std::runtime_error("Wrong number of argument: `./demo_solo8 network_id`.");
-    }
-
     real_time_tools::RealTimeThread thread;
 
-    Solo8 robot;
-    robot.initialize(std::string(argv[1]));
+    Solo8TI robot;
+
+    robot.initialize();
 
     rt_printf("controller is set up \n");
 

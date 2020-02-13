@@ -39,6 +39,7 @@ endmacro()
 
 create_robots_library(test_bench_8_motors)
 create_robots_library(solo8)
+create_robots_library(solo8ti)
 create_robots_library(solo12)
 create_robots_library(teststand)
 create_robots_library(stuggihop)

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <blmc_robots/common_header.hpp>
+#include <blmc_drivers/devices/spi_motor_board.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 
@@ -27,7 +28,7 @@ public:
    * @brief initialize the robot by setting aligning the motors and calibrate the
    * sensors to 0
    */
-  void initialize(const std::string &network_id)
+  void initialize(const std::string &network_id);
 
   /**
    * @brief send_target_torques sends the target currents to the motors
@@ -315,6 +316,11 @@ private:
   /**
     * Drivers communication objects
     */
+
+  /** @brief Main board drivers.
+   *
+   * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board  */
+  std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
   /** @brief Main board blmc_drivers overlay.
    *

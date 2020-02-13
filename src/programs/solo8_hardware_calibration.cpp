@@ -34,15 +34,20 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
     enable_ctrl_c();
+
+    if(argc != 2)
+    {
+       throw std::runtime_error("Wrong number of argument: `./demo_solo8 network_id`.");
+    }
 
     real_time_tools::RealTimeThread thread;
 
     Solo8 robot;
 
-    robot.initialize();
+    robot.initialize(std::string(argv[1]));
 
     rt_printf("controller is set up \n");
     rt_printf("Press enter to launch the calibration \n");
