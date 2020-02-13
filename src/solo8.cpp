@@ -51,7 +51,7 @@ Solo8::Solo8()
     */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(4.0); // TODO: set as paramters?
+  motor_max_current_.fill(1.0); // TODO: set as paramters?
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
@@ -82,8 +82,8 @@ void Solo8::initialize(const std::string &network_id)
   for(unsigned j_id = 0; j_id < motors_.size(); ++j_id)
   {
       motors_[j_id] = std::make_shared<blmc_drivers::Motor> (
-          motor_boards_[map_joint_id_to_motor_board_id[j_id]],
-          map_joint_id_to_motor_port_id[j_id]);
+          motor_boards_[map_joint_id_to_motor_board_id_[j_id]],
+          map_joint_id_to_motor_port_id_[j_id]);
   }
 
   // Create the joint module objects
@@ -95,11 +95,11 @@ void Solo8::initialize(const std::string &network_id)
                        joints_.get_max_torques().array();
 
   // fix the polarity to be the same as the urdf model.
-  auto reverse_polarities_ = {true, true, false, false, true, true, false, false};
+  std::array<bool, 8> reverse_polarities = {true, true, false, false, true, true, false, false};
   joints_.set_joint_polarities(reverse_polarities);
 
   // The the control gains in order to perform the calibration
-  blmc_robots::Vector12d kp, kd;
+  blmc_robots::Vector8d kp, kd;
   kp.fill(3.0);
   kd.fill(0.1);
   joints_.set_position_control_gains(kp, kd);

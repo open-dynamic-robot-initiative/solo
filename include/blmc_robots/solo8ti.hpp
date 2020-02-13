@@ -21,7 +21,7 @@ public:
   /**
    * @brief Solo8 is the constructor of the class.
    */
-  Solo8();
+  Solo8TI();
 
   /**
    * @brief initialize the robot by setting aligning the motors and calibrate the

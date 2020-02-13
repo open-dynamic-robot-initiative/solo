@@ -62,6 +62,7 @@ set(exported_libraries
   ${PROJECT_NAME}
   test_bench_8_motors
   solo8
+  solo8ti
   solo12
 
   teststand

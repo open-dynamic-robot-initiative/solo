@@ -4,9 +4,9 @@
  * @brief Small demo to test the calibration on the real robot.
  * @version 0.1
  * @date 2019-11-08
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 
 
@@ -21,7 +21,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
     ThreadCalibrationData_t* thread_data_ptr =
       (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
-    blmc_robots::Vector8d joint_index_to_zero = 
+    blmc_robots::Vector8d joint_index_to_zero =
       thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 
@@ -30,12 +30,17 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 }  // end control_loop
 
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
     enable_ctrl_c();
 
+    if(argc != 2)
+    {
+       throw std::runtime_error("Wrong number of argument: `./demo_solo12 network_id`.");
+    }
+
     std::shared_ptr<Solo8> robot = std::make_shared<Solo8>();
-    robot->initialize();
+    robot->initialize(std::string(argv[1]));
 
     ThreadCalibrationData_t thread_data(robot);
 
