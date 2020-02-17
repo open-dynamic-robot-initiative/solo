@@ -248,7 +248,7 @@ class Robot_Control:
 		# Calculating x_observed (end effector's position)
 		self.x_obs = [self.robot_data.oMf[tip_id].translation - self.block_com_position for tip_id in self.finger_tip_ids]
 
-		if self.mode == "pinocchio":
+		if self.block_info_from == "pinocchio":
 			self.x_obs = [np.array([[-0.00334082],[ 0.04888184],[-0.01672634]]),
 						  np.array([[ 0.03910008],[ 0.00379204],[-0.01891771]]),
 						  np.array([[-0.03915938],[-0.00046447],[-0.01780892]])]
@@ -659,7 +659,7 @@ class Robot_Control:
 			self.Kp = np.diag(np.full(9,81)) # np.diag(np.full(9,81))
 			self.Kd = np.diag(np.full(9,0.11)) # np.diag(np.full(9,0.09))
 		else:
-			self.Kp = np.diag(np.full(9,30)) # np.diag(np.full(9,81)) 33
+			self.Kp = np.diag(np.full(9,53)) # np.diag(np.full(9,81)) 30
 			self.Kd = np.diag(np.full(9,0.001)) # np.diag(np.full(9,0.09)) 0.001
 
 		force = self.Kp * (self.end_eff_des_pos - self.end_eff_obs_pos) + self.Kd * (self.end_eff_des_vel - self.end_eff_obs_vel)
@@ -762,7 +762,7 @@ class Robot_Control:
 		pickle.dump(data, file)
 		file.close()
 
-'''
+
 		fig1, ax1 = plt.subplots(9,1)
 		fig1.suptitle('Contact Forces')
 		for i in range(3):
@@ -866,7 +866,6 @@ class Robot_Control:
 
 
 
-'''
 
 
 
