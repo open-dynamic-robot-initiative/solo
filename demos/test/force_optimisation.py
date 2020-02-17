@@ -84,6 +84,38 @@ class Robot_Control:
 		self.finger_tip_ids = [self.robot_model.getFrameId(name) for name in self.finger_tip_links]
 
 
+
+	def check_values_from_camera(self):
+		if cameraQueue.empty():
+			return
+
+		state_from_camera = cameraQueue.get() # gives array(or matrix) 13x1
+		rotation_matrix = pinocchio.XYZQUATToSe3(state_from_camera).rotation
+
+		diff = pinocchio.difference(self.cube_q_last, state_from_camera)
+
+		
+		finger_relative_position = [self.robot_data.oMf[tip_id].translation - state_from_camera[:3] for tip_id in self.finger_tip_ids]
+		finger_offset_local = [rotation_matrix.T.dot(i) for i in finger_relative_position] # this is the offset (local frame)
+
+		# subtract the offset (rotated in world) from th ewrld tip position
+		# find the avg from the three tips
+
+		'''Now wherever we have the tip positions, we get com as follows
+
+		'''
+		finger_abs_position = [self.robot_data.oMf[tip_id].translation for tip_id in self.finger_tip_ids]
+		new_quat = diff * old_quat
+		self.new_rotation_matrix = pinocchio.Quaternion(new_quat).toRotationMatrix() # this is the new rotation matrix
+		finger_offset_world = [self.new_rotation_matrix.dot(i) for i finger_offset_local] # this rotation matrix is the fixed one
+
+		com = np.mean(np.subtract(finger_abs_position, finger_offset_world)) # this is the new com
+
+		new_cube_state = np.concatenate([com,new_quat]),reshape(-1,1)
+
+		
+
+
 	def box_state_from_tip_position(self):
 		end_effector_position = [self.robot_data.oMf[tip_id].translation for tip_id in self.finger_tip_ids]
 		box_com_position = [(end_effector_position[0][i] + 
@@ -108,10 +140,6 @@ class Robot_Control:
 		dir_y = np.cross(dir_z, dir_x)
 		dir_y = dir_y / max(np.linalg.norm(dir_y), 0.000000001)
 
-		# print(dir_x, np.linalg.norm(dir_x))
-		# print(dir_y, np.linalg.norm(dir_y))
-		# print(dir_z, np.linalg.norm(dir_z))
-
 		dir_x = dir_x
 		dir_y = dir_y
 		dir_z = dir_z
@@ -120,7 +148,7 @@ class Robot_Control:
 		self.quat = pinocchio.Quaternion(self.rotation_matrix).coeffs()
 
 		# Setting the position offset
-		offset =  np.array([0,-0.01, 0]).reshape(-1,1)
+		offset =  np.array([0,-0.000, 0]).reshape(-1,1)
 
 		box_com_position = box_com_position + self.rotation_matrix.dot(offset)
 
@@ -146,13 +174,13 @@ class Robot_Control:
 		if self.mode == "real":
 			quat, trans = self.object_tracker.get_object_pose()
 			quat = np.concatenate([quat[1:],[quat[0]]], axis = 0)
-			quat[:] = 0
-			quat[3] = 1
-			# trans[:2] = 0
-			# trans[2] = 0.05 + 0.2 * (self.t/1000)
+			# quat[:] = 0
+			# quat[3] = 1
+			# # trans[:2] = 0
+			# # trans[2] = 0.05 + 0.2 * (self.t/1000)
 			return self.box_state_from_tip_position()
 			
-			# return np.concatenate([trans, quat], axis=0).reshape(-1,1)
+			return np.concatenate([trans, quat], axis=0).reshape(-1,1)
 			# return self.cube.state.copy()[:7]
 
 		if self.mode == "pinocchio":
@@ -208,9 +236,19 @@ class Robot_Control:
 
 	def get_desired_state(self):
 		# Calculating the desird position to reach
-		self.x_des = [np.matrix([self.object_position[0], self.object_position[1] + self.object_size/2, self.object_position[2]]).T,
-				 np.matrix([self.object_position[0] + self.object_size/2, self.object_position[1], self.object_position[2]]).T,
-				 np.matrix([self.object_position[0] - self.object_size/2, self.object_position[1], self.object_position[2]]).T]
+		self.x_des = [
+				 np.matrix([self.object_position[0], 
+				 			self.object_position[1] + self.object_size/2, 
+				 			self.object_position[2] - 0.005]).T,
+
+				 np.matrix([self.object_position[0] + self.object_size/2, 
+				 			self.object_position[1] - self.object_size/4, 
+				 			self.object_position[2]]).T,
+
+				 np.matrix([self.object_position[0] - self.object_size/2, 
+				 			self.object_position[1] - self.object_size/4, 
+				 			self.object_position[2]]).T
+				 	]
 
 		# self.x_des = [np.matrix([self.object_position[0], self.object_position[1] + self.object_size/2, self.object_position[2]]).T,
 		# 		 np.matrix([self.object_position[0] + self.object_size/2, self.object_position[1], self.object_position[2]]).T,
@@ -330,74 +368,7 @@ class Robot_Control:
 				   'y':[1,4,7],
 				   'z':[2,5,8]}
 
-			if t%30==0:
-				degrees = []
-				for i in q:
-					degrees.append(math.degrees(i))
-
-				# print("Force applied along axis:",
-				# 		F[idx[direction][0]],
-				# 		F[idx[direction][1]],
-				# 		F[idx[direction][2]],
-				# 		"*****",
-				# 		F[idx[direction][0]]/force_applied*100, 
-				# 		F[idx[direction][1]]/force_applied*100, 
-				# 		F[idx[direction][2]]/force_applied*100)
-				# if self.is_grabbing:
-				# 	print("Q position is \n\t", degrees[:3], "\n\t", degrees[3:6], "\n\t", degrees[6:])
-				# 	q = self.calculate_q_compensation()
-				# 	degrees = []
-				# 	for i in q:
-				# 		degrees.append(math.degrees(i))
-				# 	print("Fixed Q position is \n\t", degrees[:3], "\n\t", degrees[3:6], "\n\t", degrees[6:])
-
-				# else:
-				# 	print("Q position is \n", degrees[:3], "\n", degrees[3:6], "\n", degrees[6:])
-				print("Q position is \n", degrees[:3], "\n", degrees[3:6], "\n", degrees[6:])
-
-				# print(force_applied)
 			
-				print("X_obsered:\n\t\t\t\t\t\t\t\t\t\t",
-						self.x_obs[:3].T, "\n\t\t\t\t\t\t\t\t\t\t",
-						self.x_obs[3:6].T, "\n\t\t\t\t\t\t\t\t\t\t",
-						self.x_obs[6:].T)
-
-				print("Torque obsered:\n",
-						tau[:3].T, "\n",
-						tau[3:6].T, "\n",
-						tau[6:].T)
-
-				# # # print("Percentage of force actually applied:",
-				# # # 		F[idx[direction][0]]/force_applied*100, 
-				# # # 		F[idx[direction][1]]/force_applied*100, 
-				# # # 		F[idx[direction][2]]/force_applied*100)
-
-				# print("Force applied along axis:",
-				# 			F[idx[direction][0]],
-				# 			F[idx[direction][1]],
-				# 			F[idx[direction][2]])
-
-
-				# # Plotting real-time values for the different terms of the total force
-				if self.is_grabbing:
-					position = self.Kp * (self.x_des - self.x_obs)
-					velocity = self.Kd * (self.v_des - self.v_obs)
-					global TIME
-
-					if self.plot_real_time:
-						plt.plot(TIME, F.data.tolist()[3][0], 'bo')
-						plt.plot(TIME, position.data.tolist()[3][0], 'y+')
-						plt.plot(TIME, velocity.data.tolist()[3][0], 'g+')
-						plt.plot(TIME, self.desired_external_force.data.tolist()[3][0], 'ro')
-						plt.pause(0.0001)
-
-					else:
-						self.plot_dict['Fo'].append(F.data.tolist()[3][0])
-						self.plot_dict['P'].append(position.data.tolist()[3][0])
-						self.plot_dict['V'].append(velocity.data.tolist()[3][0])
-						self.plot_dict['Fd'].append(self.desired_external_force.data.tolist()[3][0])
-
-					TIME += 1
 
 
 	def generate_plots(self):
@@ -531,6 +502,26 @@ class Robot_Control:
 			self.move(self.object_position[:2] + [0.045]) # picking up 
 
 
+	def random_points_in_a_circle(self):
+		alpha = 2 * math.pi * np.random.rand()
+		r = 0.1 * np.random.rand()
+		x = r * math.cos(alpha)
+		y = r * math.sin(alpha)
+
+		return np.resize([x,y,0.05], (3,1))
+
+
+	def move_in_a_circle(self):
+		alpha = math.radians(self.t/1000 * 30)
+		r = 0.08
+		x = r * math.cos(alpha)
+		y = r * math.sin(alpha)
+
+		return np.resize([x,y,0.20], (3,1))
+
+
+
+
 	def next_state(self):
 		seconds = 1
 		if (self.t*self.dt) % seconds == 0:
@@ -539,8 +530,11 @@ class Robot_Control:
 			self.q2[:3] = np.resize([0,0,0.20], (3,1))
 			self.q2[3:] = np.resize([0,0,0,1], (4,1))
 
-			if self.t == seconds * 1000:
-				self.q2 = self.cube_q_last
+			# self.q2[:3] = self.random_points_in_a_circle()
+			# self.q2[:3] = self.move_in_a_circle()
+
+			if self.t > seconds * 1000:
+				self.q2[:3] = self.random_points_in_a_circle()
 
 
 			# print("Reach Q2:", self.q2)
@@ -562,17 +556,6 @@ class Robot_Control:
 
 		steps = 1
 		if self.t % steps == 0:
-			# print("Time:", self.t, self.last_time_step)
-			# state = self.get_cube_state()
-
-			# if self.t == 0:
-			# 	self.prev_intermediate = self.cube_q_last
-			# else:
-			# 	self.prev_intermediate = pinocchio.interpolate(
-			# 					self.cube.rmodel, 
-			# 					self.q1, 
-			# 					self.q2, 
-			# 					(steps/(1000*seconds))*(self.t-1))
 
 			self.intermediate_state = pinocchio.interpolate(
 							self.cube.rmodel, 
@@ -627,7 +610,7 @@ class Robot_Control:
 
 		self._kc = np.matrix(np.diag(np.full(3,100))) # this already has mass multiplied
 		# self._kc[2] = 50
-		self._dc = np.matrix(np.diag(np.full(3, .005))) # this already has mass multiplied
+		self._dc = np.matrix(np.diag(np.full(3, .001))) # this already has mass multiplied
 
 		self._kb = np.matrix(np.diag(np.full(3,.01))) # this already has mass multiplied 0.4
 		self._db = np.matrix(np.diag(np.full(3,.0000))) # this already has mass multiplied 0.0063
@@ -756,7 +739,7 @@ class Robot_Control:
 		# Use the contact activation from the plan to determine which of the forces
 		# should be active.
 		N = (int)(np.sum(self.cnt_array))
-		self._mu = 0.8
+		self._mu = 0.78
 
 		# Setup the QP problem.
 		Q = 2. * np.eye(3 * N + 6)
@@ -778,7 +761,7 @@ class Robot_Control:
 		    A[3:, 3 * j:3 * (j + 1)] = pinocchio.utils.skew(self.x_obs[i])
 
 
-		    reduced_value = 0.8
+		    reduced_value = 0.9
 
 		    if i == 0:
 		    	G[3*j + 0, 3 * j + 1] = -1      # -Fy >= 0
@@ -871,15 +854,18 @@ class Robot_Control:
 
 	def impedance_control_finger(self):	
 		object_state = np.resize(self.cube_q_next, 13)
-		self.end_eff_des_pos = [np.matrix([object_state[0], object_state[1], object_state[2]]).T,
+
+		self.end_eff_des_pos = [
+				 np.matrix([object_state[0], object_state[1], object_state[2]]).T,
 				 np.matrix([object_state[0], object_state[1], object_state[2]]).T,
 				 np.matrix([object_state[0], object_state[1], object_state[2]]).T]
 
 		self.end_eff_des_pos = np.vstack(self.end_eff_des_pos)
 
-		orientation_offset = [np.array([0, self.object_size/2, 0]).reshape(-1,1),
-						np.array([self.object_size/2, 0, 0]).reshape(-1,1),
-						np.array([-self.object_size/2, 0, 0]).reshape(-1,1)]
+		orientation_offset = [
+						np.array([0, self.object_size/2, -0.005]).reshape(-1,1),
+						np.array([self.object_size/2, -self.object_size/4, 0]).reshape(-1,1),
+						np.array([-self.object_size/2, -self.object_size/4, 0]).reshape(-1,1)]
 
 
 		for i in range(3):
@@ -929,8 +915,8 @@ class Robot_Control:
 		
 
 		# Kp and Kd
-		self.Kp = np.diag(np.full(9,20)) # np.diag(np.full(9,81)) 10
-		self.Kd = np.diag(np.full(9,0.005)) # np.diag(np.full(9,0.09)) 0.09
+		self.Kp = np.diag(np.full(9,33)) # np.diag(np.full(9,81)) 10
+		self.Kd = np.diag(np.full(9,0.001)) # np.diag(np.full(9,0.09)) 0.09
 
 		force = self.Kp * (self.end_eff_des_pos - self.end_eff_obs_pos) + self.Kd * (self.end_eff_des_vel - self.end_eff_obs_vel)
 		total_force = self.F + force
@@ -1010,7 +996,7 @@ class Robot_Control:
 		self.cube_q_next = self.get_cube_state()
 
 		# simulation horizon 20 secs at 1.e-2 dt 
-		N = 1500
+		N = 20000
 
 		
 		optimised_forces = np.zeros([N,9])
@@ -1166,8 +1152,15 @@ class Robot_Control:
 
 
 
-
-
+	def start(self, cameraQueue):
+		self.cameraQueue = cameraQueue
+		# Move Up and Down
+		object_size = 0.065      
+		object_position = [0.0, 0.0, 0.15]
+		block_orientation = [0,0,0,1]
+		self.add_new_object(object_size, object_position, block_orientation)
+		self.optimised_trajectory()
+		self.reset_state()
 
 
 
@@ -1178,7 +1171,7 @@ class Robot_Control:
 if __name__ == "__main__":
 
 	control = Robot_Control(mode="real")
-
+	
 	# Move Up and Down
 	object_size = 0.065      
 	object_position = [0.0, 0.0, 0.15]
