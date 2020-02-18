@@ -9,7 +9,7 @@ import blmc_robots
 import robot_interfaces
 
 import matplotlib.pyplot as plt
-import sim_finger
+from pybullet_fingers import sim_finger
 
 import ipdb
 from basic_simulator.basic_simulator import CubeSimulator
@@ -56,8 +56,7 @@ class Robot_Control:
 			self.finger.initialize()
 
 		elif self.mode == "simulation" or self.mode == "pinocchio":
-			self.finger = sim_finger.Finger(finger_type="trifinger", time_step=1.e-3)
-			self.finger.remove_block()
+			self.finger = sim_finger.SimFinger(finger_type="trifinger", time_step=1.e-3, enable_visualization=True, action_bounds=None)
 
 		# End effector Ids
 		self.finger_tip_links = ["finger_tip_link_0", "finger_tip_link_120", "finger_tip_link_240"]
@@ -229,6 +228,7 @@ class Robot_Control:
 
 			# Getting robot's joint state
 			obs = self.finger.get_observation(time_stamp)
+			self.obs = obs
 			q = np.array(obs.position)
 			w = np.array(obs.velocity)
 
@@ -242,7 +242,10 @@ class Robot_Control:
 		self.J = np.vstack(J)
 
 		tau = np.matrix(obs.torque).T
-		J_inv = np.linalg.inv(self.J.T)
+		try:
+			J_inv = np.linalg.inv(self.J.T)
+		except:
+			J_inv = np.linalg.pinv(self.J.T)
 		self.F_observed = J_inv * tau
 
 		# Calculating x_observed (end effector's position)
@@ -367,13 +370,13 @@ class Robot_Control:
 		if (self.t*self.dt) % seconds == 0:
 			self.q1 = self.cube_q_last
 			self.q2 = pinocchio.se3ToXYZQUAT(pinocchio.SE3.Random())
-			self.q2[:3] = np.resize([0,0,0.20], (3,1))
+			self.q2[:3] = np.resize([0,0,0.17], (3,1))
 			self.q2[3:] = np.resize([0,0,0,1], (4,1))
 
 			# self.q2[:3] = self.move_in_a_circle()
 
-			if self.t == seconds * 1000:
-				self.q2 = self.cube_q_last
+			# if self.t == seconds * 1000:
+			# 	self.q2 = self.cube_q_last
 
 
 			self.last_time_step = self.t
@@ -466,7 +469,7 @@ class Robot_Control:
 		    minimize
 		        (1/2) * x.T * P * x + q.T * x
 		    subject to
-		        G * x >= h
+		        G * x <= h
 		        A * x == b
 		using quadprog <https://pypi.python.org/pypi/quadprog/>.
 		Parameters
@@ -523,7 +526,7 @@ class Robot_Control:
 		# Use the contact activation from the plan to determine which of the forces
 		# should be active.
 		N = (int)(np.sum(self.cnt_array))
-		self._mu = 0.8
+		self._mu = 0.4
 
 		# Setup the QP problem.
 		Q = 2. * np.eye(3 * N + 6)
@@ -545,16 +548,16 @@ class Robot_Control:
 		    A[3:, 3 * j:3 * (j + 1)] = pinocchio.utils.skew(self.x_obs[i])
 
 
-		    reduced_value = 0.8
+		    reduced_value = 1.47 # root 2
 
 		    if i == 0:
 		    	G[3*j + 0, 3 * j + 1] = -1      # -Fy >= 0
 		    	G[3*j + 1, 3 * j + 0] = -reduced_value		# |mu Fy| - Fx >= 0
 		    	G[3*j + 1, 3 * j + 1] = -self._mu
-		    	G[3*j + 2, 3 * j + 2] = -reduced_value		# |mu Fy| - Fz >= 0
-		    	G[3*j + 2, 3 * j + 1] = -self._mu
 		    	G[4*j + 1, 3 * j + 0] = reduced_value		# |mu Fy| + Fx >= 0
 		    	G[4*j + 1, 3 * j + 1] = -self._mu
+		    	G[3*j + 2, 3 * j + 2] = -reduced_value		# |mu Fy| - Fz >= 0
+		    	G[3*j + 2, 3 * j + 1] = -self._mu
 		    	G[5*j + 2, 3 * j + 2] = reduced_value		# |mu Fy| + Fz >= 0
 		    	G[5*j + 2, 3 * j + 1] = -self._mu
 
@@ -563,10 +566,10 @@ class Robot_Control:
 		    	G[3*j + 0, 3 * j + 0] = -1      # Fx <= 0
 		    	G[3*j + 1, 3 * j + 1] = -reduced_value		# |mu Fx| - Fy >= 0
 		    	G[3*j + 1, 3 * j + 0] = -self._mu
-		    	G[3*j + 2, 3 * j + 2] = -reduced_value		# |mu Fx| - Fz >= 0
-		    	G[3*j + 2, 3 * j + 0] = -self._mu
 		    	G[4*j + 1, 3 * j + 1] = reduced_value		# |mu Fx| + Fy >= 0
 		    	G[4*j + 1, 3 * j + 0] = -self._mu
+		    	G[3*j + 2, 3 * j + 2] = -reduced_value		# |mu Fx| - Fz >= 0
+		    	G[3*j + 2, 3 * j + 0] = -self._mu
 		    	G[5*j + 2, 3 * j + 2] = reduced_value		# |mu Fx| + Fz >= 0
 		    	G[5*j + 2, 3 * j + 0] = -self._mu
 
@@ -574,10 +577,10 @@ class Robot_Control:
 		    	G[3*j + 0, 3 * j + 0] = 1       # Fx >= 0
 		    	G[3*j + 1, 3 * j + 1] = -reduced_value		# |mu Fx| - Fy >= 0
 		    	G[3*j + 1, 3 * j + 0] = self._mu
-		    	G[3*j + 2, 3 * j + 2] = -reduced_value		# |mu Fx| - Fz >= 0
-		    	G[3*j + 2, 3 * j + 0] = self._mu
 		    	G[4*j + 1, 3 * j + 1] = reduced_value		# |mu Fx| + Fy >= 0
 		    	G[4*j + 1, 3 * j + 0] = self._mu
+		    	G[3*j + 2, 3 * j + 2] = -reduced_value		# |mu Fx| - Fz >= 0
+		    	G[3*j + 2, 3 * j + 0] = self._mu
 		    	G[5*j + 2, 3 * j + 2] = reduced_value		# |mu Fx| + Fz >= 0
 		    	G[5*j + 2, 3 * j + 0] = self._mu
 
@@ -623,12 +626,12 @@ class Robot_Control:
 
 		self.end_eff_des_pos = np.vstack(self.end_eff_des_pos)
 
-		orientation_offset = [np.array([0, self.object_size/2, 0]).reshape(-1,1),
-						np.array([self.object_size/2, 0, 0]).reshape(-1,1),
-						np.array([-self.object_size/2, 0, 0]).reshape(-1,1)]
+		contact_point_offset = [np.array([0, self.object_size/2, 0]).reshape(-1,1),
+						np.array([self.object_size/2, -self.object_size/8, 0]).reshape(-1,1),
+						np.array([-self.object_size/2, -self.object_size/8, 0]).reshape(-1,1)]
 
 		for i in range(3):
-			self.end_eff_des_pos[3*i: 3*(i + 1)] += self.rotation_matrix.dot(orientation_offset[i])
+			self.end_eff_des_pos[3*i: 3*(i + 1)] += self.rotation_matrix.dot(contact_point_offset[i])
 
 		self.end_eff_des_vel = np.array([object_state[7:10]] * 3).reshape(-1,1)
 
@@ -659,7 +662,7 @@ class Robot_Control:
 			self.Kp = np.diag(np.full(9,81)) # np.diag(np.full(9,81))
 			self.Kd = np.diag(np.full(9,0.11)) # np.diag(np.full(9,0.09))
 		else:
-			self.Kp = np.diag(np.full(9,53)) # np.diag(np.full(9,81)) 30
+			self.Kp = np.diag(np.full(9,63)) # np.diag(np.full(9,81)) 30 -- 53
 			self.Kd = np.diag(np.full(9,0.001)) # np.diag(np.full(9,0.09)) 0.001
 
 		force = self.Kp * (self.end_eff_des_pos - self.end_eff_obs_pos) + self.Kd * (self.end_eff_des_vel - self.end_eff_obs_vel)
@@ -686,7 +689,8 @@ class Robot_Control:
 		if self.mode == "simulation":
 			self.finger.set_block_state([0,0,0.05], [0,0,0,1])
 
-		self.move([0,0,0.03], offset=0.02, timeout=3, exit_before_timeout=True) # reaching the object
+		self.block_com_position[2] = 0.15
+		self.move([0,0,0.03], offset=0.03, timeout=3, exit_before_timeout=True) # reaching the object
 		self.grasp()
 
 		self.t = 0
@@ -697,7 +701,7 @@ class Robot_Control:
 		self.cube_q_next = self.get_cube_state()
 
 		# simulation horizon N*dt seconds. 
-		N = 5000
+		N = 20000
 
 
 		optimised_forces = np.zeros([N,9])
@@ -758,115 +762,9 @@ class Robot_Control:
 
 		data["differences"] = differences
 
-		file = open("robot_data_dump.txt", "wb")
+		file = open("robot_data_dump.pkl", "wb")
 		pickle.dump(data, file)
 		file.close()
-
-
-		fig1, ax1 = plt.subplots(9,1)
-		fig1.suptitle('Contact Forces')
-		for i in range(3):
-				# Optimised Contact Forces (Desired)
-				ax1[i].plot(1.e-3*np.arange(N), optimised_forces[:,i], '--')
-				ax1[i+3].plot(1.e-3*np.arange(N), optimised_forces[:,i+3],'--')
-				ax1[i+6].plot(1.e-3*np.arange(N), optimised_forces[:,i+6],'--')
-
-				# Observed Contact Forces
-				ax1[i].plot(1.e-3*np.arange(N), observed_forces[:,i])
-				ax1[i+3].plot(1.e-3*np.arange(N), observed_forces[:,i+3])
-				ax1[i+6].plot(1.e-3*np.arange(N), observed_forces[:,i+6])
-
-
-
-
-		fig2, ax2 = plt.subplots(9,1)
-		fig2.suptitle('Contact Points')
-		for i in range(3):
-				# Optimised Contact Forces (Desired)
-				ax2[i].plot(1.e-3*np.arange(N), desired_contact_points[:,i], '--')
-				ax2[i+3].plot(1.e-3*np.arange(N), desired_contact_points[:,i+3],'--')
-				ax2[i+6].plot(1.e-3*np.arange(N), desired_contact_points[:,i+6],'--')
-
-				# Observed Contact Forces
-				ax2[i].plot(1.e-3*np.arange(N), observed_contact_points[:,i])
-				ax2[i+3].plot(1.e-3*np.arange(N), observed_contact_points[:,i+3])
-				ax2[i+6].plot(1.e-3*np.arange(N), observed_contact_points[:,i+6])
-
-
-
-
-		fig2, ax2 = plt.subplots(9,1)
-		fig2.suptitle('Contact Velocities')
-		for i in range(3):
-				# Optimised Contact Forces (Desired)
-				ax2[i].plot(1.e-3*np.arange(N), desired_contact_velocities[:,i], '--')
-				ax2[i+3].plot(1.e-3*np.arange(N), desired_contact_velocities[:,i+3],'--')
-				ax2[i+6].plot(1.e-3*np.arange(N), desired_contact_velocities[:,i+6],'--')
-
-				# Observed Contact Forces
-				ax2[i].plot(1.e-3*np.arange(N), observed_contact_velocities[:,i])
-				ax2[i+3].plot(1.e-3*np.arange(N), observed_contact_velocities[:,i+3])
-				ax2[i+6].plot(1.e-3*np.arange(N), observed_contact_velocities[:,i+6])
-
-
-
-
-		fig4, ax4 = plt.subplots(6,1)
-		fig4.suptitle('Wrench')
-		for i in range(3):
-				# Block COM Forces
-				ax4[i].plot(1.e-3*np.arange(N), desired_wrench[:,i],'--')
-				ax4[i].plot(1.e-3*np.arange(N), observed_wrench[:,i])
-
-				# Block COM Moment
-				ax4[i+3].plot(1.e-3*np.arange(N), desired_wrench[:,i+3],'--')
-				ax4[i+3].plot(1.e-3*np.arange(N), observed_wrench[:,i+3])
-
-
-
-
-
-		# Block COM position
-		fig5, ax5 = plt.subplots(7,1)
-		fig5.suptitle('Block Position')
-		for i in range(4):
-			if i < 3:
-				# Block Position
-				ax5[i].plot(1.e-3*np.arange(N), desired_block_position[:,i],'--')
-				ax5[i].plot(1.e-3*np.arange(N), observed_block_position[:,i])
-
-			# Block Orientation
-			ax5[i+3].plot(1.e-3*np.arange(N), desired_block_position[:,i+3],'--')
-			ax5[i+3].plot(1.e-3*np.arange(N), observed_block_position[:,i+3])
-
-
-
-
-
-		# Differences
-		fig, ax = plt.subplots(12,1)
-		fig.suptitle('Differences')
-		for i in range(3):
-			# Block Position
-			ax[i].plot(1.e-2*np.arange(N), differences[:,i],'--')
-
-			# Block Orientation
-			ax[i+3].plot(1.e-2*np.arange(N), differences[:,i+3])
-
-			# Velocity
-			ax[i+6].plot(1.e-2*np.arange(N), differences[:,i+6], '--')
-
-			# Angular Velocity
-			ax[i+9].plot(1.e-2*np.arange(N), differences[:,i+9],'r-')
-
-		print(self.t)
-
-		plt.show()
-
-
-
-
-
 
 
 
@@ -876,11 +774,11 @@ class Robot_Control:
 
 if __name__ == "__main__":
 
-	control = Robot_Control(mode="real", block_info_from="real")
+	control = Robot_Control(mode="simulation", block_info_from="simulation")
 
 	# Move Up and Down
 	object_size = 0.065
-	block_com_position = [0.0, 0.0, 0.15]
+	block_com_position = [0.0, 0.0, 0.05]
 	block_orientation = [0,0,0,1]
 	control.add_new_object(object_size, block_com_position, block_orientation)
 	control.optimised_trajectory()
