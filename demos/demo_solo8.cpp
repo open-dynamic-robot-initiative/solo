@@ -51,10 +51,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
                 sliders_filt_buffer[i].pop_front();
             }
             sliders_filt_buffer[i].push_back(sliders(i));
-            // sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
-            //                                   sliders_filt_buffer[i].end(),
-            //                                   0.0) /
-            //                   (double)sliders_filt_buffer[i].size();
             sliders_filt(i) = 0.5;
         }
 

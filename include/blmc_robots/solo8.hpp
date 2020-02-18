@@ -1,8 +1,9 @@
 /**
- * \file solo8.hpp
- * \author Julian Viereck
- * \date 2020
- * \copyright Copyright (c) 2020, New York University and Max Planck Gesellschaft.
+ * @file
+ * @author Julian Viereck
+ * @date 2020
+ * @brief Solo8 robot with micro drivers.
+ * @copyright Copyright (c) 2020, New York University and Max Planck Gesellschaft.
 
  */
 
@@ -307,11 +308,11 @@ private:
    */
   Eigen::Vector4d contact_sensors_states_;
 
-  /** @brief Map the joint id to the motor board id, @see Solo12 description. */
-  std::array<int, 12> map_joint_id_to_motor_board_id_;
+  /** @brief Map the joint id to the motor board id, @see Solo8 description. */
+  std::array<int, 8> map_joint_id_to_motor_board_id_;
 
-  /** @brief Map the joint id to the motor port id, @see Solo12 description. */
-  std::array<int, 12> map_joint_id_to_motor_port_id_;
+  /** @brief Map the joint id to the motor port id, @see Solo8 description. */
+  std::array<int, 8> map_joint_id_to_motor_port_id_;
 
   /**
     * Drivers communication objects
