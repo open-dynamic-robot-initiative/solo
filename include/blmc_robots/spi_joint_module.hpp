@@ -34,28 +34,6 @@ namespace blmc_robots
 template <int COUNT>
 class SpiJointModules
 {
-private:
-
-    Vector motor_constants_;
-    Vector gear_ratios_;
-    Vector max_currents_;
-    Vector zero_angles_;
-    Vector polarities_;
-    Vector index_angles_;
-
-    Vector motor_to_card_index_;
-
-    Vector index_positions_;
-    std::array<bool, COUNT> saw_index_;
-
-
-    /**
-     * @brief Holds the motors in the joint order.
-     */
-    std::array<Motor*, COUNT> motors_;
-
-    std::shared_ptr<MasterBoardInterface> robot_if_;
-
 public:
     /**
      * @brief Defines a static Eigen vector type in order to define the
@@ -286,10 +264,25 @@ public:
         return index_positions_;
     }
 
+private:
+    Vector motor_constants_;
+    Vector gear_ratios_;
+    Vector max_currents_;
+    Vector zero_angles_;
+    Vector polarities_;
+    Vector index_angles_;
+
+    Vector motor_to_card_index_;
+
+    Vector index_positions_;
+    std::array<bool, COUNT> saw_index_;
+
+    /**
+     * @brief Holds the motors in the joint order.
+     */
+    std::array<Motor*, COUNT> motors_;
+
+    std::shared_ptr<MasterBoardInterface> robot_if_;
 };
-
-
-
-
 
 } // namespace blmc_robots
