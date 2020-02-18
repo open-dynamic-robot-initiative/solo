@@ -52,8 +52,10 @@ class Robot(RobotWrapper):
                  ):
         self.load_urdf()
         print("Control Dim:", self.control_dim)
-        self.viscous_friction = to_matrix(np.zeros(self.control_dim)) + viscous_friction
-        self.static_friction = to_matrix(np.zeros(self.control_dim)) + static_friction
+        self.viscous_friction = to_matrix(
+            np.zeros(self.control_dim)) + viscous_friction
+        self.static_friction = to_matrix(
+            np.zeros(self.control_dim)) + static_friction
         self.symplectic = symplectic
         if visualizer == "meshcat":
             self.setVisualizer(MeshcatVisualizer())
@@ -74,7 +76,7 @@ class Robot(RobotWrapper):
         else:
             raise NotImplementedError
 
-    # dynamics -----------------------------------------------------------------
+    # dynamics ---------------------------------------------------------------
     def simulate(self,
                  dt,
                  n_steps=None,
@@ -161,7 +163,7 @@ class Robot(RobotWrapper):
         actuator_torque = joint_torque - self.friction_torque(velocity)
 
         # TODO: Figure out why this fails some times.
-        # just as a sanity check -----------------------------------------------
+        # just as a sanity check ----------------------------------------------
         Y = self.compute_regressor_matrix(angle, velocity, acceleration)
         actuator_torque_1 = Y * self.get_params()
         assert ((abs(actuator_torque - actuator_torque_1) <= 1e-6).all())
@@ -191,11 +193,25 @@ class Robot(RobotWrapper):
         if isinstance(params, np.ndarray):
             params = np.array(params).flatten()
 
-        inertia_about_origin = \
-            np.array([[params[10 * link_index + 4], params[10 * link_index + 5], params[10 * link_index + 7]],
-                      [params[10 * link_index + 5], params[10 *
-                                                           link_index + 6], params[10 * link_index + 8]],
-                      [params[10 * link_index + 7], params[10 * link_index + 8], params[10 * link_index + 9]]])
+        inertia_about_origin = np.array([[params[10 *
+                                                 link_index +
+                                                 4], params[10 *
+                                                            link_index +
+                                                            5], params[10 *
+                                                                       link_index +
+                                                                       7]], [params[10 *
+                                                                                    link_index +
+                                                                                    5], params[10 *
+                                                                                               link_index +
+                                                                                               6], params[10 *
+                                                                                                          link_index +
+                                                                                                          8]], [params[10 *
+                                                                                                                       link_index +
+                                                                                                                       7], params[10 *
+                                                                                                                                  link_index +
+                                                                                                                                  8], params[10 *
+                                                                                                                                             link_index +
+                                                                                                                                             9]]])
         return inertia_about_origin
 
     # see Wensing et al 2018 for details
@@ -227,8 +243,13 @@ class Robot(RobotWrapper):
         if isinstance(params, np.ndarray):
             params = np.array(params).flatten()
 
-        mass_times_com = np.array([params[10 * link_index + 1],
-                                   params[10 * link_index + 2], params[10 * link_index + 3]])
+        mass_times_com = np.array([params[10 *
+                                          link_index +
+                                          1], params[10 *
+                                                     link_index +
+                                                     2], params[10 *
+                                                                link_index +
+                                                                3]])
         return mass_times_com
 
     def params_to_mass(self, params, link_index):
@@ -253,7 +274,7 @@ class Robot(RobotWrapper):
     def count_degrees_of_freedom(self):
         return self.nv
 
-    # getters and setters ------------------------------------------------------
+    # getters and setters ----------------------------------------------------
 
     def get_params(self):
         theta = [self.model.inertias[i].toDynamicParameters()
@@ -310,7 +331,7 @@ class Robot(RobotWrapper):
 
         # parallel axis theorem
         inertia_matrix_origin = inertia_matrix_com + mass * \
-            (np.inner(com, com)*np.identity(3) - np.outer(com, com))
+            (np.inner(com, com) * np.identity(3) - np.outer(com, com))
         return inertia_matrix_origin
 
     def get_viscous_friction(self, link_index):
@@ -335,8 +356,8 @@ class Robot(RobotWrapper):
         for dof in range(self.model.nv):
             theta_dof = theta[dof * 10: (dof + 1) * 10]
 
-            self.model.inertias[dof + 1] = pinocchio.libpinocchio_pywrap.Inertia.FromDynamicParameters(
-                theta_dof)
+            self.model.inertias[dof +
+                                1] = pinocchio.libpinocchio_pywrap.Inertia.FromDynamicParameters(theta_dof)
 
         n_inertial_params = self.model.nv * 10
         self.viscous_friction = theta[n_inertial_params: n_inertial_params + 3]
@@ -361,15 +382,19 @@ class Robot(RobotWrapper):
             self.model.inertias[dof + 1].inertia += np.abs(np.diag(
                 sigma * np.random.randn(3)))
 
-    # loading ------------------------------------------------------------------
+    # loading ----------------------------------------------------------------
     def load_urdf(self):
         try:
-            model_path = os.path.join(rospkg.RosPack().get_path("robot_properties_manipulator"))
+            model_path = os.path.join(
+                rospkg.RosPack().get_path("robot_properties_manipulator"))
         except rospkg.ResourceNotFound:
             print('Warning: The URDF is not being loaded from a ROS package.')
             current_path = str(os.path.dirname(os.path.abspath(__file__)))
-            model_path = str(os.path.abspath(os.path.join(current_path,
-                                                          '../../robot_properties_manipulator')))
+            model_path = str(
+                os.path.abspath(
+                    os.path.join(
+                        current_path,
+                        '../../robot_properties_manipulator')))
         urdf_path = join(model_path, "urdf", "trifinger_with_stage.urdf")
         if "tri" in urdf_path:
             self.control_dim = 9
@@ -402,14 +427,13 @@ def some_demo():
                   viscous_friction=0.0)
     robot.initViewer(loadModel=True)
 
-    torque = np.array([0., 0., 0.5]*3)
+    torque = np.array([0., 0., 0.5] * 3)
 
     torques = np.empty([n_steps, 9])
     for t in range(n_steps):
         if t % 100 == 0 and t > 0:
             torque = -torque
         torques[t] = torque
-
 
     positions, _, _, _ = robot.simulate(dt=dt,
                                         n_steps=n_steps,
@@ -423,7 +447,6 @@ def some_demo():
     print('elapsed time:', elapsed_time)
 
 
-
 def croc():
     robot = Robot(visualizer='meshcat',
                   viscous_friction=0.0)
@@ -435,7 +458,9 @@ def croc():
     robot.initViewer(loadModel=True)
 
     # Create the cost functions
-    Mref = crocoddyl.FrameTranslation(robot_model.getFrameId("finger_tip_link"), np.matrix(target).T)
+    Mref = crocoddyl.FrameTranslation(
+        robot_model.getFrameId("finger_tip_link"),
+        np.matrix(target).T)
     state = crocoddyl.StateMultibody(robot.model)
     goalTrackingCost = crocoddyl.CostModelFrameTranslation(state, Mref)
     xRegCost = crocoddyl.CostModelState(state)
@@ -447,8 +472,8 @@ def croc():
 
     # Then let's added the running and terminal cost functions
     runningCostModel.addCost("gripperPose", goalTrackingCost, 1.)
-    runningCostModel.addCost("stateReg", xRegCost, 1e-4) # 1e-4
-    runningCostModel.addCost("ctrlReg", uRegCost, 1e-7) # 1e-7
+    runningCostModel.addCost("stateReg", xRegCost, 1e-4)  # 1e-4
+    runningCostModel.addCost("ctrlReg", uRegCost, 1e-7)  # 1e-7
     terminalCostModel.addCost("gripperPose", goalTrackingCost, 1000.)
     terminalCostModel.addCost("stateReg", xRegCost, 1e-4)
     terminalCostModel.addCost("ctrlReg", uRegCost, 1e-7)
@@ -458,9 +483,11 @@ def croc():
 
     # Create the action model
     runningModel = crocoddyl.IntegratedActionModelEuler(
-        crocoddyl.DifferentialActionModelFreeFwdDynamics(state, actuationModel, runningCostModel), DT)
+        crocoddyl.DifferentialActionModelFreeFwdDynamics(
+            state, actuationModel, runningCostModel), DT)
     terminalModel = crocoddyl.IntegratedActionModelEuler(
-        crocoddyl.DifferentialActionModelFreeFwdDynamics(state, actuationModel, terminalCostModel))
+        crocoddyl.DifferentialActionModelFreeFwdDynamics(
+            state, actuationModel, terminalCostModel))
 
     # Create the problem
     q0 = np.matrix([0., 0., 0.]).T
@@ -478,12 +505,12 @@ def croc():
     # Plotting the solution and the DDP convergence
     log = ddp.getCallbacks()[0]
     crocoddyl.plotOCSolution(log.xs, log.us)
-    crocoddyl.plotConvergence(log.costs,log.control_regs,
-                              log.state_regs,log.gm_stops,
-                              log.th_stops,log.steps)
+    crocoddyl.plotConvergence(log.costs, log.control_regs,
+                              log.state_regs, log.gm_stops,
+                              log.th_stops, log.steps)
 
     positions = []
-    for t,xi in enumerate(log.xs):
+    for t, xi in enumerate(log.xs):
         positions.append(np.asarray(xi).reshape(-1)[:state.nq])
         time.sleep(1.e-2)
     print(positions)
@@ -492,7 +519,7 @@ def croc():
     robot.play(np.array(positions).transpose(), 1)
 
     positions = []
-    for t,xi in enumerate(ddp.xs):
+    for t, xi in enumerate(ddp.xs):
         positions.append(np.asarray(xi).reshape(-1)[:state.nq])
     print(positions)
     print(ddp.us)
@@ -503,10 +530,8 @@ def croc():
     xT = ddp.xs[-1]
     pinocchio.forwardKinematics(robot_model, robot_data, xT[:state.nq])
     pinocchio.updateFramePlacements(robot_model, robot_data)
-    print('Finally reached = ', robot_data.oMf[robot_model.getFrameId("finger_tip_link")].translation.T)
-
-
-
+    print('Finally reached = ', robot_data.oMf[robot_model.getFrameId(
+        "finger_tip_link")].translation.T)
 
 
 if __name__ == '__main__':
@@ -514,5 +539,5 @@ if __name__ == '__main__':
         some_demo()
         # croc()
         input()
-    except:
+    except BaseException:
         extype, value, tb = sys.exc_info()
