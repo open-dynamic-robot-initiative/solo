@@ -1,24 +1,32 @@
+#!/usr/bin/env python3
 """ implements a very basic simulator, fully actuated and no contact ! """
-
 import numpy as np
 import pinocchio as pin
 from pinocchio.robot_wrapper import RobotWrapper
 import os, sys, time   
 import matplotlib.pyplot as plt 
+import rospkg
 
 
 
 
 class CubeSimulator(object):
     def __init__(self, 
-                urdf_path="/home/vagraval/blmc_ei/workspace/src/catkin/simulators/pybullet_fingers/test/basic_simulator/model/urdf/free_flyer.urdf", 
-                mesh_path="/home/vagraval/blmc_ei/workspace/src/catkin/simulators/pybullet_fingers/test/basic_simulator/model/", 
                 dt=1.e-3, 
                 int_steps=1):
-        self.urdf_path = urdf_path
-        self.mesh_path = mesh_path
+        self.blmc_robots_path = os.path.join(rospkg.RosPack().get_path("blmc_robots"))
+        self.urdf_path = os.path.join(self.blmc_robots_path,
+                                "demos",
+                                "basic_simulator",
+                                "model",
+                                "urdf",
+                                "free_flyer.urdf")
+        self.mesh_path = os.path.join(self.blmc_robots_path,
+                                "demos",
+                                "basic_simulator",
+                                "model")
         self.robot = RobotWrapper.BuildFromURDF(
-        urdf_path, [mesh_path], pin.JointModelFreeFlyer())
+        self.urdf_path, [self.mesh_path], pin.JointModelFreeFlyer())
         self.rmodel = self.robot.model 
         self.rdata = self.rmodel.createData()
         self.dt = dt  # simulation step 

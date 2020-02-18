@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import math
 import time
 import pinocchio
@@ -353,7 +354,7 @@ class Robot_Control:
 
 	def move_in_a_circle(self):
 		alpha = math.radians(self.t/1000 * 60)
-		r = 0.08
+		r = 0.1
 		x = r * math.cos(alpha)
 		y = r * math.sin(alpha)
 
@@ -373,10 +374,12 @@ class Robot_Control:
 			self.q2[:3] = np.resize([0,0,0.17], (3,1))
 			self.q2[3:] = np.resize([0,0,0,1], (4,1))
 
-			# self.q2[:3] = self.move_in_a_circle()
+			self.q2[:3] = self.move_in_a_circle()
 
-			# if self.t == seconds * 1000:
-			# 	self.q2 = self.cube_q_last
+			if self.t >= seconds * 9000:
+				# self.q2 = self.cube_q_last
+				self.q2[:3] = np.resize([0,0,0.05], (3,1))
+
 
 
 			self.last_time_step = self.t
@@ -431,7 +434,7 @@ class Robot_Control:
 
 	def compute_block_wrench(self):
 		'''
-		Computes the block's wrench (i.e. the com linear forces and the andular torques) for each point along the trajectory.
+		Computes the block's wrench (i.e. the com linear forces and the angular torques) for each point along the trajectory.
 		'''
 		present_state = self.present_state() # 13x1
 		next_state = self.next_state() # 13x1
@@ -526,7 +529,7 @@ class Robot_Control:
 		# Use the contact activation from the plan to determine which of the forces
 		# should be active.
 		N = (int)(np.sum(self.cnt_array))
-		self._mu = 0.4
+		self._mu = 0.7
 
 		# Setup the QP problem.
 		Q = 2. * np.eye(3 * N + 6)
@@ -662,7 +665,7 @@ class Robot_Control:
 			self.Kp = np.diag(np.full(9,81)) # np.diag(np.full(9,81))
 			self.Kd = np.diag(np.full(9,0.11)) # np.diag(np.full(9,0.09))
 		else:
-			self.Kp = np.diag(np.full(9,63)) # np.diag(np.full(9,81)) 30 -- 53
+			self.Kp = np.diag(np.full(9,30)) # np.diag(np.full(9,81)) 30 -- 53
 			self.Kd = np.diag(np.full(9,0.001)) # np.diag(np.full(9,0.09)) 0.001
 
 		force = self.Kp * (self.end_eff_des_pos - self.end_eff_obs_pos) + self.Kd * (self.end_eff_des_vel - self.end_eff_obs_vel)
@@ -701,7 +704,7 @@ class Robot_Control:
 		self.cube_q_next = self.get_cube_state()
 
 		# simulation horizon N*dt seconds. 
-		N = 20000
+		N = 12000
 
 
 		optimised_forces = np.zeros([N,9])
@@ -774,7 +777,7 @@ class Robot_Control:
 
 if __name__ == "__main__":
 
-	control = Robot_Control(mode="simulation", block_info_from="simulation")
+	control = Robot_Control(mode="real", block_info_from="real")
 
 	# Move Up and Down
 	object_size = 0.065

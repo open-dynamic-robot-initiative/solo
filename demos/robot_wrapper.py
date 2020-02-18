@@ -1,33 +1,8 @@
-# from pinocchio.robot_wrapper import RobotWrapper
-# # from pinocchio.visualize import *
-# from os.path import join, dirname, exists
-#
-# import sys
-# import pinocchio
-# import numpy as np
-# import crocoddyl
-# import time
-#
-#
-# robot_properties_path = "/home/vagrawal/blmc_ei/workspace/src/catkin/robots/robot_properties/robot_properties_manipulator"
-# finger_urdf_path = join(robot_properties_path,"urdf", "finger.urdf")
-# meshes_path = dirname(robot_properties_path)
-# print(finger_urdf_path, meshes_path)
-# robot = RobotWrapper.BuildFromURDF(finger_urdf_path, [meshes_path])
-# robot_model = robot.model
-#
-# target = np.array([0.4, 0., .4])
-#
-# robot.initViewer(loadModel=True)
-# robot.viewer.gui.addSphere('world/point', .05, [1., 0., 0., 1.])  # radius = .1, RGBA=1001
-# robot.viewer.gui.applyConfiguration('world/point', target.tolist() + [0., 0., 0., 1.])  # xyz+quaternion
-# robot.viewer.gui.refresh()
-
-
+#!/usr/bin/env python3
 from __future__ import print_function
 
 import argparse
-# import ipdb
+import ipdb
 import traceback
 import sys
 
@@ -44,7 +19,7 @@ import math
 
 import matplotlib
 
-# import matplotlib.pylab as plt
+import matplotlib.pylab as plt
 
 import pinocchio
 
@@ -54,7 +29,7 @@ from os.path import join, dirname
 
 from scipy.ndimage import gaussian_filter1d
 
-# import rospkg
+import rospkg
 import crocoddyl
 import time
 
@@ -389,7 +364,7 @@ class Robot(RobotWrapper):
     # loading ------------------------------------------------------------------
     def load_urdf(self):
         try:
-            model_path = "/home/vagraval/blmc_ei/workspace/src/catkin/robots/robot_properties/robot_properties_manipulator"
+            model_path = os.path.join(rospkg.RosPack().get_path("robot_properties_manipulator"))
         except rospkg.ResourceNotFound:
             print('Warning: The URDF is not being loaded from a ROS package.')
             current_path = str(os.path.dirname(os.path.abspath(__file__)))
@@ -441,9 +416,6 @@ def some_demo():
                                         torque=torques,
                                         initial_velocity=[0] * 9,
                                         initial_angle=[0] * 9)
-    # ipdb.set_trace()
-    # print(positions)
-    # print(type(positions),type(positions[0]))
     start_time = time.time()
     robot.play(positions.transpose(), 0.01)
     elapsed_time = time.time() - start_time
@@ -461,9 +433,6 @@ def croc():
     T = 5
     target = np.array([0.3, 0.3, .2])
     robot.initViewer(loadModel=True)
-    # robot.viewer.gui.addSphere('world/point', .05, [1., 0., 0., 1.])  # radius = .1, RGBA=1001
-    # robot.viewer.gui.applyConfiguration('world/point', target.tolist() + [0., 0., 0., 1.])  # xyz+quaternion
-    # robot.viewer.gui.refresh()
 
     # Create the cost functions
     Mref = crocoddyl.FrameTranslation(robot_model.getFrameId("finger_tip_link"), np.matrix(target).T)
@@ -507,23 +476,15 @@ def croc():
     ddp.solve()
 
     # Plotting the solution and the DDP convergence
-    # %matplotlib inline
-
     log = ddp.getCallbacks()[0]
     crocoddyl.plotOCSolution(log.xs, log.us)
     crocoddyl.plotConvergence(log.costs,log.control_regs,
                               log.state_regs,log.gm_stops,
                               log.th_stops,log.steps)
 
-    # Visualizing the solution in gepetto-viewer
-    # crocoddyl.displayTrajectory(robot, ddp.xs, runningModel.dt)
-    # ddp.getCallbacks()[2](ddp)
-    # crocoddyl.CallbackDisplay(robot)(ddp)
     positions = []
     for t,xi in enumerate(log.xs):
         positions.append(np.asarray(xi).reshape(-1)[:state.nq])
-    #    print(positions[:-1], type(positions[-1]))
-        #robot.display(xi[:robot.nq, None])
         time.sleep(1.e-2)
     print(positions)
     print(log.us)
@@ -533,9 +494,6 @@ def croc():
     positions = []
     for t,xi in enumerate(ddp.xs):
         positions.append(np.asarray(xi).reshape(-1)[:state.nq])
- #       print(xi, type(xi))
-  #      #robot.display(xi[:robot.nq, None])
-   #     time.sleep(1.e-2)
     print(positions)
     print(ddp.us)
     input()
@@ -558,5 +516,3 @@ if __name__ == '__main__':
         input()
     except:
         extype, value, tb = sys.exc_info()
-        # traceback.print_exc()
-        # ipdb.post_mortem(tb)
