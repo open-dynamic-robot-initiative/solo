@@ -174,9 +174,13 @@ public:
         // Current clamping.
         desired_current = desired_current.cwiseMin(max_currents_);
         desired_current = desired_current.cwiseMax(-max_currents_);
+        // Vector desired_current;
+        // desired_current.setZero();
 
         for (int i = 0; i < motors_.size(); i++) {
-            motors_[i]->SetCurrentReference(desired_current(i));
+            if (motors_[i]->IsEnabled()) {
+                motors_[i]->SetCurrentReference(desired_current(i));
+            }
         }
     }
 
