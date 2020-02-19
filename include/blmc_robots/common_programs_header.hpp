@@ -47,7 +47,7 @@ void enable_ctrl_c()
 /**
  * @brief Usefull tool for the demos and programs in order to print data in
  * real time.
- * 
+ *
  * @param v_name  is a string defining the data to print.
  * @param v the vector to print.
  */
@@ -57,7 +57,7 @@ void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
     rt_printf("%s", v_name.c_str());
     for (int i = 0; i < v.size(); ++i)
     {
-        rt_printf("%f, ", v(i));
+        rt_printf("%0.3f, ", v(i));
     }
     rt_printf("]\n");
 }
