@@ -21,15 +21,15 @@ position_control_gains:
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad:
-    - 1.191
-    - 0.830
-    - 2.365
-    - 0.885
-    - 1.314
-    - 2.246
-    - 1.420
-    - 0.900
-    - 2.725
+    - 1.265
+    - 0.782
+    - 2.387
+    - 0.983
+    - 1.344
+    - 2.221
+    - 1.049
+    - 1.297
+    - 2.782
 
 # Set the initial position such that it is still save when the stage is at the
 # highest level.
