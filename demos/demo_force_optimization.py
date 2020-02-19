@@ -16,11 +16,6 @@ import ipdb
 from basic_simulator.basic_simulator import CubeSimulator
 from quadprog import solve_qp
 
-
-from object_tracker import ObjectTracker
-import transformations as tf
-from py_blmc_kinect_camera import KinectCamera
-
 import pickle
 
 
@@ -117,12 +112,6 @@ class Robot_Control:
             x_init[:3] = np.resize(position, (3, 1))
             x_init[3:7] = np.resize(orientation, (4, 1))  # quaternion
             self.cube.reset_state(x_init)
-
-            # Add tracking from depth camera
-            # initial_object_in_base_link = tf.compose_matrix(angles=(0, 0, 0),
-            #                                         translate=(0, 0, 0.05))
-            # self.object_tracker = ObjectTracker()
-            # self.object_tracker.initialize(initial_object_in_base_link)
 
         self.cube_q_last = self.get_cube_state()
         self.cube_q_next = self.get_cube_state()
