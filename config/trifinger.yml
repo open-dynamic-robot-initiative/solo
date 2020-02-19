@@ -16,7 +16,7 @@ safety_kd:
     - 0.09
     - 0.05
 position_control_gains:
-    kp: [3, 3, 3, 3, 3, 3, 3, 3, 3]
+    kp: [6, 6, 6, 6, 6, 6, 6, 6, 6]
     kd: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03]
 
 # Set zero-position according to URDF (finger pointing straight down).
