@@ -808,7 +808,7 @@ class Robot_Control:
 
 if __name__ == "__main__":
 
-    control = Robot_Control(mode="real", block_info_from="real")
+    control = Robot_Control(mode="simulation", block_info_from="simulation")
 
     # Move Up and Down
     object_size = 0.065
