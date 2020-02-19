@@ -399,6 +399,7 @@ class Robot_Control:
                     
             if motion_type == "circular":
                 self.q2[:3] = self.move_in_a_circle()
+                self.q2[3:] = np.resize([0, 0, 0, 1], (4, 1))
 
             self.last_time_step = self.t
 
