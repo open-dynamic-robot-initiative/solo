@@ -1,5 +1,6 @@
 #include <cmath>
 #include "blmc_robots/solo8.hpp"
+#include "blmc_robots/common_programs_header.hpp"
 
 namespace blmc_robots{
 
@@ -67,64 +68,56 @@ void Solo8::initialize(const std::string &network_id)
   main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id);
   main_board_ptr_->Init();
 
-  // create the SpiBus (blmc_drivers wrapper around the MasterBoardInterface)
-  spi_bus_ = std::make_shared<blmc_drivers::SpiBus>(main_board_ptr_,
-                                                    motor_boards_.size());
-
-  // create the motor board objects:
-  for(size_t mb_id = 0; mb_id < motor_boards_.size(); ++mb_id)
-  {
-      motor_boards_[mb_id] =
-          std::make_shared<blmc_drivers::SpiMotorBoard>(spi_bus_, mb_id);
-  }
-
-  // Create the motors object. j_id is the joint_id
-  for(unsigned j_id = 0; j_id < motors_.size(); ++j_id)
-  {
-      motors_[j_id] = std::make_shared<blmc_drivers::Motor> (
-          motor_boards_[map_joint_id_to_motor_board_id_[j_id]],
-          map_joint_id_to_motor_port_id_[j_id]);
-  }
-
-  // Create the joint module objects
-  joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
-                          joint_zero_positions_, motor_max_current_);
-
-  // Set the maximum joint torque available
-  max_joint_torques_ = max_joint_torque_security_margin_ *
-                       joints_.get_max_torques().array();
-
-  // fix the polarity to be the same as the urdf model.
   std::array<bool, 8> reverse_polarities = {true, true, false, false, true, true, false, false};
-  joints_.set_joint_polarities(reverse_polarities);
 
-  // The the control gains in order to perform the calibration
-  blmc_robots::Vector8d kp, kd;
-  kp.fill(3.0);
-  kd.fill(0.1);
-  joints_.set_position_control_gains(kp, kd);
+  joints_ = std::make_shared<blmc_robots::SpiJointModules<8> >(
+    main_board_ptr_,
+    map_joint_id_to_motor_board_id_,
+    map_joint_id_to_motor_port_id_,
+    motor_torque_constants_,
+    joint_gear_ratios_,
+    joint_zero_positions_,
+    motor_max_current_,
+    reverse_polarities
+  );
 
-  // Wait until all the motors are ready.
-  spi_bus_->wait_until_ready();
+  joints_->enable();
 
-  rt_printf("All motors and boards are ready.\n");
+  while (!joints_->is_ready() && !CTRL_C_DETECTED)
+  {
+    joints_->send_torques();
+    joints_->acquire_sensors();
+    real_time_tools::Timer::sleep_sec(0.001);
+  }
+
+  if (joints_->is_ready()) {
+    rt_printf("All motors and boards are ready.\n");
+  }
 }
 
 void Solo8::acquire_sensors()
 {
+  static int counter = 0;
+
+  joints_->acquire_sensors();
+
+  if (counter++ % 1000 == 0 && main_board_ptr_->IsTimeout()) {
+    printf("=== master-board is in timeout.\n");
+  }
+
   /**
     * Joint data
     */
   // acquire the joint position
-  joint_positions_ = joints_.get_measured_angles();
+  joint_positions_ = joints_->get_measured_angles();
   // acquire the joint velocities
-  joint_velocities_ = joints_.get_measured_velocities();
+  joint_velocities_ = joints_->get_measured_velocities();
   // acquire the joint torques
-  joint_torques_ = joints_.get_measured_torques();
+  joint_torques_ = joints_->get_measured_torques();
   // acquire the joint index
-  joint_encoder_index_ = joints_.get_measured_index_angles();
+  joint_encoder_index_ = joints_->get_measured_index_angles();
   // acquire the target joint torques
-  joint_target_torques_ = joints_.get_sent_torques();
+  joint_target_torques_ = joints_->get_sent_torques();
 
   /**
     * Additional data
@@ -137,52 +130,27 @@ void Solo8::acquire_sensors()
    */
 
   // motor board status
-  for(size_t i = 0; i < motor_boards_.size(); ++i)
+  for(size_t i = 0; i < 4; ++i)
   {
-      const blmc_drivers::MotorBoardStatus& motor_board_status =
-          motor_boards_[i]->get_status()->newest_element();
-      motor_board_enabled_[i] = motor_board_status.system_enabled;
-      motor_board_errors_[i] = motor_board_status.error_code;
+    motor_board_enabled_[i] = main_board_ptr_->motor_drivers[i].get_is_enabled();
+    motor_board_errors_[i] = main_board_ptr_->motor_drivers[i].get_error_code();
   }
-  // motors status
-  for(size_t j_id = 0; j_id < motors_.size(); ++j_id)
-  {
-      const blmc_drivers::MotorBoardStatus& motor_board_status =
-          motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
-          ->get_status()->newest_element();
 
-      motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
-                             motor_board_status.motor2_enabled:
-                             motor_board_status.motor1_enabled;
-      motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
-                           motor_board_status.motor2_ready:
-                           motor_board_status.motor1_ready;
-  }
+  // motors status
+  motor_enabled_ = joints_->get_motor_enabled();
+  motor_ready_ = joints_->get_motor_ready();
 }
 
 void Solo8::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
-  Vector8d ctrl_torque = target_joint_torque;
-  ctrl_torque = ctrl_torque.array().min(max_joint_torques_);
-  ctrl_torque = ctrl_torque.array().max(- max_joint_torques_);
-  joints_.set_torques(ctrl_torque);
-  joints_.send_torques();
+  joints_->set_torques(target_joint_torque);
+  joints_->send_torques();
 }
 
 bool Solo8::calibrate(const Vector8d& home_offset_rad)
 {
-  // Maximum distance is twice the angle between joint indexes
-  double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
-  double profile_step_size_rad=0.001;
-  HomingReturnCode homing_return_code = joints_.execute_homing(
-      search_distance_limit_rad, home_offset_rad, profile_step_size_rad);
-  if(homing_return_code == HomingReturnCode::FAILED)
-  {
-    return false;
-  }
-  Vector8d zero_pose = Vector8d::Zero();
-  joints_.go_to(zero_pose);
+  /** @TODO: Implement calibration procedure. */
   return true;
 }
 

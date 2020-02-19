@@ -12,6 +12,7 @@
 #include <blmc_robots/common_header.hpp>
 #include <blmc_drivers/devices/spi_motor_board.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_robots/spi_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 
 namespace blmc_robots {
@@ -318,32 +319,23 @@ private:
     * Drivers communication objects
     */
 
-  /** @brief Main board drivers.
+  /**
+   * @brief Main board drivers.
    *
-   * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board  */
+   * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board
+   */
   std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
-  /** @brief Main board blmc_drivers overlay.
-   *
-   * This object contains the API compatible with the blmc_drivers and
-   * BLMCJointModule(s).
-   */
-  std::shared_ptr<blmc_drivers::SpiBus> spi_bus_;
   /**
-   * @brief motor_boards_ are the 4 can motor board.
+   * @brief joint_modules_ Used to communicate to the master board motor drivers and motors.
    */
-  std::array<std::shared_ptr<blmc_drivers::SpiMotorBoard>, 4> motor_boards_;
+  std::shared_ptr<blmc_robots::SpiJointModules<8> > joints_;
 
   /**
    * @brief motors_ are the objects allowing us to send motor commands and
    * receive data.
    */
   std::array<MotorInterface_ptr, 8> motors_;
-
-  /**
-   * @brief This is the collection of joints that compose the robot.
-   */
-  BlmcJointModules<8> joints_;
 
   /**
    * @brief Address the rotation direction of the motor.

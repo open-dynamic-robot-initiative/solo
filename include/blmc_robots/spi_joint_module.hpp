@@ -46,8 +46,8 @@ public:
      */
     SpiJointModules(
         std::shared_ptr<MasterBoardInterface> robot_if,
-        const Vector& motor_to_card_index,
-        const Vector& motor_to_card_port_index,
+        std::array<int, COUNT>& motor_to_card_index,
+        std::array<int, COUNT>& motor_to_card_port_index,
         const Vector& motor_constants,
         const Vector& gear_ratios,
         const Vector& zero_angles,
@@ -75,7 +75,7 @@ public:
 
         motor_to_card_index_ = motor_to_card_index;
 
-        last_index_positions_.fill(0.);
+        index_angles_.fill(0.);
     }
 
     /**
@@ -86,13 +86,13 @@ public:
         for (int i = 0; i < COUNT; i++)
         {
             int driver_idx = motor_to_card_index_[i];
-            robot_if->motor_drivers[driver_idx].motor1->SetCurrentReference(0);
-            robot_if->motor_drivers[driver_idx].motor2->SetCurrentReference(0);
-            robot_if->motor_drivers[driver_idx].motor1->Enable();
-            robot_if->motor_drivers[driver_idx].motor2->Enable();
-            robot_if->motor_drivers[driver_idx].EnablePositionRolloverError();
-            robot_if->motor_drivers[driver_idx].SetTimeout(5);
-            robot_if->motor_drivers[driver_idx].Enable();
+            robot_if_->motor_drivers[driver_idx].motor1->SetCurrentReference(0);
+            robot_if_->motor_drivers[driver_idx].motor2->SetCurrentReference(0);
+            robot_if_->motor_drivers[driver_idx].motor1->Enable();
+            robot_if_->motor_drivers[driver_idx].motor2->Enable();
+            robot_if_->motor_drivers[driver_idx].EnablePositionRolloverError();
+            robot_if_->motor_drivers[driver_idx].SetTimeout(5);
+            robot_if_->motor_drivers[driver_idx].Enable();
         }
         robot_if_->SendCommand();
     }
@@ -106,11 +106,31 @@ public:
     {
         for (int i = 0; i < COUNT; i++)
         {
-            if (!motors_[i].IsEnabled() || !motors_[i].IsReady()) {
+            if (!motors_[i]->IsEnabled() || !motors_[i]->IsReady()) {
                 return false;
             }
         }
         return true;
+    }
+
+    std::array<bool, COUNT> get_motor_enabled()
+    {
+        std::array<bool, COUNT> motor_enabled;
+        for (int i = 0; i < COUNT; i++)
+        {
+            motor_enabled[i] = motors_[i]->IsEnabled();
+        }
+        return motor_enabled;
+    }
+
+    std::array<bool, COUNT> get_motor_ready()
+    {
+        std::array<bool, COUNT> motor_ready;
+        for (int i = 0; i < COUNT; i++)
+        {
+            motor_ready[i] = motors_[i]->IsReady();
+        }
+        return motor_ready;
     }
 
     /**
@@ -133,10 +153,10 @@ public:
         Vector positions = get_measured_angles();
         for (int i = 0; i < COUNT; i++)
         {
-            if (saw_index_[i] == false && motors_[i].HasIndexBeenDetected())
+            if (saw_index_[i] == false && motors_[i]->HasIndexBeenDetected())
             {
                 saw_index_[i] = true;
-                index_positions_[i] = positions(i);
+                index_angles_[i] = positions(i);
             }
         }
     }
@@ -148,14 +168,15 @@ public:
      */
     void set_torques(const Vector& desired_torques)
     {
-        Vector desired_current = polarities_ * desired_torques / gear_ratios_ / motor_constants_;
+        Vector desired_current = polarities_.cwiseProduct(desired_torques).
+            cwiseQuotient(gear_ratios_).cwiseQuotient(motor_constants_);
 
         // Current clamping.
         desired_current = desired_current.cwiseMin(max_currents_);
         desired_current = desired_current.cwiseMax(-max_currents_);
 
         for (int i = 0; i < motors_.size(); i++) {
-            motors_[i].SetCurrentReference(desired_current(i))
+            motors_[i]->SetCurrentReference(desired_current(i));
         }
     }
 
@@ -166,7 +187,7 @@ public:
      */
     Vector get_max_torques()
     {
-        return max_current * gear_ratios_ * motor_constants_;
+        return max_currents_.cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
     }
 
     /**
@@ -179,9 +200,9 @@ public:
         Vector torques;
         for(size_t i = 0; i < COUNT; i++)
         {
-            torques(i) = motors_[i].GetCurrentRef();
+            torques(i) = motors_[i]->GetCurrentRef();
         }
-        torques = torques * polarities_ * gear_ratios_ * motor_constants_;
+        torques = torques.cwiseProduct(polarities_).cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
         return torques;
     }
 
@@ -195,9 +216,9 @@ public:
         Vector torques;
         for(size_t i = 0; i < COUNT; i++)
         {
-            torques(i) = motors_[i].GetCurrent();
+            torques(i) = motors_[i]->GetCurrent();
         }
-        torques = torques * polarities_ * gear_ratios_ * motor_constants_;
+        torques = torques.cwiseProduct(polarities_).cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
         return torques;
     }
 
@@ -211,9 +232,9 @@ public:
         Vector positions;
         for(size_t i = 0; i < COUNT; i++)
         {
-            positions(i) = motors_[i].GetPosition();
+            positions(i) = motors_[i]->GetPosition();
         }
-        positions = positions * polarities_  / gear_ratios_ - zero_angles_;
+        positions = positions.cwiseProduct(polarities_).cwiseQuotient(gear_ratios_) - zero_angles_;
         return positions;
     }
 
@@ -227,9 +248,9 @@ public:
         Vector velocities;
         for(size_t i = 0; i < COUNT; i++)
         {
-            velocities(i) = motors_[i].GetVelocity();
+            velocities(i) = motors_[i]->GetVelocity();
         }
-        velocities = velocities * polarities_ / gear_ratios_;
+        velocities = velocities.cwiseProduct(polarities_).cwiseQuotient(gear_ratios_);
         return velocities;
     }
 
@@ -261,7 +282,7 @@ public:
      */
     Vector get_measured_index_angles() const
     {
-        return index_positions_;
+        return index_angles_;
     }
 
 private:
@@ -270,11 +291,10 @@ private:
     Vector max_currents_;
     Vector zero_angles_;
     Vector polarities_;
+
+    std::array<int, COUNT> motor_to_card_index_;
+
     Vector index_angles_;
-
-    Vector motor_to_card_index_;
-
-    Vector index_positions_;
     std::array<bool, COUNT> saw_index_;
 
     /**
