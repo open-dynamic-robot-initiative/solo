@@ -31,7 +31,6 @@ from scipy.ndimage import gaussian_filter1d
 
 import rospkg
 import crocoddyl
-import time
 
 
 def to_matrix(array):
@@ -193,25 +192,16 @@ class Robot(RobotWrapper):
         if isinstance(params, np.ndarray):
             params = np.array(params).flatten()
 
-        inertia_about_origin = np.array([[params[10 *
-                                                 link_index +
-                                                 4], params[10 *
-                                                            link_index +
-                                                            5], params[10 *
-                                                                       link_index +
-                                                                       7]], [params[10 *
-                                                                                    link_index +
-                                                                                    5], params[10 *
-                                                                                               link_index +
-                                                                                               6], params[10 *
-                                                                                                          link_index +
-                                                                                                          8]], [params[10 *
-                                                                                                                       link_index +
-                                                                                                                       7], params[10 *
-                                                                                                                                  link_index +
-                                                                                                                                  8], params[10 *
-                                                                                                                                             link_index +
-                                                                                                                                             9]]])
+        inertia_about_origin = np.array(
+            [[params[10 * link_index + 4],
+              params[10 * link_index + 5],
+              params[10 * link_index + 7]],
+             [params[10 * link_index + 5],
+              params[10 * link_index + 6],
+              params[10 * link_index + 8]],
+             [params[10 * link_index + 7],
+              params[10 * link_index + 8],
+              params[10 * link_index + 9]]])
         return inertia_about_origin
 
     # see Wensing et al 2018 for details
@@ -243,13 +233,9 @@ class Robot(RobotWrapper):
         if isinstance(params, np.ndarray):
             params = np.array(params).flatten()
 
-        mass_times_com = np.array([params[10 *
-                                          link_index +
-                                          1], params[10 *
-                                                     link_index +
-                                                     2], params[10 *
-                                                                link_index +
-                                                                3]])
+        mass_times_com = np.array([params[10 * link_index + 1],
+                                   params[10 * link_index + 2],
+                                   params[10 * link_index + 3]])
         return mass_times_com
 
     def params_to_mass(self, params, link_index):
@@ -356,8 +342,9 @@ class Robot(RobotWrapper):
         for dof in range(self.model.nv):
             theta_dof = theta[dof * 10: (dof + 1) * 10]
 
-            self.model.inertias[dof +
-                                1] = pinocchio.libpinocchio_pywrap.Inertia.FromDynamicParameters(theta_dof)
+            self.model.inertias[dof + 1] = \
+                pinocchio.libpinocchio_pywrap.Inertia.FromDynamicParameters(
+                    theta_dof)
 
         n_inertial_params = self.model.nv * 10
         self.viscous_friction = theta[n_inertial_params: n_inertial_params + 3]
