@@ -12,9 +12,9 @@ position_control_gains:
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad:
-    - 1.410
-    - 0.872
-    - 2.715
+    - 1.049
+    - 1.297
+    - 2.782
 initial_position_rad: [0, -.8, -1.5]
 
 
