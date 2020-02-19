@@ -383,18 +383,22 @@ class Robot_Control:
 
         # the block is supposed to reach a final position within 1 second after
         # which the final position changes
+        motion_type = "upward"
+        motion_type = "circular"
+        
         seconds = 1
         if (self.t * self.dt) % seconds == 0:
             self.q1 = self.cube_q_last
             self.q2 = pinocchio.se3ToXYZQUAT(pinocchio.SE3.Random())
-            self.q2[:3] = np.resize([0, 0, 0.17], (3, 1))
-            self.q2[3:] = np.resize([0, 0, 0, 1], (4, 1))
-
-            self.q2[:3] = self.move_in_a_circle()
-
-            if self.t >= seconds * 9000:
-                # self.q2 = self.cube_q_last
-                self.q2[:3] = np.resize([0, 0, 0.05], (3, 1))
+            
+            if motion_type == "upward":
+                self.q2[:3] = np.resize([0, 0, 0.17], (3, 1))
+                self.q2[3:] = np.resize([0, 0, 0, 1], (4, 1))
+                if self.t >= seconds * 9000:
+                    self.q2 = self.cube_q_last
+                    
+            if motion_type == "circular":
+                self.q2[:3] = self.move_in_a_circle()
 
             self.last_time_step = self.t
 
@@ -576,7 +580,7 @@ class Robot_Control:
             A[:3, 3 * j:3 * (j + 1)] = np.eye(3)
             A[3:, 3 * j:3 * (j + 1)] = pinocchio.utils.skew(self.x_obs[i])
 
-            reduced_value = 1.47  # root 2
+            reduced_value = 1.414  # root 2
 
             if i == 0:
                 G[3 * j + 0, 3 * j + 1] = -1  # -Fy >= 0
