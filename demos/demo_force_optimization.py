@@ -128,7 +128,9 @@ class Robot_Control:
         self.cube_q_next = self.get_cube_state()
 
     def get_cube_state(self):
-        '''Returns the cube's current state (position and orientation --> 1x7) depending upon the requested source
+        '''
+        Returns the cube's current state (position and orientation --> 1x7)
+        depending upon the requested source.
         '''
         if self.block_info_from == "simulation":
             return self.finger.get_block_state()
@@ -198,14 +200,15 @@ class Robot_Control:
             elif torque < -0.1:
                 q[i] += math.radians(-1 * torque + 0.7)
             # else:
-            # 	q[i] += math.radians(-11 * (torque - 0.03) - 0.63)
+            #   q[i] += math.radians(-11 * (torque - 0.03) - 0.63)
 
         return q
 
     def finger_tip_observed_state(self):
         '''
         Apply the torque values to get to a new state of the robot.
-        Also calculates the new Jacobians and the new end-effector position by doing Forward Kinematics.
+        Also calculates the new Jacobians and the new end-effector position by
+        doing Forward Kinematics.
         '''
 
         # Applying torque on real robot
@@ -219,7 +222,8 @@ class Robot_Control:
             self.obs = obs
             q = obs.position
             w = obs.velocity
-            q = self.calculate_q_compensation()  # for backlash and motorbelt timing error
+            # for backlash and motorbelt timing error
+            q = self.calculate_q_compensation()
 
         else:
             time_stamp = self.finger.append_desired_action(
@@ -273,8 +277,8 @@ class Robot_Control:
             exit_before_timeout=True):
         '''
         Moves the finger tips to the desired final position.
-        An offset is passed, so that the fingers don't disturb the object while reaching it.
-        The forces are not optimised in a simple "move" task.
+        An offset is passed, so that the fingers don't disturb the object while
+        reaching it.  The forces are not optimised in a simple "move" task.
         '''
         if offset is not None:
             self.object_size += offset
@@ -332,8 +336,9 @@ class Robot_Control:
     def grasp(self, f_applied=[1.1, 1.1, 0]):
         '''
         This signals that the fingers are now grasping the object.
-        Hence, the external forces (optimised) to hold the object begin to be applied.
-        For this, we assume that the fingers have already reached the object boundary.
+        Hence, the external forces (optimised) to hold the object begin to be
+        applied.  For this, we assume that the fingers have already reached the
+        object boundary.
         '''
         self.f_applied = f_applied
         self.cnt_array = [1, 1, 1]
@@ -382,7 +387,9 @@ class Robot_Control:
         return np.resize([x, y, 0.05], (3, 1))
 
     def next_state(self):
-        '''Numerically computes the next state of the block (using interpolation between an initial and a final state)
+        '''
+        Numerically computes the next state of the block (using interpolation
+        between an initial and a final state)
         '''
 
         # the block is supposed to reach a final position within 1 second after
@@ -452,7 +459,8 @@ class Robot_Control:
 
     def compute_block_wrench(self):
         '''
-        Computes the block's wrench (i.e. the com linear forces and the angular torques) for each point along the trajectory.
+        Computes the block's wrench (i.e. the com linear forces and the angular
+        torques) for each point along the trajectory.
         '''
         present_state = self.present_state()  # 13x1
         next_state = self.next_state()  # 13x1
@@ -481,7 +489,8 @@ class Robot_Control:
 
         # This is computed in the block's local frame
         self.block_com_wrench = np.vstack([
-            self.rotation_matrix.T.dot(np.array([0, 0, 0.8]).reshape(-1, 1)) + self._kc * self.dx[:3] + self._dc * self.dx[6:9],
+            self.rotation_matrix.T.dot(np.array([0, 0, 0.8]).reshape(-1, 1))
+            + self._kc * self.dx[:3] + self._dc * self.dx[6:9],
             self._kb * self.dx[3:6] + self._db * self.dx[9:]
         ])
 
@@ -526,8 +535,9 @@ class Robot_Control:
             Solution to the QP, if found, otherwise ``None``.
         Note
         ----
-        The quadprog solver only considers the lower entries of `P`, therefore it
-        will use a wrong cost function if a non-symmetric matrix is provided.
+        The quadprog solver only considers the lower entries of `P`, therefore
+        it will use a wrong cost function if a non-symmetric matrix is
+        provided.
         """
         if initvals is not None:
             print("quadprog: note that warm-start values ignored by wrapper")
@@ -548,13 +558,14 @@ class Robot_Control:
 
     def compute_force_qp(self):
         '''
-        Optimize the end-effector forces subject to some linear and inequality constraints.
+        Optimize the end-effector forces subject to some linear and inequality
+        constraints.
         '''
 
         self.finger_tip_observed_state()
 
-        # Use the contact activation from the plan to determine which of the forces
-        # should be active.
+        # Use the contact activation from the plan to determine which of the
+        # forces should be active.
         N = (int)(np.sum(self.cnt_array))
         self._mu = 0.4
 
@@ -580,36 +591,36 @@ class Robot_Control:
             reduced_value = 1.47  # root 2
 
             if i == 0:
-                G[3 * j + 0, 3 * j + 1] = -1      # -Fy >= 0
-                G[3 * j + 1, 3 * j + 0] = -reduced_value		# |mu Fy| - Fx >= 0
+                G[3 * j + 0, 3 * j + 1] = -1  # -Fy >= 0
+                G[3 * j + 1, 3 * j + 0] = -reduced_value  # |mu Fy| - Fx >= 0
                 G[3 * j + 1, 3 * j + 1] = -self._mu
-                G[4 * j + 1, 3 * j + 0] = reduced_value		# |mu Fy| + Fx >= 0
+                G[4 * j + 1, 3 * j + 0] = reduced_value  # |mu Fy| + Fx >= 0
                 G[4 * j + 1, 3 * j + 1] = -self._mu
-                G[3 * j + 2, 3 * j + 2] = -reduced_value		# |mu Fy| - Fz >= 0
+                G[3 * j + 2, 3 * j + 2] = -reduced_value  # |mu Fy| - Fz >= 0
                 G[3 * j + 2, 3 * j + 1] = -self._mu
-                G[5 * j + 2, 3 * j + 2] = reduced_value		# |mu Fy| + Fz >= 0
+                G[5 * j + 2, 3 * j + 2] = reduced_value  # |mu Fy| + Fz >= 0
                 G[5 * j + 2, 3 * j + 1] = -self._mu
 
             if i == 1:
-                G[3 * j + 0, 3 * j + 0] = -1      # Fx <= 0
-                G[3 * j + 1, 3 * j + 1] = -reduced_value		# |mu Fx| - Fy >= 0
+                G[3 * j + 0, 3 * j + 0] = -1  # Fx <= 0
+                G[3 * j + 1, 3 * j + 1] = -reduced_value  # |mu Fx| - Fy >= 0
                 G[3 * j + 1, 3 * j + 0] = -self._mu
-                G[4 * j + 1, 3 * j + 1] = reduced_value		# |mu Fx| + Fy >= 0
+                G[4 * j + 1, 3 * j + 1] = reduced_value  # |mu Fx| + Fy >= 0
                 G[4 * j + 1, 3 * j + 0] = -self._mu
-                G[3 * j + 2, 3 * j + 2] = -reduced_value		# |mu Fx| - Fz >= 0
+                G[3 * j + 2, 3 * j + 2] = -reduced_value  # |mu Fx| - Fz >= 0
                 G[3 * j + 2, 3 * j + 0] = -self._mu
-                G[5 * j + 2, 3 * j + 2] = reduced_value		# |mu Fx| + Fz >= 0
+                G[5 * j + 2, 3 * j + 2] = reduced_value  # |mu Fx| + Fz >= 0
                 G[5 * j + 2, 3 * j + 0] = -self._mu
 
             if i == 2:
-                G[3 * j + 0, 3 * j + 0] = 1       # Fx >= 0
-                G[3 * j + 1, 3 * j + 1] = -reduced_value		# |mu Fx| - Fy >= 0
+                G[3 * j + 0, 3 * j + 0] = 1  # Fx >= 0
+                G[3 * j + 1, 3 * j + 1] = -reduced_value  # |mu Fx| - Fy >= 0
                 G[3 * j + 1, 3 * j + 0] = self._mu
-                G[4 * j + 1, 3 * j + 1] = reduced_value		# |mu Fx| + Fy >= 0
+                G[4 * j + 1, 3 * j + 1] = reduced_value  # |mu Fx| + Fy >= 0
                 G[4 * j + 1, 3 * j + 0] = self._mu
-                G[3 * j + 2, 3 * j + 2] = -reduced_value		# |mu Fx| - Fz >= 0
+                G[3 * j + 2, 3 * j + 2] = -reduced_value  # |mu Fx| - Fz >= 0
                 G[3 * j + 2, 3 * j + 0] = self._mu
-                G[5 * j + 2, 3 * j + 2] = reduced_value		# |mu Fx| + Fz >= 0
+                G[5 * j + 2, 3 * j + 2] = reduced_value  # |mu Fx| + Fz >= 0
                 G[5 * j + 2, 3 * j + 0] = self._mu
 
             j += 1
@@ -632,13 +643,8 @@ class Robot_Control:
         F_observed_local = np.zeros([9]).reshape(-1, 1)
 
         for i in range(3):
-            F_observed_local[3 *
-                             i: 3 *
-                             (i +
-                              1)] = self.rotation_matrix.T.dot(self.F_observed[3 *
-                                                                               i: 3 *
-                                                                               (i +
-                                                                                1)])
+            F_observed_local[3 * i: 3 * (i + 1)] = \
+                self.rotation_matrix.T.dot(self.F_observed[3 * i: 3 * (i + 1)])
 
         self.observed_wrench = np.matrix(A[:, :-6]) * F_observed_local
 
@@ -647,23 +653,26 @@ class Robot_Control:
 
     def finger_impedance_control(self, unoptimised_forces=False):
         '''
-        Computes a relation between end-effector external force, position and velocity.
-        This final force is mapped to the torque values using end-effector Jacobian transpose
+        Computes a relation between end-effector external force, position and
+        velocity.  This final force is mapped to the torque values using
+        end-effector Jacobian transpose
         '''
         object_state = np.resize(self.cube_q_next, 13)
-        self.end_eff_des_pos = [np.matrix([object_state[0], object_state[1], object_state[2]]).T,
-                                np.matrix([object_state[0], object_state[1], object_state[2]]).T,
-                                np.matrix([object_state[0], object_state[1], object_state[2]]).T]
+        self.end_eff_des_pos = [
+            np.matrix([object_state[0], object_state[1], object_state[2]]).T,
+            np.matrix([object_state[0], object_state[1], object_state[2]]).T,
+            np.matrix([object_state[0], object_state[1], object_state[2]]).T]
 
         self.end_eff_des_pos = np.vstack(self.end_eff_des_pos)
 
-        contact_point_offset = [np.array([0, self.object_size / 2, 0]).reshape(-1, 1),
-                                np.array([self.object_size / 2, -self.object_size / 8, 0]).reshape(-1, 1),
-                                np.array([-self.object_size / 2, -self.object_size / 8, 0]).reshape(-1, 1)]
+        contact_point_offset = [
+            np.array([0, self.object_size / 2, 0]).reshape(-1, 1),
+            np.array([self.object_size / 2, -self.object_size / 8, 0]).reshape(-1, 1),
+            np.array([-self.object_size / 2, -self.object_size / 8, 0]).reshape(-1, 1)]
 
         for i in range(3):
-            self.end_eff_des_pos[3 * i: 3 * \
-                (i + 1)] += self.rotation_matrix.dot(contact_point_offset[i])
+            self.end_eff_des_pos[3 * i: 3 * (i + 1)] += \
+                self.rotation_matrix.dot(contact_point_offset[i])
 
         self.end_eff_des_vel = np.array(
             [object_state[7:10]] * 3).reshape(-1, 1)
@@ -700,12 +709,10 @@ class Robot_Control:
 
         # Kp and Kd
         if unoptimised_forces:
-            self.Kp = np.diag(np.full(9, 81))  # np.diag(np.full(9,81))
-            self.Kd = np.diag(np.full(9, 0.11))  # np.diag(np.full(9,0.09))
+            self.Kp = np.diag(np.full(9, 81))
+            self.Kd = np.diag(np.full(9, 0.11))
         else:
-            # np.diag(np.full(9,81)) 30 -- 53
             self.Kp = np.diag(np.full(9, 30))
-            # np.diag(np.full(9,0.09)) 0.001
             self.Kd = np.diag(np.full(9, 0.001))
 
         force = self.Kp * (self.end_eff_des_pos - self.end_eff_obs_pos) + \
@@ -716,15 +723,19 @@ class Robot_Control:
         self.torque = np.array(torque).reshape(-1)
 
     def apply_controls(self):
-        '''Sequentially calls the funtion to calculate block's wrench at the com and then the optimised finger forces.
+        '''
+        Sequentially calls the funtion to calculate block's wrench at the com
+        and then the optimised finger forces.
         '''
         self.compute_block_wrench()
         self.compute_force_qp()
-        u = self.cube.step(self.block_com_wrench).copy()
+        self.cube.step(self.block_com_wrench).copy()
 
     def optimised_trajectory(self):
-        '''Divides the task of reaching the object, grasping it and then making it follow a desired trajectory.
-        The end-effector forces are optimized while doing so.
+        '''
+        Divides the task of reaching the object, grasping it and then making it
+        follow a desired trajectory.  The end-effector forces are optimized
+        while doing so.
         '''
         if self.mode == "simulation":
             self.finger.set_block_state([0, 0, 0.05], [0, 0, 0, 1])
