@@ -496,15 +496,14 @@ class Robot_Control:
 
         self.block_com_position = present_state[:3]
 
-    def quadprog_solve_qp(
-        self,
-        P,
-        q,
-        G=None,
-        h=None,
-        A=None,
-        b=None,
-            initvals=None):
+    def quadprog_solve_qp(self,
+                          P,
+                          q,
+                          G=None,
+                          h=None,
+                          A=None,
+                          b=None,
+                          initvals=None):
         """
         Solve a Quadratic Program defined as:
             minimize
