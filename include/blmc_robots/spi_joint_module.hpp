@@ -178,9 +178,7 @@ public:
         // desired_current.setZero();
 
         for (int i = 0; i < motors_.size(); i++) {
-            if (motors_[i]->IsEnabled()) {
-                motors_[i]->SetCurrentReference(desired_current(i));
-            }
+            motors_[i]->SetCurrentReference(desired_current(i));
         }
     }
 
