@@ -745,7 +745,8 @@ class Robot_Control:
         self.cube_q_next = self.get_cube_state()
 
         # simulation horizon N*dt seconds.
-        N = 12000
+        # this is 12 seconds
+        N = 12000 
 
         optimised_forces = np.zeros([N, 9])
         observed_forces = np.zeros([N, 9])
