@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 {
     if(argc != 2)
     {
-        throw std::runtime_error("Wrong number of argument: `./demo_solo12_calibration network_id`.");
+        throw std::runtime_error("Wrong number of argument: `./solo12_hardware_calibration network_id`.");
     }
 
     enable_ctrl_c();
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 
     Solo12 robot;
 
-    robot.initialize(argv[1], argv[2]);
+    robot.initialize(argv[1], "banana");
 
     rt_printf("Controller is set up.\n");
     rt_printf("Press enter to launch the calibration.\n");

@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     }
     
     std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
-    robot->initialize(argv[1], argv[2]);
+    robot->initialize(argv[1], "banana");
 
     ThreadCalibrationData_t thread_data(robot);
 

@@ -55,7 +55,7 @@ Solo12::Solo12()
    */
 
   // for now this value is very small but it is currently for debug mode
-  motor_max_current_.fill(4.0); // TODO: set as paramters?
+  motor_max_current_.fill(8.0); // TODO: set as paramters?
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
