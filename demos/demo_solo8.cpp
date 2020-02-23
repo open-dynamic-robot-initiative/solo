@@ -26,17 +26,22 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
 
     Eigen::Vector4d sliders;
     Eigen::Vector4d sliders_filt;
+    Eigen::Vector4d sliders_init;
 
     Solo8 robot;
     robot.initialize("eno1");
 
     std::vector<std::deque<double> > sliders_filt_buffer(
         robot.get_slider_positions().size());
-    size_t max_filt_dim = 200;
+    size_t max_filt_dim = 100;
     for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
     {
         sliders_filt_buffer[i].clear();
     }
+
+    robot.acquire_sensors();
+    sliders_init = robot.get_slider_positions();
+
     size_t count = 0;
     while (!CTRL_C_DETECTED)
     {
@@ -53,17 +58,22 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
                 sliders_filt_buffer[i].pop_front();
             }
             sliders_filt_buffer[i].push_back(sliders(i));
-            sliders_filt(i) = 0.5;
+            sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
+                                    sliders_filt_buffer[i].end(),
+                                    0.0) /
+                    (double)sliders_filt_buffer[i].size();
         }
 
         // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
         for (unsigned i = 0; i < 4; ++i)
         {
             // desired_pose[i].push_back
-            desired_joint_position(2 * i) = max_range * (sliders_filt(i) - 0.5);
+            desired_joint_position(2 * i) = max_range * (sliders_filt(0) - sliders_init(0));
             desired_joint_position(2 * i + 1) =
-                max_range * (sliders_filt(i) - 0.5);
+                -2. * max_range * (sliders_filt(0) - sliders_init(0));
         }
+
+        desired_joint_position.tail(4) *= -1;
 
         // we implement here a small pd control at the current level
         desired_torque =
@@ -79,8 +89,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
         if ((count % 1000) == 0)
         {
             print_vector("des_joint_tau", desired_torque);
+            print_vector("des_joint_tau", desired_torque);
             print_vector("    joint_pos", robot.get_joint_positions());
             print_vector("des_joint_pos", desired_joint_position);
+            print_vector("   slider_pos", robot.get_slider_positions());
         }
         ++count;
     }  // endwhile
@@ -108,7 +120,7 @@ int main(int argc, char** argv)
 
     rt_printf("control loop started \n");
 
-    while (true)
+    while (!CTRL_C_DETECTED)
     {
         real_time_tools::Timer::sleep_sec(0.01);
     }

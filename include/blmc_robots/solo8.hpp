@@ -10,8 +10,7 @@
 #pragma once
 
 #include <blmc_robots/common_header.hpp>
-#include <blmc_drivers/devices/spi_motor_board.hpp>
-#include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_drivers/serial_reader.hpp>
 #include <blmc_robots/spi_joint_module.hpp>
 #include <blmc_robots/slider.hpp>
 
@@ -325,6 +324,16 @@ private:
    * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board
    */
   std::shared_ptr<MasterBoardInterface> main_board_ptr_;
+
+  /**
+   * @brief Reader for serial port to read arduino slider values.
+   */
+  std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
+
+  /**
+   * @brief For reading the raw slider values from the serial port.
+   */
+  std::vector<int> slider_positions_vector_;
 
   /**
    * @brief joint_modules_ Used to communicate to the master board motor drivers and motors.
