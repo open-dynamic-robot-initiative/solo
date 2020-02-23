@@ -56,10 +56,15 @@ Solo8::Solo8()
   motor_torque_constants_.fill(0.025);
   motor_inertias_.fill(0.045);
   joint_gear_ratios_.fill(9.0);
+
+  slider_positions_vector_.resize(3);
 }
 
 void Solo8::initialize(const std::string &network_id)
 {
+  // Use a serial port to read slider values.
+  serial_reader_ = std::make_shared<blmc_drivers::SerialReader>("Not used", 3);
+
   // Create the different mapping
   map_joint_id_to_motor_board_id_ = {0, 0, 1, 1, 2, 2, 3, 3};
   map_joint_id_to_motor_port_id_ = {0, 1, 1, 0, 1, 0, 0, 1};
@@ -122,8 +127,14 @@ void Solo8::acquire_sensors()
   /**
     * Additional data
     */
-  // acquire the slider positions
-  // TODO: Acquire via Arduino.
+  serial_reader_->fill_vector(slider_positions_vector_);
+  for (unsigned i = 0; i < 2; ++i)
+  {
+    // acquire the slider
+    slider_positions_(i) = double(slider_positions_vector_[i+1]) / 1024.;
+  }
+
+  // active_estop_ = slider_positions_vector_[0] == 0;
 
   /**
    * The different status.
