@@ -361,6 +361,9 @@ private:
    * are analogue inputs.
    */
   std::array<ContactSensor_ptr, 4> contact_sensors_;
+
+  /** @brief If the physical estop is pressed or not. */
+  bool active_estop_;
 };
 
 } // namespace blmc_robots
