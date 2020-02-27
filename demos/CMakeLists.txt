@@ -61,6 +61,3 @@ create_demo(stuggihop stuggihop)
 create_demo(solo8_calibration solo8 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo8.yaml")
 create_demo(solo12_calibration solo12 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo12.yaml")
 create_demo(teststand_calibration teststand "${robot_properties_teststand_SOURCE_PREFIX}/config/dgm_parameters.yaml")
-
-create_demo(finger_position_control)
-create_demo(finger_torque_control)
