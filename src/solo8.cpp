@@ -134,7 +134,7 @@ void Solo8::acquire_sensors()
     slider_positions_(i) = double(slider_positions_vector_[i+1]) / 1024.;
   }
 
-  // active_estop_ = slider_positions_vector_[0] == 0;
+  active_estop_ = slider_positions_vector_[0] == 0;
 
   /**
    * The different status.
@@ -155,7 +155,16 @@ void Solo8::acquire_sensors()
 void Solo8::send_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
-  joints_->set_torques(target_joint_torque);
+  static int estop_msg_counter_ = 0;
+  Vector8d ctrl_torque = target_joint_torque;
+  if (active_estop_) {
+    ctrl_torque.fill(0.);
+    estop_msg_counter_ += 1;
+    if (estop_msg_counter_ % 5000 == 0) {
+      rt_printf("solo8: estop is active. Setting ctrl_torque to zero.\n");
+    }
+  }
+  joints_->set_torques(ctrl_torque);
   joints_->send_torques();
 }
 
