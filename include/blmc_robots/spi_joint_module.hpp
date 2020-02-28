@@ -202,7 +202,7 @@ public:
         Vector torques;
         for(size_t i = 0; i < COUNT; i++)
         {
-            torques(i) = motors_[i]->GetCurrentRef();
+            torques(i) = motors_[i]->current_ref;
         }
         torques = torques.cwiseProduct(polarities_).cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
         return torques;
