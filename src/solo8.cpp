@@ -174,4 +174,19 @@ bool Solo8::calibrate(const Vector8d& home_offset_rad)
   return true;
 }
 
+void Solo8::fill_joint_positions(Eigen::Ref<Vector8d> positions)
+{
+    positions = joint_positions_;
+}
+
+void Solo8::fill_joint_velocities(Eigen::Ref<Vector8d> velocities)
+{
+    velocities = joint_velocities_;
+}
+
+void Solo8::fill_joint_encoder_indices(Eigen::Ref<Vector8d> encoder_indices)
+{
+    encoder_indices = joint_encoder_index_;
+}
+
 } // namespace blmc_robots

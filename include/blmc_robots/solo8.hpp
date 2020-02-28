@@ -225,6 +225,27 @@ public:
     return motor_board_errors_;
   }
 
+  /**
+   * @brief Fills the joint positions into the provided array.
+   *
+   * @param positions Vector to put measured angles into.
+   */
+  void fill_joint_positions(Eigen::Ref<Vector8d> positions);
+
+  /**
+   * @brief Fills the joint velocities into the provided array.
+   *
+   * @param velocities Vector to put measured velocities into.
+   */
+  void fill_joint_velocities(Eigen::Ref<Vector8d> velocities);
+
+  /**
+   * @brief Fills the detected joint encoder indices into the array.
+   *
+   * @param encoder_indices Vector to put the joint encoder indices into.
+   */
+  void fill_joint_encoder_indices(Eigen::Ref<Vector8d> encoder_indices);
+
 private:
 
   /**
