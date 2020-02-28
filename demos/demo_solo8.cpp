@@ -14,9 +14,9 @@
 
 using namespace blmc_robots;
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    // Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
+    Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
 
     double kp = 3.0;
     double kd = 0.05;
@@ -27,9 +27,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
     Eigen::Vector4d sliders;
     Eigen::Vector4d sliders_filt;
     Eigen::Vector4d sliders_init;
-
-    Solo8 robot;
-    robot.initialize("eno1");
 
     std::vector<std::deque<double> > sliders_filt_buffer(
         robot.get_slider_positions().size());
@@ -86,7 +83,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void*)
         // print -----------------------------------------------------------
         real_time_tools::Timer::sleep_sec(0.001);
 
-        if ((count % 1000) == 0)
+        if ((count % 250) == 0)
         {
             print_vector("des_joint_tau", desired_torque);
             print_vector("des_joint_tau", desired_torque);
@@ -110,13 +107,11 @@ int main(int argc, char** argv)
 
     real_time_tools::RealTimeThread thread;
 
-    // Solo8 robot;
-    // robot.initialize(std::string(argv[1]));
+    Solo8 robot;
+    robot.initialize(std::string(argv[1]));
 
-    rt_printf("controller is set up \n");
-
-    // thread.create_realtime_thread(&control_loop, &robot);
-    thread.create_realtime_thread(&control_loop);
+    thread.create_realtime_thread(&control_loop, &robot);
+    // thread.create_realtime_thread(&control_loop);
 
     rt_printf("control loop started \n");
 
