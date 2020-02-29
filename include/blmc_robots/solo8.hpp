@@ -38,6 +38,11 @@ public:
       const Eigen::Ref<Vector8d> target_joint_torque);
 
   /**
+   * @brief Defines the angle in joint output space corresponding to zero.
+   */
+  void set_zero_angles(const Vector8d& zero_angles);
+
+  /**
    * @brief acquire_sensors acquire all available sensors, WARNING !!!!
    * this method has to be called prior to any getter to have up to date data.
    */

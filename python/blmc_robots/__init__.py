@@ -5,3 +5,4 @@ from blmc_robots.py_real_finger import *
 from blmc_robots.py_trifinger import *
 from blmc_robots.py_one_joint import *
 from blmc_robots.py_two_joint import *
+from blmc_robots.py_solo8 import *

@@ -45,5 +45,6 @@ PYBIND11_MODULE(py_solo8, m)
         .def("get_joint_velocities", &Solo8::get_joint_velocities)
         .def("fill_joint_positions", &Solo8::fill_joint_positions, py::arg("positions"))
         .def("fill_joint_velocities", &Solo8::fill_joint_velocities, py::arg("velocities"))
-        .def("fill_joint_encoder_indices", &Solo8::fill_joint_encoder_indices, py::arg("encoder_indices"));
+        .def("fill_joint_encoder_indices", &Solo8::fill_joint_encoder_indices, py::arg("encoder_indices"))
+        .def("set_zero_angles", &Solo8::set_zero_angles, py::arg("zero_angles"));
 }

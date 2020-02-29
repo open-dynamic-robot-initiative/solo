@@ -168,6 +168,11 @@ void Solo8::send_target_joint_torque(
   joints_->send_torques();
 }
 
+void Solo8::set_zero_angles(const Vector8d& zero_angles)
+{
+  joints_->set_zero_angles(zero_angles);
+}
+
 bool Solo8::calibrate(const Vector8d& home_offset_rad)
 {
   /** @TODO: Implement calibration procedure. */

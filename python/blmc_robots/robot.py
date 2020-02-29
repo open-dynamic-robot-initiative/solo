@@ -51,4 +51,4 @@ def demo_print_position(robot):
         pos = robot.frontend.get_observation(t).position
         n_joints = len(pos)
         format_string = "\r" + ", ".join(["{: 6.3f}"] * n_joints)
-        print(format_string.format(*pos), end="")
+        # print(format_string.format(*pos), end="")
