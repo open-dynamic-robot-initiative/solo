@@ -8,8 +8,6 @@
  *  @example serial_stream_read.cpp
  */
 
-#include <libserial/SerialStream.h>
-
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h>
