@@ -20,6 +20,7 @@
 #include <robot_interfaces/n_joint_robot_functions.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
+#include <robot_interfaces/monitored_robot_driver.hpp>
 
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/common_header.hpp>
@@ -719,10 +720,16 @@ typename Driver::Types::BackendPtr create_backend(
     auto config = Driver::Config::load_config(config_file_path);
     config.print();
 
-    auto robot = std::make_shared<Driver>(config);
+    // wrap the actual robot driver directly in a MonitoredRobotDriver
+    auto monitored_driver = std::make_shared<
+        robot_interfaces::MonitoredRobotDriver<typename Driver::Action,
+                                               typename Driver::Observation>>(
+        std::make_shared<Driver>(config),
+        MAX_ACTION_DURATION_S,
+        MAX_INTER_ACTION_DURATION_S);
 
     auto backend = std::make_shared<typename Driver::Types::Backend>(
-        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+        monitored_driver, robot_data);
     backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
