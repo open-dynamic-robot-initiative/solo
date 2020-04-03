@@ -17,10 +17,10 @@
 
 #include <yaml_cpp_catkin/yaml_eigen.h>
 #include <mpi_cpp_tools/math.hpp>
+#include <robot_interfaces/monitored_robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_functions.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
-#include <robot_interfaces/monitored_robot_driver.hpp>
 
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/common_header.hpp>
@@ -379,7 +379,6 @@ public:
         return joint_modules_.get_measured_index_angles();
     }
 
-public:
     Observation get_latest_observation() override
     {
         Observation observation;
@@ -451,7 +450,40 @@ public:
         return error_msg;
     }
 
-protected:
+    /**
+     * @brief Find home position of all joints and move to start position.
+     *
+     * Homes all joints using home_on_index_after_negative_end_stop.  When
+     * finished, move the joint to the starting position (defined in
+     * `config_.initial_position_rad`).
+     *
+     */
+    void initialize() override
+    {
+        // Initialization is moving the robot and thus needs to be executed in
+        // a real-time thread.  This method only starts the thread and waits
+        // for it to finish.  Actual implementation of initialization is in
+        // `_initialize()`.
+
+        real_time_tools::RealTimeThread realtime_thread;
+        realtime_thread.create_realtime_thread(
+            [](void *instance_pointer) {
+                // instance_pointer = this, cast to correct type and call the
+                // _initialize() method.
+                ((NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
+                      *)(instance_pointer))
+                    ->_initialize();
+                return (void *)nullptr;
+            },
+            this);
+        realtime_thread.join();
+    }
+
+    void shutdown() override
+    {
+        pause_motors();
+    }
+
     Action apply_action(const Action &desired_action) override
     {
         if (!is_initialized_)
@@ -464,6 +496,7 @@ protected:
         return apply_action_uninitialized(desired_action);
     }
 
+protected:
     Action apply_action_uninitialized(const Action &desired_action)
     {
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
@@ -485,11 +518,6 @@ protected:
         real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
 
         return applied_action;
-    }
-
-    void shutdown() override
-    {
-        pause_motors();
     }
 
     /**
@@ -622,35 +650,6 @@ protected:
         }
 
         return reached_goal;
-    }
-
-    /**
-     * @brief Find home position of all joints and move to start position.
-     *
-     * Homes all joints using home_on_index_after_negative_end_stop.  When
-     * finished, move the joint to the starting position (defined in
-     * `config_.initial_position_rad`).
-     *
-     */
-    void initialize() override
-    {
-        // Initialization is moving the robot and thus needs to be executed in
-        // a real-time thread.  This method only starts the thread and waits
-        // for it to finish.  Actual implementation of initialization is in
-        // `_initialize()`.
-
-        real_time_tools::RealTimeThread realtime_thread;
-        realtime_thread.create_realtime_thread(
-            [](void *instance_pointer) {
-                // instance_pointer = this, cast to correct type and call the
-                // _initialize() method.
-                ((NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
-                      *)(instance_pointer))
-                    ->_initialize();
-                return (void *)nullptr;
-            },
-            this);
-        realtime_thread.join();
     }
 
 protected:
