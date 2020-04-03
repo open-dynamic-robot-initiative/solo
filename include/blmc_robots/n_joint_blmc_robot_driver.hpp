@@ -721,12 +721,11 @@ typename Driver::Types::BackendPtr create_backend(
     config.print();
 
     // wrap the actual robot driver directly in a MonitoredRobotDriver
-    auto monitored_driver = std::make_shared<
-        robot_interfaces::MonitoredRobotDriver<typename Driver::Action,
-                                               typename Driver::Observation>>(
-        std::make_shared<Driver>(config),
-        MAX_ACTION_DURATION_S,
-        MAX_INTER_ACTION_DURATION_S);
+    auto monitored_driver =
+        std::make_shared<robot_interfaces::MonitoredRobotDriver<Driver>>(
+            std::make_shared<Driver>(config),
+            MAX_ACTION_DURATION_S,
+            MAX_INTER_ACTION_DURATION_S);
 
     auto backend = std::make_shared<typename Driver::Types::Backend>(
         monitored_driver, robot_data);
