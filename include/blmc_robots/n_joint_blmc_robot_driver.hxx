@@ -5,9 +5,6 @@
  *            Gesellschaft.
  */
 
-#include <cstddef>
-#include <string>
-
 #define TPL_NJBRD template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
 #define NJBRD NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
 
