@@ -186,7 +186,7 @@ bool Teststand::calibrate(const Vector2d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
   double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
-  double profile_step_size_rad=0.001;
+  Vector2d profile_step_size_rad = Vector2d::Constant(0.001);
   joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
                          profile_step_size_rad);
   Vector2d zero_pose = Vector2d::Zero();

@@ -197,7 +197,7 @@ bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
   double search_distance_limit_rad = 10.0 * (2.0 * M_PI / joint_gear_ratios_(0));
-  double profile_step_size_rad = 0.001;
+  Vector12d profile_step_size_rad = Vector12d::Constant(0.001);
   HomingReturnCode homing_return_code =
     joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
                            profile_step_size_rad);
