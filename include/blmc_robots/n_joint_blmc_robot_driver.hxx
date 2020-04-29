@@ -319,8 +319,8 @@ void NJBRD::_initialize()
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
-    is_initialized_ = homing(
-        config_.calibration.endstop_search_torques_Nm, config_.home_offset_rad);
+    is_initialized_ = homing(config_.calibration.endstop_search_torques_Nm,
+                             config_.home_offset_rad);
 
     if (is_initialized_)
     {
@@ -338,8 +338,8 @@ void NJBRD::_initialize()
 }
 
 TPL_NJBRD
-bool NJBRD::homing(
-    NJBRD::Vector endstop_search_torques_Nm, NJBRD::Vector home_offset_rad)
+bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
+                   NJBRD::Vector home_offset_rad)
 {
     //! Distance after which encoder index search is aborted.
     //! Computed based on gear ratio to be 1.5 motor revolutions.
@@ -406,13 +406,16 @@ bool NJBRD::homing(
     for (unsigned int i = 0; i < N_JOINTS; i++)
     {
         index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
-        if (endstop_search_torques_Nm[i] > 0) {
+        if (endstop_search_torques_Nm[i] > 0)
+        {
             index_search_step_sizes[i] *= -1;
         }
     }
 
-    HomingReturnCode homing_status = joint_modules_.execute_homing(
-        INDEX_SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad, index_search_step_sizes);
+    HomingReturnCode homing_status =
+        joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
+                                      home_offset_rad,
+                                      index_search_step_sizes);
 
     rt_printf("Finished homing.\n");
 

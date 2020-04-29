@@ -186,9 +186,8 @@ protected:
      * @param home_offset_rad Offset between the home position and the desired
      *     zero position.
      */
-    bool homing(
-        Vector endstop_search_torques_Nm,
-        Vector home_offset_rad = Vector::Zero());
+    bool homing(Vector endstop_search_torques_Nm,
+                Vector home_offset_rad = Vector::Zero());
 
     /**
      * @brief Move to given goal position using PD control.
@@ -310,7 +309,6 @@ private:
                                  const std::string &name,
                                  T *var);
 };
-
 
 /**
  * @brief Create backend using the specified driver.
