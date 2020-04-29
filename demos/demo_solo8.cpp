@@ -7,7 +7,7 @@
  * This file uses the Solo8 class in a small demo.
  */
 
-
+#include <numeric>
 #include "blmc_robots/solo8.hpp"
 #include "blmc_robots/common_programs_header.hpp"
 
