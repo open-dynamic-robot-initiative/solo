@@ -343,8 +343,10 @@ bool NJBRD::homing(
 {
     //! Distance after which encoder index search is aborted.
     //! Computed based on gear ratio to be 1.5 motor revolutions.
-    const double SEARCH_DISTANCE_LIMIT_RAD =
+    const double INDEX_SEARCH_DISTANCE_LIMIT_RAD =
         (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
+    //! Absolute step size when moving for encoder index search.
+    constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.001;
 
     rt_printf("Start homing.\n");
     if (has_endstop_)
@@ -353,7 +355,7 @@ bool NJBRD::homing(
         constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
         //! Size of the window when computing average velocity.
         constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
-        //! Velocity limit at which the joints are considered to be stopped
+        //! Velocity limit at which the joints are considered to be stopped.
         constexpr double STOP_VELOCITY = 0.01;
 
         static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
@@ -397,8 +399,20 @@ bool NJBRD::homing(
     }
 
     // Home on encoder index
+
+    // Set the search direction for each joint opposite to the end-stop search
+    // direction.
+    Vector index_search_step_sizes;
+    for (unsigned int i = 0; i < N_JOINTS; i++)
+    {
+        index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
+        if (endstop_search_torques_Nm[i] > 0) {
+            index_search_step_sizes[i] *= -1;
+        }
+    }
+
     HomingReturnCode homing_status = joint_modules_.execute_homing(
-        SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad);
+        INDEX_SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad, index_search_step_sizes);
 
     rt_printf("Finished homing.\n");
 

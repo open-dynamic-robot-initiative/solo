@@ -611,13 +611,13 @@ public:
      */
     HomingReturnCode execute_homing(double search_distance_limit_rad,
             Vector home_offset_rad,
-            double profile_step_size_rad=0.001)
+            Vector profile_step_size_rad=Vector::Constant(0.001))
     {
         // Initialise homing for all joints
         for(size_t i = 0; i < COUNT; i++)
         {
             modules_[i]->init_homing((int) i, search_distance_limit_rad,
-                    home_offset_rad[i], profile_step_size_rad);
+                    home_offset_rad[i], profile_step_size_rad[i]);
         }
 
         // run homing for all joints until all of them are done

@@ -237,7 +237,7 @@ bool Solo8TI::calibrate(const Vector8d& home_offset_rad)
 {
   // Maximum distance is twice the angle between joint indexes
   double search_distance_limit_rad = 2.0 * (2.0 * M_PI / 9.0);
-  double profile_step_size_rad=0.001;
+  Vector8d profile_step_size_rad = Vector8d::Constant(0.001);
   joints_.execute_homing(search_distance_limit_rad, home_offset_rad,
                          profile_step_size_rad);
   Vector8d zero_pose = Vector8d::Zero();
