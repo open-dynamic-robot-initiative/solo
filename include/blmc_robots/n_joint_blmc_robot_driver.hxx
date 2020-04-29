@@ -24,8 +24,8 @@ void NJBRD::Config::print() const
               << "\t has_endstop: " << has_endstop << "\n"
               << "\t calibration: "
               << "\n"
-              << "\t\t endstop_search_torque_Nm: "
-              << calibration.endstop_search_torque_Nm << "\n"
+              << "\t\t endstop_search_torques_Nm: "
+              << calibration.endstop_search_torques_Nm.transpose() << "\n"
               << "\t\t position_tolerance_rad: "
               << calibration.position_tolerance_rad << "\n"
               << "\t\t move_timeout: " << calibration.move_timeout << "\n"
@@ -88,8 +88,8 @@ typename NJBRD::Config NJBRD::Config::load_config(
         YAML::Node calib = user_config["calibration"];
 
         set_config_value(calib,
-                         "endstop_search_torque_Nm",
-                         &config.calibration.endstop_search_torque_Nm);
+                         "endstop_search_torques_Nm",
+                         &config.calibration.endstop_search_torques_Nm);
         set_config_value(calib,
                          "position_tolerance_rad",
                          &config.calibration.position_tolerance_rad);
@@ -319,8 +319,8 @@ void NJBRD::_initialize()
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
-    is_initialized_ = home_on_index_after_negative_end_stop(
-        config_.calibration.endstop_search_torque_Nm, config_.home_offset_rad);
+    is_initialized_ = homing(
+        config_.calibration.endstop_search_torques_Nm, config_.home_offset_rad);
 
     if (is_initialized_)
     {
@@ -338,8 +338,8 @@ void NJBRD::_initialize()
 }
 
 TPL_NJBRD
-bool NJBRD::home_on_index_after_negative_end_stop(
-    double endstop_search_torque_Nm, NJBRD::Vector home_offset_rad)
+bool NJBRD::homing(
+    NJBRD::Vector endstop_search_torques_Nm, NJBRD::Vector home_offset_rad)
 {
     //! Distance after which encoder index search is aborted.
     //! Computed based on gear ratio to be 1.5 motor revolutions.
@@ -371,8 +371,7 @@ bool NJBRD::home_on_index_after_negative_end_stop(
                (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
                 STOP_VELOCITY))
         {
-            Vector torques = Vector::Constant(-endstop_search_torque_Nm);
-            apply_action_uninitialized(torques);
+            apply_action_uninitialized(endstop_search_torques_Nm);
             Vector abs_velocities =
                 get_latest_observation().velocity.cwiseAbs();
 
