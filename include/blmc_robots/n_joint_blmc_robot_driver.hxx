@@ -201,9 +201,23 @@ TPL_NJBRD
 typename NJBRD::Observation NJBRD::get_latest_observation()
 {
     Observation observation;
+
     observation.position = joint_modules_.get_measured_angles();
     observation.velocity = joint_modules_.get_measured_velocities();
     observation.torque = joint_modules_.get_measured_torques();
+
+    // The force sensor is supposed to be connected to ADC A on board 0
+    auto adc_a_history = motor_boards_[0]->get_measurement(
+        blmc_drivers::MotorBoardInterface::MeasurementIndex::analog_0);
+    if (adc_a_history->length() == 0)
+    {
+        observation.tip_force = std::numeric_limits<double>::quiet_NaN();
+    }
+    else
+    {
+        observation.tip_force = adc_a_history->newest_element();
+    }
+
     return observation;
 }
 
