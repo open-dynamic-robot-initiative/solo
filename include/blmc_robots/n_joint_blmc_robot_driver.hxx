@@ -208,7 +208,7 @@ typename NJBRD::Observation NJBRD::get_latest_observation()
 
     // The force sensor is supposed to be connected to ADC A on board 0
     auto adc_a_history = motor_boards_[0]->get_measurement(
-        blmc_drivers::MotorBoardInterface::MeasurementIndex::analog_0);
+        blmc_drivers::MotorBoardInterface::MeasurementIndex::analog_1);
     if (adc_a_history->length() == 0)
     {
         observation.tip_force = std::numeric_limits<double>::quiet_NaN();
