@@ -301,6 +301,7 @@ void BlmcJointModule::init_homing(int joint_id, double search_distance_limit_rad
             mi::encoder_index);
     homing_state_.target_position_rad = get_measured_angle();
     homing_state_.step_count = 0;
+    homing_state_.start_position = get_measured_angle();
 
     homing_state_.status = HomingReturnCode::RUNNING;
 }
@@ -374,6 +375,10 @@ HomingReturnCode BlmcJointModule::update_homing()
                 // -- FINISHED
                 const double index_angle = get_measured_index_angle();
 
+                // Store the end position of the homing so it can be used to
+                // determine the travelled distance.
+                homing_state_.end_position = index_angle;
+
                 // set the zero angle
                 set_zero_angle(index_angle + homing_state_.home_offset_rad);
 
@@ -395,6 +400,18 @@ HomingReturnCode BlmcJointModule::update_homing()
     }
 
     return homing_state_.status;
+}
+
+double BlmcJointModule::get_distance_travelled_during_homing() const
+{
+    if (homing_state_.status != HomingReturnCode::SUCCEEDED)
+    {
+        throw std::runtime_error(
+            "Homing status needs to be SUCCEEDED to determine travelled "
+            "distance.");
+    }
+
+    return homing_state_.end_position - homing_state_.start_position;
 }
 
 } // namespace
