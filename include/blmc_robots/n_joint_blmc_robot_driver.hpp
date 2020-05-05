@@ -53,18 +53,17 @@ struct MotorParameters
  * @tparam N_JOINTS Number of joints.
  * @tparam N_MOTOR_BOARDS Number of motor control boards that are used.
  */
-template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
 class NJointBlmcRobotDriver
     : public robot_interfaces::RobotDriver<
-          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Action,
-          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation>
+          typename robot_interfaces::Action<N_JOINTS>,
+          Observation>
 {
 public:
-    typedef typename robot_interfaces::NJointRobotTypes<N_JOINTS> Types;
+    typedef typename robot_interfaces::Action<N_JOINTS> Action;
+    typedef typename robot_interfaces::RobotInterfaceTypes<Action, Observation> Types;
 
-    typedef typename Types::Action Action;
-    typedef typename Types::Observation Observation;
-    typedef typename Types::Vector Vector;
+    typedef typename Types::Action::Vector Vector;  // FIXME ?
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
         Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,

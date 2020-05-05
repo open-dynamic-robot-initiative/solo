@@ -211,11 +211,11 @@ typename NJBRD::Observation NJBRD::get_latest_observation()
         blmc_drivers::MotorBoardInterface::MeasurementIndex::analog_1);
     if (adc_a_history->length() == 0)
     {
-        observation.tip_force = std::numeric_limits<double>::quiet_NaN();
+        //observation.tip_force = std::numeric_limits<double>::quiet_NaN();
     }
     else
     {
-        observation.tip_force = adc_a_history->newest_element();
+        //observation.tip_force = adc_a_history->newest_element();
     }
 
     return observation;
