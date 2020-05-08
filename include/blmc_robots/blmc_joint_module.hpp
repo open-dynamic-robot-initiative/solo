@@ -56,7 +56,7 @@ enum class GoToReturnCode
  */
 struct HomingState
 {
-    //! Id of the joint.  Just use for debug prints.
+    //! Id of the joint.  Just used for debug prints.
     int joint_id = 0;
     //! Max. distance to move while searching the encoder index.
     double search_distance_limit_rad = 0.0;
@@ -72,6 +72,17 @@ struct HomingState
     double target_position_rad = 0.0;
     //! Current status of the homing procedure.
     HomingReturnCode status = HomingReturnCode::NOT_INITIALIZED;
+
+    //! Position at which homing is started
+    double start_position;
+    /**
+     * @brief Position at which homing is ended (before resetting position).
+     *
+     * This is only set when status is SUCCEEDED.  Together with start_position
+     * it can be used to determine the distance the joint travelled during the
+     * homing procedure (e.g. useful for home offset calibration).
+     */
+    double end_position;
 };
 
 /**
@@ -261,6 +272,20 @@ public:
      * @return Status of the homing procedure.
      */
     HomingReturnCode update_homing();
+
+    /**
+     * @brief Get distance between start and end position of homing.
+     *
+     * Compute the distance that the joint moved between initialization of
+     * homing and reaching the home position.
+     *
+     * This can be used to determine the home offset by first moving the joint
+     * to the desired zero position, then executing the homing and finally
+     * calling this function which will provide the desired home offset.
+     *
+     * @return Distance between start and end position of homing.
+     */
+    double get_distance_travelled_during_homing() const;
 
 private:
     /**
@@ -666,6 +691,17 @@ public:
         } while (homing_status == HomingReturnCode::RUNNING);
 
         return homing_status;
+    }
+
+    //! @see BlmcJointModule::get_distance_travelled_during_homing
+    Vector get_distance_travelled_during_homing() const
+    {
+        Vector dist;
+        for (unsigned i = 0; i < COUNT; ++i)
+        {
+            dist[i] = modules_[i]->get_distance_travelled_during_homing();
+        }
+        return dist;
     }
 
     /**
