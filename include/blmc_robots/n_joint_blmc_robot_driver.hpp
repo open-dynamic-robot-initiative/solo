@@ -56,14 +56,18 @@ struct MotorParameters
 template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
 class NJointBlmcRobotDriver
     : public robot_interfaces::RobotDriver<
-          typename robot_interfaces::Action<N_JOINTS>,
+          typename robot_interfaces::NJointAction<N_JOINTS>,
           Observation>
 {
 public:
-    typedef typename robot_interfaces::Action<N_JOINTS> Action;
-    typedef typename robot_interfaces::RobotInterfaceTypes<Action, Observation> Types;
+    static constexpr size_t num_joints = N_JOINTS;
+    static constexpr size_t num_motor_boards = N_MOTOR_BOARDS;
 
-    typedef typename Types::Action::Vector Vector;  // FIXME ?
+    typedef typename robot_interfaces::NJointAction<N_JOINTS> Action;
+    typedef typename robot_interfaces::RobotInterfaceTypes<Action, Observation>
+        Types;
+
+    typedef typename Action::Vector Vector;  // FIXME ?
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
         Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
@@ -129,10 +133,109 @@ public:
      */
     void initialize() override;
 
-    Observation get_latest_observation() override;
+    virtual Observation get_latest_observation() = 0;
     Action apply_action(const Action &desired_action) override;
     std::string get_error() override;
     void shutdown() override;
+
+    /**
+     * @brief Process the desired action provided by the user.
+     *
+     * Takes the desired action from the user and does the following processing:
+     *
+     * ## 1. Run the position controller in case a target position is set.
+     *
+     *   If the target position is set to a value unequal to NaN for any joint,
+     *   a PD position controller is executed for this joint and the resulting
+     *   torque command is added to the torque command in the action.
+     *
+     *   If the P- and/or D-gains are set to a non-NaN value in the action, they
+     *   are used for the control.  NaN-values are replaced with the default
+     *   gains.
+     *
+     * ## 2. Apply safety checks.
+     *
+     *   - Limit the torque to the allowed maximum value.
+     *   - Dampen velocity using the given safety_kd gains.  Damping us done
+     *     joint-wise using this equation:
+     *
+     *         torque_damped = torque_desired - safety_kd * current_velocity
+     *
+     * The resulting action with modifications of all steps is returned.
+     *
+     * @param desired_action  Desired action given by the user.
+     * @param latest_observation  Latest observation from the robot.
+     * @param max_torque_Nm  Maximum allowed absolute torque.
+     * @param safety_kd  D-gain for velocity damping.
+     * @param default_position_control_kp  Default P-gain for position control.
+     * @param default_position_control_kd  Default D-gain for position control.
+     *
+     * @return Resulting action after applying all the processing.
+     */
+    // FIXME
+    static typename Types::Action process_desired_action(
+        const typename Types::Action &desired_action,
+        const typename Types::Observation &latest_observation,
+        const double max_torque_Nm,
+        const typename Types::Action::Vector &safety_kd,
+        const typename Types::Action::Vector &default_position_control_kp,
+        const typename Types::Action::Vector &default_position_control_kd)
+    {
+        typename Types::Action processed_action;
+
+        processed_action.torque = desired_action.torque;
+        processed_action.position = desired_action.position;
+
+        // Position controller
+        // -------------------
+        // TODO: add position limits
+
+        // Run the position controller only if a target position is set for at
+        // least one joint.
+        if (!processed_action.position.array().isNaN().all())
+        {
+            // Replace NaN-values with default gains
+            processed_action.position_kp =
+                desired_action.position_kp.array().isNaN().select(
+                    default_position_control_kp, desired_action.position_kp);
+            processed_action.position_kd =
+                desired_action.position_kd.array().isNaN().select(
+                    default_position_control_kd, desired_action.position_kd);
+
+            typename Types::Action::Vector position_error =
+                processed_action.position - latest_observation.position;
+
+            // simple PD controller
+            typename Types::Action::Vector position_control_torque =
+                processed_action.position_kp.cwiseProduct(position_error) -
+                processed_action.position_kd.cwiseProduct(
+                    latest_observation.velocity);
+
+            // position_control_torque contains NaN for joints where target
+            // position is set to NaN!  Filter those out and set the torque to
+            // zero instead.
+            position_control_torque =
+                position_control_torque.array().isNaN().select(
+                    0, position_control_torque);
+
+            // Add result of position controller to the torque command
+            processed_action.torque += position_control_torque;
+        }
+
+        // Safety Checks
+        // -------------
+        // limit to configured maximum torque
+        processed_action.torque =
+            mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+        // velocity damping to prevent too fast movements
+        processed_action.torque -=
+            safety_kd.cwiseProduct(latest_observation.velocity);
+        // after applying checks, make sure we are still below the max. torque
+        processed_action.torque =
+            mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+
+        return processed_action;
+    }
 
 protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
@@ -207,8 +310,8 @@ protected:
 /**
  * @brief Configuration of the robot that can be changed by the user.
  */
-template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
-struct NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::Config
+template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
 {
     typedef std::array<std::string, N_MOTOR_BOARDS> CanPortArray;
 
@@ -307,6 +410,78 @@ private:
     static void set_config_value(const YAML::Node &user_config,
                                  const std::string &name,
                                  T *var);
+};
+
+/**
+ * TODO
+ */
+template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+class SimpleNJointBlmcRobotDriver
+    : public NJointBlmcRobotDriver<
+          robot_interfaces::NJointObservation<N_JOINTS>,
+          N_JOINTS,
+          N_MOTOR_BOARDS>
+{
+public:
+    typedef robot_interfaces::NJointObservation<N_JOINTS> Observation;
+
+    using NJointBlmcRobotDriver<robot_interfaces::NJointObservation<N_JOINTS>,
+                                N_JOINTS,
+                                N_MOTOR_BOARDS>::NJointBlmcRobotDriver;
+
+    Observation get_latest_observation() override;
+};
+
+// FIXME move to robot_fingers
+constexpr size_t JOINTS_PER_FINGER = 3;
+constexpr size_t BOARDS_PER_FINGER = 2;
+template <size_t N_FINGERS>
+class FingerRobotDriver : public NJointBlmcRobotDriver<
+                              robot_interfaces::FingerObservation<N_FINGERS>,
+                              N_FINGERS * JOINTS_PER_FINGER,
+                              N_FINGERS * BOARDS_PER_FINGER>
+{
+public:
+    typedef robot_interfaces::FingerObservation<N_FINGERS> Observation;
+
+    using NJointBlmcRobotDriver<robot_interfaces::FingerObservation<N_FINGERS>,
+                                N_FINGERS * JOINTS_PER_FINGER,
+                                N_FINGERS *
+                                    BOARDS_PER_FINGER>::NJointBlmcRobotDriver;
+
+    Observation get_latest_observation() override
+    {
+        Observation observation;
+
+        observation.position = this->joint_modules_.get_measured_angles();
+        observation.velocity = this->joint_modules_.get_measured_velocities();
+        observation.torque = this->joint_modules_.get_measured_torques();
+
+        for (size_t finger_idx = 0; finger_idx < N_FINGERS; finger_idx++)
+        {
+            // The force sensor is supposed to be connected to ADC A on the
+            // first board of each finger.
+            const size_t board_idx = finger_idx * BOARDS_PER_FINGER;
+
+            auto adc_a_history =
+                this->motor_boards_[board_idx]->get_measurement(
+                    blmc_drivers::MotorBoardInterface::MeasurementIndex::
+                        analog_1);
+
+            if (adc_a_history->length() == 0)
+            {
+                observation.tip_force[finger_idx] =
+                    std::numeric_limits<double>::quiet_NaN();
+            }
+            else
+            {
+                observation.tip_force[finger_idx] =
+                    adc_a_history->newest_element();
+            }
+        }
+
+        return observation;
+    }
 };
 
 /**
