@@ -18,7 +18,6 @@
 #include <yaml_cpp_catkin/yaml_eigen.h>
 #include <mpi_cpp_tools/math.hpp>
 #include <robot_interfaces/monitored_robot_driver.hpp>
-#include <robot_interfaces/n_joint_robot_functions.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
 
@@ -172,7 +171,7 @@ public:
      *
      * @return Resulting action after applying all the processing.
      */
-    // FIXME
+    // FIXME move to hxx
     static typename Types::Action process_desired_action(
         const typename Types::Action &desired_action,
         const typename Types::Observation &latest_observation,
@@ -415,7 +414,7 @@ private:
 /**
  * TODO
  */
-template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+template <size_t N_JOINTS, size_t N_MOTOR_BOARDS = (N_JOINTS + 1) / 2>
 class SimpleNJointBlmcRobotDriver
     : public NJointBlmcRobotDriver<
           robot_interfaces::NJointObservation<N_JOINTS>,
