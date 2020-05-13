@@ -279,6 +279,71 @@ void NJBRD::shutdown()
 }
 
 TPL_NJBRD
+typename NJBRD::Action NJBRD::process_desired_action(
+    const Action &desired_action,
+    const Observation &latest_observation,
+    const double max_torque_Nm,
+    const Vector &safety_kd,
+    const Vector &default_position_control_kp,
+    const Vector &default_position_control_kd)
+{
+    Action processed_action;
+
+    processed_action.torque = desired_action.torque;
+    processed_action.position = desired_action.position;
+
+    // Position controller
+    // -------------------
+    // TODO: add position limits
+
+    // Run the position controller only if a target position is set for at
+    // least one joint.
+    if (!processed_action.position.array().isNaN().all())
+    {
+        // Replace NaN-values with default gains
+        processed_action.position_kp =
+            desired_action.position_kp.array().isNaN().select(
+                default_position_control_kp, desired_action.position_kp);
+        processed_action.position_kd =
+            desired_action.position_kd.array().isNaN().select(
+                default_position_control_kd, desired_action.position_kd);
+
+        Vector position_error =
+            processed_action.position - latest_observation.position;
+
+        // simple PD controller
+        Vector position_control_torque =
+            processed_action.position_kp.cwiseProduct(position_error) -
+            processed_action.position_kd.cwiseProduct(
+                latest_observation.velocity);
+
+        // position_control_torque contains NaN for joints where target
+        // position is set to NaN!  Filter those out and set the torque to
+        // zero instead.
+        position_control_torque =
+            position_control_torque.array().isNaN().select(
+                0, position_control_torque);
+
+        // Add result of position controller to the torque command
+        processed_action.torque += position_control_torque;
+    }
+
+    // Safety Checks
+    // -------------
+    // limit to configured maximum torque
+    processed_action.torque =
+        mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+    // velocity damping to prevent too fast movements
+    processed_action.torque -=
+        safety_kd.cwiseProduct(latest_observation.velocity);
+    // after applying checks, make sure we are still below the max. torque
+    processed_action.torque =
+        mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+
+    return processed_action;
+}
+
+TPL_NJBRD
 typename NJBRD::Action NJBRD::apply_action_uninitialized(
     const NJBRD::Action &desired_action)
 {
