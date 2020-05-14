@@ -66,7 +66,7 @@ public:
     typedef typename robot_interfaces::RobotInterfaceTypes<Action, Observation>
         Types;
 
-    typedef typename Action::Vector Vector;  // FIXME ?
+    typedef typename Action::Vector Vector;
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
         Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
