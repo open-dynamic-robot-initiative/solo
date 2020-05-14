@@ -374,58 +374,6 @@ public:
     Observation get_latest_observation() override;
 };
 
-// FIXME move to robot_fingers
-constexpr size_t JOINTS_PER_FINGER = 3;
-constexpr size_t BOARDS_PER_FINGER = 2;
-template <size_t N_FINGERS>
-class FingerRobotDriver : public NJointBlmcRobotDriver<
-                              robot_interfaces::FingerObservation<N_FINGERS>,
-                              N_FINGERS * JOINTS_PER_FINGER,
-                              N_FINGERS * BOARDS_PER_FINGER>
-{
-public:
-    typedef robot_interfaces::FingerObservation<N_FINGERS> Observation;
-
-    using NJointBlmcRobotDriver<robot_interfaces::FingerObservation<N_FINGERS>,
-                                N_FINGERS * JOINTS_PER_FINGER,
-                                N_FINGERS *
-                                    BOARDS_PER_FINGER>::NJointBlmcRobotDriver;
-
-    Observation get_latest_observation() override
-    {
-        Observation observation;
-
-        observation.position = this->joint_modules_.get_measured_angles();
-        observation.velocity = this->joint_modules_.get_measured_velocities();
-        observation.torque = this->joint_modules_.get_measured_torques();
-
-        for (size_t finger_idx = 0; finger_idx < N_FINGERS; finger_idx++)
-        {
-            // The force sensor is supposed to be connected to ADC A on the
-            // first board of each finger.
-            const size_t board_idx = finger_idx * BOARDS_PER_FINGER;
-
-            auto adc_a_history =
-                this->motor_boards_[board_idx]->get_measurement(
-                    blmc_drivers::MotorBoardInterface::MeasurementIndex::
-                        analog_1);
-
-            if (adc_a_history->length() == 0)
-            {
-                observation.tip_force[finger_idx] =
-                    std::numeric_limits<double>::quiet_NaN();
-            }
-            else
-            {
-                observation.tip_force[finger_idx] =
-                    adc_a_history->newest_element();
-            }
-        }
-
-        return observation;
-    }
-};
-
 /**
  * @brief Create backend using the specified driver.
  *
