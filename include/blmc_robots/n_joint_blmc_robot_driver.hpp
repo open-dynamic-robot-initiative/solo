@@ -44,7 +44,7 @@ struct MotorParameters
 };
 
 /**
- * @brief Base class for simple n-joint BLMC robots.
+ * @brief Base class for n-joint BLMC robots.
  *
  * This is a generic base class to easily implement drivers for simple BLMC
  * robots that consist of N_JOINTS joints.
@@ -355,7 +355,10 @@ private:
 };
 
 /**
- * TODO
+ * @brief Simple n-joint robot driver that uses NJointObservation.
+ *
+ * @tparam N_JOINTS  Number of joints
+ * @tparam N_MOTOR_BOARDS  Number of motor boards.
  */
 template <size_t N_JOINTS, size_t N_MOTOR_BOARDS = (N_JOINTS + 1) / 2>
 class SimpleNJointBlmcRobotDriver
