@@ -132,7 +132,7 @@ public:
      */
     void initialize() override;
 
-    virtual Observation get_latest_observation() = 0;
+    virtual Observation get_latest_observation() override = 0;
     Action apply_action(const Action &desired_action) override;
     std::string get_error() override;
     void shutdown() override;
