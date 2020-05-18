@@ -3,9 +3,7 @@
  * @author Julian Viereck
  * @date 2020
  * @brief Solo8 robot with micro drivers.
- * @copyright Copyright (c) 2020, New York University and Max Planck
- Gesellschaft.
-
+ * @copyright Copyright (c) 2020, New York University & Max Planck Gesellschaft.
  */
 
 #pragma once
