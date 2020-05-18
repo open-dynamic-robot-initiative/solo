@@ -8,9 +8,8 @@
  */
 
 #include <numeric>
-#include "blmc_robots/solo8.hpp"
 #include "blmc_robots/common_programs_header.hpp"
-
+#include "blmc_robots/solo8.hpp"
 
 using namespace blmc_robots;
 
@@ -56,16 +55,17 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
             }
             sliders_filt_buffer[i].push_back(sliders(i));
             sliders_filt(i) = std::accumulate(sliders_filt_buffer[i].begin(),
-                                    sliders_filt_buffer[i].end(),
-                                    0.0) /
-                    (double)sliders_filt_buffer[i].size();
+                                              sliders_filt_buffer[i].end(),
+                                              0.0) /
+                              (double)sliders_filt_buffer[i].size();
         }
 
         // the slider goes from 0 to 1 so we go from -0.5rad to 0.5rad
         for (unsigned i = 0; i < 4; ++i)
         {
             // desired_pose[i].push_back
-            desired_joint_position(2 * i) = max_range * (sliders_filt(0) - sliders_init(0));
+            desired_joint_position(2 * i) =
+                max_range * (sliders_filt(0) - sliders_init(0));
             desired_joint_position(2 * i + 1) =
                 -2. * max_range * (sliders_filt(0) - sliders_init(0));
         }
@@ -100,9 +100,10 @@ int main(int argc, char** argv)
 {
     enable_ctrl_c();
 
-    if(argc != 2)
+    if (argc != 2)
     {
-       throw std::runtime_error("Wrong number of argument: `./demo_solo8 network_id`.");
+        throw std::runtime_error(
+            "Wrong number of argument: `./demo_solo8 network_id`.");
     }
 
     real_time_tools::RealTimeThread thread;

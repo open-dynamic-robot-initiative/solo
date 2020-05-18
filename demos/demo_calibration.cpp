@@ -7,13 +7,10 @@
  * This file uses the Quadruped class in a small demo.
  */
 
-
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "blmc_robots/common_programs_header.hpp"
 
-
 using namespace blmc_robots;
-
 
 struct Robot
 {
@@ -59,7 +56,7 @@ int main(int, char**)
 {
     enable_ctrl_c()
 
-    real_time_tools::RealTimeThread thread;
+        real_time_tools::RealTimeThread thread;
 
     Robot robot;
     robot.can_bus = std::make_shared<blmc_drivers::CanBus>("can0");

@@ -7,13 +7,10 @@
  * This file uses the Stuggihop class in a small demo.
  */
 
-
-#include "blmc_robots/stuggihop.hpp"
 #include "blmc_robots/common_programs_header.hpp"
-
+#include "blmc_robots/stuggihop.hpp"
 
 using namespace blmc_robots;
-
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
