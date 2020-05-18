@@ -28,3 +28,4 @@ target_compile_definitions(${test_name}_ut PUBLIC
 endmacro(create_blmc_robots_unittest test_name)
 
 create_blmc_robots_unittest(polynomes)
+create_blmc_robots_unittest(process_action)
