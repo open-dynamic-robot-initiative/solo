@@ -4,29 +4,29 @@
  * @author Maximilien Naveau (maximilien.naveau@gmail.com)
  * @author Julian Viereck (jviereck@tuebingen.mpg.de)
  * @license License BSD-3-Clause
- * @copyright Copyright (c) 2019, New York University and Max Planck Gesellschaft.
+ * @copyright Copyright (c) 2019, New York University and Max Planck
+ * Gesellschaft.
  * @date 2020-02-17
  */
 #pragma once
 
-#include <iostream>
-#include <array>
-#include <stdexcept>
 #include <math.h>
 #include <Eigen/Eigen>
+#include <array>
+#include <iostream>
+#include <stdexcept>
 
 #include "blmc_drivers/devices/motor.hpp"
 #include "blmc_robots/common_header.hpp"
 #include "blmc_robots/mathematics/polynome.hpp"
 
-#include "master_board_sdk/master_board_interface.h"
 #include "master_board_sdk/defines.h"
+#include "master_board_sdk/master_board_interface.h"
 
 #include <stdexcept>
 
 namespace blmc_robots
 {
-
 /**
  * @brief This class defines an interface to a collection of BLMC joints. It
  * creates a BLMCJointModule for every blmc_driver::MotorInterface provided.
@@ -44,24 +44,27 @@ public:
     /**
      * @brief Construct a new SpiJointModules object.
      */
-    SpiJointModules(
-        std::shared_ptr<MasterBoardInterface> robot_if,
-        std::array<int, COUNT>& motor_to_card_index,
-        std::array<int, COUNT>& motor_to_card_port_index,
-        const Vector& motor_constants,
-        const Vector& gear_ratios,
-        const Vector& zero_angles,
-        const Vector& max_currents,
-        std::array<bool, COUNT> reverse_polarities)
+    SpiJointModules(std::shared_ptr<MasterBoardInterface> robot_if,
+                    std::array<int, COUNT>& motor_to_card_index,
+                    std::array<int, COUNT>& motor_to_card_port_index,
+                    const Vector& motor_constants,
+                    const Vector& gear_ratios,
+                    const Vector& zero_angles,
+                    const Vector& max_currents,
+                    std::array<bool, COUNT> reverse_polarities)
     {
         robot_if_ = robot_if;
 
         // Setup the motor vectores based on the card and port mapping.
-        for (int i = 0; i < COUNT; i++) {
+        for (int i = 0; i < COUNT; i++)
+        {
             int driver_idx = motor_to_card_index[i];
-            if (motor_to_card_port_index[i] == 0) {
+            if (motor_to_card_port_index[i] == 0)
+            {
                 motors_[i] = (robot_if->motor_drivers[driver_idx].motor1);
-            } else {
+            }
+            else
+            {
                 motors_[i] = (robot_if->motor_drivers[driver_idx].motor2);
             }
 
@@ -106,7 +109,8 @@ public:
     {
         for (int i = 0; i < COUNT; i++)
         {
-            if (!motors_[i]->IsEnabled() || !motors_[i]->IsReady()) {
+            if (!motors_[i]->IsEnabled() || !motors_[i]->IsReady())
+            {
                 return false;
             }
         }
@@ -138,7 +142,7 @@ public:
      */
     void send_torques()
     {
-       robot_if_->SendCommand();
+        robot_if_->SendCommand();
     }
 
     /**
@@ -168,8 +172,9 @@ public:
      */
     void set_torques(const Vector& desired_torques)
     {
-        Vector desired_current = polarities_.cwiseProduct(desired_torques).
-            cwiseQuotient(gear_ratios_).cwiseQuotient(motor_constants_);
+        Vector desired_current = polarities_.cwiseProduct(desired_torques)
+                                     .cwiseQuotient(gear_ratios_)
+                                     .cwiseQuotient(motor_constants_);
 
         // Current clamping.
         desired_current = desired_current.cwiseMin(max_currents_);
@@ -177,7 +182,8 @@ public:
         // Vector desired_current;
         // desired_current.setZero();
 
-        for (int i = 0; i < motors_.size(); i++) {
+        for (int i = 0; i < motors_.size(); i++)
+        {
             motors_[i]->SetCurrentReference(desired_current(i));
         }
     }
@@ -189,7 +195,8 @@ public:
      */
     Vector get_max_torques()
     {
-        return max_currents_.cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
+        return max_currents_.cwiseProduct(gear_ratios_)
+            .cwiseProduct(motor_constants_);
     }
 
     /**
@@ -200,11 +207,13 @@ public:
     Vector get_sent_torques() const
     {
         Vector torques;
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             torques(i) = motors_[i]->current_ref;
         }
-        torques = torques.cwiseProduct(polarities_).cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
+        torques = torques.cwiseProduct(polarities_)
+                      .cwiseProduct(gear_ratios_)
+                      .cwiseProduct(motor_constants_);
         return torques;
     }
 
@@ -216,11 +225,13 @@ public:
     Vector get_measured_torques() const
     {
         Vector torques;
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             torques(i) = motors_[i]->GetCurrent();
         }
-        torques = torques.cwiseProduct(polarities_).cwiseProduct(gear_ratios_).cwiseProduct(motor_constants_);
+        torques = torques.cwiseProduct(polarities_)
+                      .cwiseProduct(gear_ratios_)
+                      .cwiseProduct(motor_constants_);
         return torques;
     }
 
@@ -232,11 +243,13 @@ public:
     Vector get_measured_angles() const
     {
         Vector positions;
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             positions(i) = motors_[i]->GetPosition();
         }
-        positions = positions.cwiseProduct(polarities_).cwiseQuotient(gear_ratios_) - zero_angles_;
+        positions =
+            positions.cwiseProduct(polarities_).cwiseQuotient(gear_ratios_) -
+            zero_angles_;
         return positions;
     }
 
@@ -248,11 +261,12 @@ public:
     Vector get_measured_velocities() const
     {
         Vector velocities;
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             velocities(i) = motors_[i]->GetVelocity();
         }
-        velocities = velocities.cwiseProduct(polarities_).cwiseQuotient(gear_ratios_);
+        velocities =
+            velocities.cwiseProduct(polarities_).cwiseQuotient(gear_ratios_);
         return velocities;
     }
 
@@ -307,4 +321,4 @@ private:
     std::shared_ptr<MasterBoardInterface> robot_if_;
 };
 
-} // namespace blmc_robots
+}  // namespace blmc_robots

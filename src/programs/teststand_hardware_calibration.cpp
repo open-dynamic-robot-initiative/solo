@@ -4,17 +4,17 @@
  * @brief Program that launch the calibration of the testand with 0 offset
  * @version 0.1
  * @date 2019-11-08
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  * This program is a helper for the measurement of the offset between the joint
  * index (home pose) and the theoretical zero defined by the urdf.
- * 
+ *
  * - It start by initializing the robot.
  * - Once done it wait for the user to press enter in order to move the leg to
  *   the joint index
  * - Then the controller just sends 0 torques and report the current joint pose.
- * 
+ *
  * Once this small procedure is done the user can setup the joints in the zero
  * configuration and read the offset in the screen. The offset should be
  * reported at least in the
@@ -35,11 +35,10 @@
  * This file uses the Teststand class in a small demo.
  */
 
-#include "blmc_robots/teststand.hpp"
 #include "blmc_robots/common_programs_header.hpp"
+#include "blmc_robots/teststand.hpp"
 
 using namespace blmc_robots;
-
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
@@ -50,20 +49,19 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
-    while(!CTRL_C_DETECTED)
+    while (!CTRL_C_DETECTED)
     {
-      if(count % 200 == 0)
-      {
-        robot.acquire_sensors();
-        print_vector("Joint Positions", robot.get_joint_positions());
-      }
+        if (count % 200 == 0)
+        {
+            robot.acquire_sensors();
+            print_vector("Joint Positions", robot.get_joint_positions());
+        }
     }
 
     CTRL_C_DETECTED = true;
 
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
-
 
 int main(int, char**)
 {

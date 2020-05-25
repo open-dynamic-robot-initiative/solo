@@ -17,19 +17,18 @@
 #include <Eigen/Eigen>
 
 // manage the exit of the program with ctrl+c
-#include <signal.h> // manage the ctrl+c signal
-#include <atomic> // thread safe flag for application shutdown management
+#include <signal.h>  // manage the ctrl+c signal
+#include <atomic>    // thread safe flag for application shutdown management
 
 // some real_time_tools in order to have a real time control
 #include "real_time_tools/iostream.hpp"
-#include "real_time_tools/timer.hpp"
 #include "real_time_tools/spinner.hpp"
 #include "real_time_tools/thread.hpp"
+#include "real_time_tools/timer.hpp"
 
 // The robot drivers for building the robot wrapper around.
-#include <blmc_drivers/devices/motor.hpp>
 #include <blmc_drivers/devices/analog_sensor.hpp>
-
+#include <blmc_drivers/devices/motor.hpp>
 
 namespace blmc_robots
 {
@@ -105,4 +104,4 @@ typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
  */
 typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
 
-} // namespace blmc_robots
+}  // namespace blmc_robots

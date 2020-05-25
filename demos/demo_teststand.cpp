@@ -8,12 +8,10 @@
  */
 
 #include <numeric>
-#include "blmc_robots/teststand.hpp"
 #include "blmc_robots/common_programs_header.hpp"
-
+#include "blmc_robots/teststand.hpp"
 
 using namespace blmc_robots;
-
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
@@ -40,7 +38,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     size_t count = 0;
     bool success_acquiring_sensor = true;
     bool success_sending_torques = true;
-    while (!CTRL_C_DETECTED && success_acquiring_sensor && success_sending_torques)
+    while (!CTRL_C_DETECTED && success_acquiring_sensor &&
+           success_sending_torques)
     {
         // acquire the sensors
         success_acquiring_sensor = robot.acquire_sensors();

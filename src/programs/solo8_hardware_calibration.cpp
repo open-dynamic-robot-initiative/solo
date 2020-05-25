@@ -7,11 +7,10 @@
  * This file uses the Solo8 class in a small demo.
  */
 
-#include "blmc_robots/solo8.hpp"
 #include "blmc_robots/common_programs_header.hpp"
+#include "blmc_robots/solo8.hpp"
 
 using namespace blmc_robots;
-
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
@@ -22,13 +21,13 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
-    while(!CTRL_C_DETECTED)
+    while (!CTRL_C_DETECTED)
     {
-      if(count % 200 == 0)
-      {
-        robot.acquire_sensors();
-        print_vector("Joint Positions", robot.get_joint_positions());
-      }
+        if (count % 200 == 0)
+        {
+            robot.acquire_sensors();
+            print_vector("Joint Positions", robot.get_joint_positions());
+        }
     }
 
     return THREAD_FUNCTION_RETURN_VALUE;
@@ -38,9 +37,10 @@ int main(int argc, char** argv)
 {
     enable_ctrl_c();
 
-    if(argc != 2)
+    if (argc != 2)
     {
-       throw std::runtime_error("Wrong number of argument: `./demo_solo8 network_id`.");
+        throw std::runtime_error(
+            "Wrong number of argument: `./demo_solo8 network_id`.");
     }
 
     real_time_tools::RealTimeThread thread;

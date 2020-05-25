@@ -12,7 +12,6 @@
 
 #include "blmc_robots/common_header.hpp"
 
-
 namespace blmc_robots
 {
 /**
@@ -62,4 +61,4 @@ void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
     rt_printf("]\n");
 }
 
-} // namespace blmc_robots
+}  // namespace blmc_robots

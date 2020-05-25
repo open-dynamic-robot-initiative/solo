@@ -7,31 +7,28 @@
  * This file uses the Teststand class in a small demo.
  */
 
-
 #include "blmc_robots/teststand.hpp"
 #include "common_demo_header.hpp"
 
 using namespace blmc_robots;
 typedef ThreadCalibrationData<Teststand> ThreadCalibrationData_t;
 
-
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
     ThreadCalibrationData_t* thread_data_ptr =
-      (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
-    blmc_robots::Vector2d joint_index_to_zero = 
-      thread_data_ptr->joint_index_to_zero;
+        (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
+    blmc_robots::Vector2d joint_index_to_zero =
+        thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 
     CTRL_C_DETECTED = true;
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-
 int main(int, char**)
 {
     enable_ctrl_c();
-    
+
     std::shared_ptr<Teststand> robot = std::make_shared<Teststand>();
     robot->initialize();
 

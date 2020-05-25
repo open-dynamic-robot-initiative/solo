@@ -7,11 +7,10 @@
  * This file uses the Solo12 class in a small demo.
  */
 
-#include "blmc_robots/solo12.hpp"
 #include "blmc_robots/common_programs_header.hpp"
+#include "blmc_robots/solo12.hpp"
 
 using namespace blmc_robots;
-
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
@@ -22,13 +21,13 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     bool good_calibration = robot.calibrate(joint_index_to_zero);
 
     long int count = 0;
-    while(!CTRL_C_DETECTED && good_calibration)
+    while (!CTRL_C_DETECTED && good_calibration)
     {
-      if(count % 200 == 0)
-      {
-        robot.acquire_sensors();
-        print_vector("Joint Positions", robot.get_joint_positions());
-      }
+        if (count % 200 == 0)
+        {
+            robot.acquire_sensors();
+            print_vector("Joint Positions", robot.get_joint_positions());
+        }
     }
 
     return THREAD_FUNCTION_RETURN_VALUE;
@@ -36,9 +35,11 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
 int main(int argc, char** argv)
 {
-    if(argc != 2)
+    if (argc != 2)
     {
-        throw std::runtime_error("Wrong number of argument: `./demo_solo12_calibration network_id`.");
+        throw std::runtime_error(
+            "Wrong number of argument: `./demo_solo12_calibration "
+            "network_id`.");
     }
 
     enable_ctrl_c();

@@ -8,12 +8,13 @@
  */
 
 #include <numeric>
-#include "blmc_robots/solo12.hpp"
 #include "blmc_robots/common_programs_header.hpp"
+#include "blmc_robots/solo12.hpp"
 
 using namespace blmc_robots;
 
-void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders, Eigen::Ref<Vector12d> sliders_out)
+void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders,
+                 Eigen::Ref<Vector12d> sliders_out)
 {
     double slider_A = sliders(0) - 0.5;
     double slider_B = sliders(1);
@@ -23,7 +24,8 @@ void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders, Eigen::Ref<Vector12d> slid
         sliders_out(3 * i + 1) = slider_B;
         sliders_out(3 * i + 2) = 2. * (1. - slider_B);
 
-        if (i >= 2) {
+        if (i >= 2)
+        {
             sliders_out(3 * i + 1) *= -1;
             sliders_out(3 * i + 2) *= -1;
         }
@@ -119,7 +121,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
         // print -----------------------------------------------------------
         if ((count % 1000) == 0)
         {
-            printf("\33[H\33[2J"); //clear screen
+            printf("\33[H\33[2J");  // clear screen
             print_vector("sliders_filt", sliders_filt);
             print_vector("sliders_zero", sliders_zero);
             print_vector("sliders_raw ", robot.get_slider_positions());
@@ -142,18 +144,19 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 
 int main(int argc, char** argv)
 {
-    if(argc != 2)
+    if (argc != 2)
     {
-       throw std::runtime_error("Wrong number of argument: `./demo_solo12 network_id`.");
+        throw std::runtime_error(
+            "Wrong number of argument: `./demo_solo12 network_id`.");
     }
 
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
     Solo12 robot;
-    robot.initialize( std::string(argv[1]) );
+    robot.initialize(std::string(argv[1]));
     robot.set_max_joint_torques(0.5);
-    
+
     rt_printf("controller is set up \n");
     thread.create_realtime_thread(&control_loop, &robot);
 

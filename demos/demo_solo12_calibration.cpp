@@ -4,11 +4,10 @@
  * @brief Small demo to test the calibration on the real robot.
  * @version 0.1
  * @date 2019-11-08
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
-
 
 #include "blmc_robots/solo12.hpp"
 #include "common_demo_header.hpp"
@@ -16,29 +15,29 @@
 using namespace blmc_robots;
 typedef ThreadCalibrationData<Solo12> ThreadCalibrationData_t;
 
-
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
     ThreadCalibrationData_t* thread_data_ptr =
-      (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
-    blmc_robots::Vector12d joint_index_to_zero = 
-      thread_data_ptr->joint_index_to_zero;
+        (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
+    blmc_robots::Vector12d joint_index_to_zero =
+        thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 
     CTRL_C_DETECTED = true;
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-
 int main(int argc, char** argv)
 {
     enable_ctrl_c();
 
-    if(argc != 2)
+    if (argc != 2)
     {
-        throw std::runtime_error("Wrong number of argument: `./demo_solo12_calibration network_id`.");
+        throw std::runtime_error(
+            "Wrong number of argument: `./demo_solo12_calibration "
+            "network_id`.");
     }
-    
+
     std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
     robot->initialize(argv[1]);
 
