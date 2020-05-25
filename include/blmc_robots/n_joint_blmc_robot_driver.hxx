@@ -282,6 +282,18 @@ std::string NJBRD::get_error()
         }
     }
 
+    // check if position is within the limits
+    Vector position = this->joint_modules_.get_measured_angles();
+    if (!config_.is_within_joint_limits(position))
+    {
+        if (!error_msg.empty())
+        {
+            error_msg += " | ";
+        }
+
+        error_msg += "Position limits exceeded.";
+    }
+
     return error_msg;
 }
 
@@ -305,9 +317,10 @@ typename NJBRD::Action NJBRD::process_desired_action(
     processed_action.torque = desired_action.torque;
     processed_action.position = desired_action.position;
 
+    // TODO if desired position exceeds allowed limits, clamp it?
+
     // Position controller
     // -------------------
-    // TODO: add position limits
 
     // Run the position controller only if a target position is set for at
     // least one joint.
