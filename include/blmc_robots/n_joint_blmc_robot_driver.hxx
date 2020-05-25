@@ -14,8 +14,8 @@ namespace blmc_robots
 TPL_NJBRD
 bool NJBRD::Config::is_within_joint_limits(const Vector &position) const
 {
-    return (joint_lower_limits.array() < position.array()).all() &&
-           (position.array() < joint_upper_limits.array()).all();
+    return (joint_lower_limits.array() <= position.array()).all() &&
+           (position.array() <= joint_upper_limits.array()).all();
 }
 
 TPL_NJBRD

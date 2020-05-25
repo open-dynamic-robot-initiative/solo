@@ -335,7 +335,7 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      *
      * @param position Joint positions.
      *
-     * @return True if `joint_lower_limits < position < joint_upper_limits`.
+     * @return True if `joint_lower_limits <= position <= joint_upper_limits`.
      */
     bool is_within_joint_limits(const Vector &position) const;
 
