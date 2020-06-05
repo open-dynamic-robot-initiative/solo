@@ -144,9 +144,10 @@ public:
      *
      * ## 1. Check position limits
      *
-     *   If the observed position of a joint exceeds the limits, the action for
-     *   this joint is overwritten with a position command to the limit value
-     *   using the default PD-gains.
+     *   If the observed position of a joint exceeds the limits, actions for
+     *   that joint that do not point back towards the allowed range are
+     *   replaced with a position command to the limit value.  Further custom
+     *   PD-gains are ignored in this case.
      *
      * ## 2. Run the position controller in case a target position is set.
      *
