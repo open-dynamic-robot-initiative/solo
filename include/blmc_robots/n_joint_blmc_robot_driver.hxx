@@ -427,13 +427,26 @@ typename NJBRD::Action NJBRD::apply_action_uninitialized(
 
     Observation observation = get_latest_observation();
 
+    // Only enable soft position limits once initialization is done (i.e. no
+    // limits during homing).
+    Vector lower_limits =
+        is_initialized_
+            ? config_.soft_position_limits_lower
+            : Vector::Constant(-std::numeric_limits<double>::infinity());
+    Vector upper_limits =
+        is_initialized_
+            ? config_.soft_position_limits_upper
+            : Vector::Constant(std::numeric_limits<double>::infinity());
+
     Action applied_action =
         process_desired_action(desired_action,
                                observation,
                                max_torque_Nm_,
                                config_.safety_kd,
                                config_.position_control_gains.kp,
-                               config_.position_control_gains.kd);
+                               config_.position_control_gains.kd,
+                               lower_limits,
+                               upper_limits);
 
     joint_modules_.set_torques(applied_action.torque);
     joint_modules_.send_torques();
