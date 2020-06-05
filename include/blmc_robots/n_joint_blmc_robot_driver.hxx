@@ -310,16 +310,37 @@ typename NJBRD::Action NJBRD::process_desired_action(
     const double max_torque_Nm,
     const Vector &safety_kd,
     const Vector &default_position_control_kp,
-    const Vector &default_position_control_kd)
+    const Vector &default_position_control_kd,
+    const Vector &lower_position_limits,
+    const Vector &upper_position_limits)
 {
-    Action processed_action;
+    Action processed_action = desired_action;
 
-    processed_action.torque = desired_action.torque;
-    processed_action.position = desired_action.position;
+    // Position Limits
+    // ---------------
+    // If a joint exceeds the soft position limit, replace the command for that
+    // joint with a position command to the limit
+    for (std::size_t i = 0; i < N_JOINTS; i++)
+    {
+        auto set_limit_action = [&](double limit) {
+            processed_action.torque[i] = 0;
+            processed_action.position[i] = limit;
+            // do not allow custom gains
+            processed_action.position_kp[i] = default_position_control_kp[i];
+            processed_action.position_kd[i] = default_position_control_kd[i];
+        };
 
-    // TODO if desired position exceeds allowed limits, clamp it?
+        if (latest_observation.position[i] < lower_position_limits[i])
+        {
+            set_limit_action(lower_position_limits[i]);
+        }
+        else if (latest_observation.position[i] > upper_position_limits[i])
+        {
+            set_limit_action(upper_position_limits[i]);
+        }
+    }
 
-    // Position controller
+    // Position Controller
     // -------------------
 
     // Run the position controller only if a target position is set for at
@@ -328,11 +349,11 @@ typename NJBRD::Action NJBRD::process_desired_action(
     {
         // Replace NaN-values with default gains
         processed_action.position_kp =
-            desired_action.position_kp.array().isNaN().select(
-                default_position_control_kp, desired_action.position_kp);
+            processed_action.position_kp.array().isNaN().select(
+                default_position_control_kp, processed_action.position_kp);
         processed_action.position_kd =
-            desired_action.position_kd.array().isNaN().select(
-                default_position_control_kd, desired_action.position_kd);
+            processed_action.position_kd.array().isNaN().select(
+                default_position_control_kd, processed_action.position_kd);
 
         Vector position_error =
             processed_action.position - latest_observation.position;

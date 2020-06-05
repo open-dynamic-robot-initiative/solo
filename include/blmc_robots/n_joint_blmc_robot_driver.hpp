@@ -142,7 +142,13 @@ public:
      *
      * Takes the desired action from the user and does the following processing:
      *
-     * ## 1. Run the position controller in case a target position is set.
+     * ## 1. Check position limits
+     *
+     *   If the observed position of a joint exceeds the limits, the action for
+     *   this joint is overwritten with a position command to the limit value
+     *   using the default PD-gains.
+     *
+     * ## 2. Run the position controller in case a target position is set.
      *
      *   If the target position is set to a value unequal to NaN for any joint,
      *   a PD position controller is executed for this joint and the resulting
@@ -152,7 +158,7 @@ public:
      *   are used for the control.  NaN-values are replaced with the default
      *   gains.
      *
-     * ## 2. Apply safety checks.
+     * ## 3. Apply safety checks.
      *
      *   - Limit the torque to the allowed maximum value.
      *   - Dampen velocity using the given safety_kd gains.  Damping us done
@@ -168,6 +174,8 @@ public:
      * @param safety_kd  D-gain for velocity damping.
      * @param default_position_control_kp  Default P-gain for position control.
      * @param default_position_control_kd  Default D-gain for position control.
+     * @param lower_position_limits  Lower limits for joint positions.
+     * @param upper_position_limits  Upper limits for joint positions.
      *
      * @return Resulting action after applying all the processing.
      */
@@ -177,8 +185,11 @@ public:
         const double max_torque_Nm,
         const Vector &safety_kd,
         const Vector &default_position_control_kp,
-        const Vector &default_position_control_kd);
-
+        const Vector &default_position_control_kd,
+        const Vector &lower_position_limits =
+            Vector::Constant(-std::numeric_limits<double>::infinity()),
+        const Vector &upper_position_limits =
+            Vector::Constant(std::numeric_limits<double>::infinity()));
 
     /**
      * @brief Check if the joint position is within the allowed limits.
