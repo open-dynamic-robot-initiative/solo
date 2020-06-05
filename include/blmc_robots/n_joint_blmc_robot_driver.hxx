@@ -345,9 +345,32 @@ typename NJBRD::Action NJBRD::process_desired_action(
     // joint with a position command to the limit
     for (std::size_t i = 0; i < N_JOINTS; i++)
     {
-        auto set_limit_action = [&](double limit) {
-            processed_action.torque[i] = 0;
-            processed_action.position[i] = limit;
+        // Clamp position commands to the allowed range (note that if position
+        // is NaN both conditions are false, so the NaN is preserved).
+        if (processed_action.position[i] < lower_position_limits[i])
+        {
+            processed_action.position[i] = lower_position_limits[i];
+        }
+        else if (processed_action.position[i] > upper_position_limits[i])
+        {
+            processed_action.position[i] = upper_position_limits[i];
+        }
+
+        auto set_limit_action = [&](double sign, double limit) {
+            // Discard torque command if it pushes further out of the valid
+            // range.
+            if (processed_action.torque[i] * sign > 0)
+            {
+                processed_action.torque[i] = 0;
+            }
+
+            // If no position is set, set it to the limit value (otherwise it
+            // will already be clamped to the limit range, so it will be fine).
+            if (std::isnan(processed_action.position[i]))
+            {
+                processed_action.position[i] = limit;
+            }
+
             // do not allow custom gains
             processed_action.position_kp[i] = default_position_control_kp[i];
             processed_action.position_kd[i] = default_position_control_kd[i];
@@ -355,11 +378,11 @@ typename NJBRD::Action NJBRD::process_desired_action(
 
         if (latest_observation.position[i] < lower_position_limits[i])
         {
-            set_limit_action(lower_position_limits[i]);
+            set_limit_action(-1, lower_position_limits[i]);
         }
         else if (latest_observation.position[i] > upper_position_limits[i])
         {
-            set_limit_action(upper_position_limits[i]);
+            set_limit_action(+1, upper_position_limits[i]);
         }
     }
 
