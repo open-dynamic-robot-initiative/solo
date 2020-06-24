@@ -2,23 +2,20 @@
  * \file slider.hpp
  * \author Manuel Wuthrich
  * \date 2018
- * \copyright Copyright (c) 2019, New York University and Max Planck Gesellschaft.
-
+ * \copyright Copyright (c) 2019, New York University & Max Planck Gesellschaft.
  */
 
 #pragma once
 
 #include <array>
 
-#include <Eigen/Eigen>
-#include <blmc_robots/common_header.hpp>
 #include <math.h>
+#include <Eigen/Eigen>
 #include <blmc_drivers/devices/analog_sensor.hpp>
-
+#include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
 {
-
 class Slider
 {
 public:
@@ -36,7 +33,7 @@ public:
     {
         auto measurement_history = analog_sensor_->get_measurement();
 
-        if(measurement_history->length() == 0)
+        if (measurement_history->length() == 0)
         {
             return std::numeric_limits<double>::quiet_NaN();
         }
@@ -46,15 +43,11 @@ public:
     }
 
 private:
-
     std::shared_ptr<blmc_drivers::AnalogSensorInterface> analog_sensor_;
 
     double min_position_;
     double max_position_;
 };
-
-
-
 
 template <int COUNT>
 class Sliders
@@ -62,36 +55,38 @@ class Sliders
 public:
     typedef Eigen::Matrix<double, COUNT, 1> Vector;
 
-    typedef std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>, COUNT>
-    AnalogSensors;
+    typedef std::array<std::shared_ptr<blmc_drivers::AnalogSensorInterface>,
+                       COUNT>
+        AnalogSensors;
 
-    typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>, (COUNT+1)/2>
-    MotorBoards;
-
+    typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
+                       (COUNT + 1) / 2>
+        MotorBoards;
 
     Sliders(const AnalogSensors& analog_sensors,
             const Vector& min_positions,
             const Vector& max_positions)
     {
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
-            sliders_[i] = std::make_shared<Slider>(analog_sensors[i],
-                                                   min_positions[i],
-                                                   max_positions[i]);
+            sliders_[i] = std::make_shared<Slider>(
+                analog_sensors[i], min_positions[i], max_positions[i]);
         }
     }
 
     Sliders(const MotorBoards& motor_boards,
             const Vector& min_positions,
-            const Vector& max_positions):
-        Sliders(create_analog_sensors(motor_boards), min_positions, max_positions)
-    { }
+            const Vector& max_positions)
+        : Sliders(
+              create_analog_sensors(motor_boards), min_positions, max_positions)
+    {
+    }
 
     Vector get_positions() const
     {
         Vector positions;
 
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             positions(i) = sliders_[i]->get_position();
         }
@@ -105,18 +100,14 @@ private:
     {
         AnalogSensors analog_sensors;
 
-        for(size_t i = 0; i < COUNT; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             analog_sensors[i] = std::make_shared<blmc_drivers::AnalogSensor>(
-                        motor_boards[i/2], i%2);
+                motor_boards[i / 2], i % 2);
         }
 
         return analog_sensors;
     }
-
 };
 
-
-
-
-} // namespace blmc_robots
+}  // namespace blmc_robots

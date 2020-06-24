@@ -30,6 +30,8 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   robot_interfaces
   pybind11_catkin
   yaml_cpp_catkin
+  robot_properties_solo
+  robot_properties_teststand
 )
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PKGS})
 
@@ -62,6 +64,7 @@ set(exported_libraries
   ${PROJECT_NAME}
   test_bench_8_motors
   solo8
+  solo8ti
   solo12
 
   teststand

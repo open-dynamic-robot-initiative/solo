@@ -17,7 +17,7 @@
 
 #include <yaml_cpp_catkin/yaml_eigen.h>
 #include <mpi_cpp_tools/math.hpp>
-#include <robot_interfaces/n_joint_robot_functions.hpp>
+#include <robot_interfaces/monitored_robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
 
@@ -44,20 +44,7 @@ struct MotorParameters
 };
 
 /**
- * @brief Parameters for the joint calibration (homing and go to initial pose).
- */
-struct CalibrationParameters
-{
-    //! @brief Torque that is used to find the end stop.
-    double endstop_search_torque_Nm;
-    //! @brief Tolerance for reaching the starting position.
-    double position_tolerance_rad;
-    //! @brief Timeout for reaching the starting position.
-    double move_timeout;
-};
-
-/**
- * @brief Base class for simple n-joint BLMC robots.
+ * @brief Base class for n-joint BLMC robots.
  *
  * This is a generic base class to easily implement drivers for simple BLMC
  * robots that consist of N_JOINTS joints.
@@ -65,242 +52,28 @@ struct CalibrationParameters
  * @tparam N_JOINTS Number of joints.
  * @tparam N_MOTOR_BOARDS Number of motor control boards that are used.
  */
-template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
 class NJointBlmcRobotDriver
     : public robot_interfaces::RobotDriver<
-          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Action,
-          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation>
+          typename robot_interfaces::NJointAction<N_JOINTS>,
+          Observation>
 {
 public:
-    typedef typename robot_interfaces::NJointRobotTypes<N_JOINTS> Types;
+    static constexpr size_t num_joints = N_JOINTS;
+    static constexpr size_t num_motor_boards = N_MOTOR_BOARDS;
 
-    typedef typename Types::Action Action;
-    typedef typename Types::Observation Observation;
-    typedef typename Types::Vector Vector;
+    typedef typename robot_interfaces::NJointAction<N_JOINTS> Action;
+    typedef typename robot_interfaces::RobotInterfaceTypes<Action, Observation>
+        Types;
+
+    typedef typename Action::Vector Vector;
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
         Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
                        N_MOTOR_BOARDS>
         MotorBoards;
 
-    /**
-     * @brief Configuration of the robot that can be changed by the user.
-     */
-    struct Config
-    {
-        typedef std::array<std::string, N_MOTOR_BOARDS> CanPortArray;
-
-        // All parameters should have default values that should not result in
-        // dangerous behaviour in case someone forgets to specify them.
-
-        /**
-         * @brief List of CAN port names used by the robot.
-         *
-         * For each motor control board used by the robot, this specifies the
-         * CAN port through which it is connected.
-         *
-         * Example: `{"can0", "can1"}`
-         */
-        CanPortArray can_ports;
-
-        //! @brief Maximum current that can be sent to the motor [A].
-        double max_current_A = 0.0;
-
-        /**
-         * @brief Whether the joints have physical end stops or not.
-         *
-         * This is for example relevant for homing, where (in case this value
-         * is set to true) all joints move until they hit the end stop to
-         * determine their absolute position.
-         *
-         * Note that not having end stops does not mean that the joint can
-         * rotate freely in general.
-         */
-        bool has_endstop = false;
-
-        //! @brief Parameters related to calibration.
-        CalibrationParameters calibration = {
-            .endstop_search_torque_Nm = 0.0,
-            .position_tolerance_rad = 0.0,
-            .move_timeout = 0,
-        };
-
-        //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
-        // set some rather high damping by default
-        Vector safety_kd = Vector::Constant(0.1);
-
-        //! @brief Default control gains for the position PD controller.
-        struct
-        {
-            Vector kp = Vector::Zero();
-            Vector kd = Vector::Zero();
-        } position_control_gains;
-
-        //! \brief Offset between home position and zero.
-        Vector home_offset_rad = Vector::Zero();
-
-        /**
-         * @brief Initial position to which the robot moves after
-         *        initialization.
-         */
-        Vector initial_position_rad = Vector::Zero();
-
-        /**
-         * @brief Print the given configuration in a human-readable way.
-         */
-        void print() const
-        {
-            std::cout << "Configuration:\n"
-                      << "\t can_ports:";
-            for (const auto &port : can_ports)
-            {
-                std::cout << " " << port;
-            }
-            std::cout << "\n"
-                      << "\t max_current_A: " << max_current_A << "\n"
-                      << "\t has_endstop: " << has_endstop << "\n"
-                      << "\t calibration: "
-                      << "\n"
-                      << "\t\t endstop_search_torque_Nm: "
-                      << calibration.endstop_search_torque_Nm << "\n"
-                      << "\t\t position_tolerance_rad: "
-                      << calibration.position_tolerance_rad << "\n"
-                      << "\t\t move_timeout: " << calibration.move_timeout
-                      << "\n"
-                      << "\t safety_kd: " << safety_kd.transpose() << "\n"
-                      << "\t position_control_gains: "
-                      << "\n"
-                      << "\t\t kp: " << position_control_gains.kp.transpose()
-                      << "\n"
-                      << "\t\t kd: " << position_control_gains.kd.transpose()
-                      << "\n"
-                      << "\t home_offset_rad: " << home_offset_rad.transpose()
-                      << "\n"
-                      << "\t initial_position_rad: "
-                      << initial_position_rad.transpose() << "\n"
-                      << std::endl;
-        }
-
-        /**
-         * @brief Load driver configuration from file.
-         *
-         * Load the configuration from the specified YAML file.  The file is
-         * expected to have the same structure/key naming as the Config struct.
-         * If a value can not be read from the file, the application exists
-         * with an error message.
-         *
-         * @param config_file_name  Path/name of the configuration YAML file.
-         *
-         * @return Configuration
-         */
-        static Config load_config(const std::string &config_file_name)
-        {
-            Config config;
-            YAML::Node user_config;
-
-            try
-            {
-                user_config = YAML::LoadFile(config_file_name);
-            }
-            catch (...)
-            {
-                std::cout << "FATAL: Failed to load configuration from '"
-                          << config_file_name << "'." << std::endl;
-                std::exit(1);
-            }
-
-            // replace values from the default config with the ones given in the
-            // users config file
-
-            // TODO: for some reason direct conversion is not working (despite
-            // yaml-cpp implementing a generic conversion for std::array)
-            // set_config_value<CanPortArray>(user_config, "can_ports",
-            // &config.can_ports);
-            try
-            {
-                for (size_t i = 0; i < config.can_ports.size(); i++)
-                {
-                    config.can_ports[i] =
-                        user_config["can_ports"][i].as<std::string>();
-                }
-            }
-            catch (...)
-            {
-                std::cerr << "FATAL: Failed to load parameter 'can_ports' from "
-                             "configuration file"
-                          << std::endl;
-                std::exit(1);
-            }
-
-            set_config_value(
-                user_config, "max_current_A", &config.max_current_A);
-            set_config_value(user_config, "has_endstop", &config.has_endstop);
-
-            if (user_config["calibration"])
-            {
-                YAML::Node calib = user_config["calibration"];
-
-                set_config_value(calib,
-                                 "endstop_search_torque_Nm",
-                                 &config.calibration.endstop_search_torque_Nm);
-                set_config_value(calib,
-                                 "position_tolerance_rad",
-                                 &config.calibration.position_tolerance_rad);
-                set_config_value(
-                    calib, "move_timeout", &config.calibration.move_timeout);
-            }
-
-            set_config_value(user_config, "safety_kd", &config.safety_kd);
-
-            if (user_config["position_control_gains"])
-            {
-                YAML::Node pos_ctrl = user_config["position_control_gains"];
-
-                set_config_value(
-                    pos_ctrl, "kp", &config.position_control_gains.kp);
-                set_config_value(
-                    pos_ctrl, "kd", &config.position_control_gains.kd);
-            }
-
-            set_config_value(
-                user_config, "home_offset_rad", &config.home_offset_rad);
-            set_config_value(user_config,
-                             "initial_position_rad",
-                             &config.initial_position_rad);
-
-            return config;
-        }
-
-    private:
-        /**
-         * \brief Set value from user configuration to var if specified.
-         *
-         * Checks if a field `name` exists in `user_config`.  If yes, its value
-         * is written to `var`, otherwise `var` is unchanged.
-         *
-         * \param[in] user_config  YAML node containing the user configuration.
-         * \param[in] name  Name of the configuration entry.
-         * \param[out] var  Variable to which configuration is written.  Value
-         * is unchanged if the specified field name does not exist in
-         * user_config, i.e.  it can be initialized with a default value.
-         */
-        template <typename T>
-        static void set_config_value(const YAML::Node &user_config,
-                                     const std::string &name,
-                                     T *var)
-        {
-            try
-            {
-                *var = user_config[name].as<T>();
-            }
-            catch (const YAML::Exception &e)
-            {
-                std::cerr << "FATAL: Failed to load parameter '" << name
-                          << "' from configuration file" << std::endl;
-                std::exit(1);
-            };
-        }
-    };
+    struct Config;  // actual declaration see below
 
     /**
      * @brief True if the joints have mechanical end stops, false if not.
@@ -338,290 +111,16 @@ public:
     }
 
     static MotorBoards create_motor_boards(
-        const std::array<std::string, N_MOTOR_BOARDS> &can_ports)
+        const std::array<std::string, N_MOTOR_BOARDS> &can_ports);
+
+    Vector get_max_torques() const
     {
-        // setup can buses -----------------------------------------------------
-        std::array<std::shared_ptr<blmc_drivers::CanBus>, N_MOTOR_BOARDS>
-            can_buses;
-        for (size_t i = 0; i < can_buses.size(); i++)
-        {
-            can_buses[i] = std::make_shared<blmc_drivers::CanBus>(can_ports[i]);
-        }
-
-        // set up motor boards -------------------------------------------------
-        MotorBoards motor_boards;
-        for (size_t i = 0; i < motor_boards.size(); i++)
-        {
-            motor_boards[i] = std::make_shared<blmc_drivers::CanBusMotorBoard>(
-                can_buses[i], 1000, 10);
-            /// \TODO: reduce the timeout further!!
-        }
-
-        for (size_t i = 0; i < motor_boards.size(); i++)
-        {
-            motor_boards[i]->wait_until_ready();
-        }
-
-        return motor_boards;
+        return max_torque_Nm_ * Vector::Ones();
     }
 
-    void pause_motors()
-    {
-        for (size_t i = 0; i < motor_boards_.size(); i++)
-        {
-            motor_boards_[i]->pause_motors();
-        }
-    }
+    void pause_motors();
 
-    Vector get_measured_index_angles() const
-    {
-        return joint_modules_.get_measured_index_angles();
-    }
-
-public:
-    Observation get_latest_observation() override
-    {
-        Observation observation;
-        observation.position = joint_modules_.get_measured_angles();
-        observation.velocity = joint_modules_.get_measured_velocities();
-        observation.torque = joint_modules_.get_measured_torques();
-        return observation;
-    }
-
-    std::string get_error() override
-    {
-        // Checks each board for errors and translates the error codes into
-        // human-readable strings.  If multiple boards have errors, the messages
-        // are concatenated.  Each message is prepended with the index of the
-        // corresponding board.
-
-        std::string error_msg = "";
-
-        for (size_t i = 0; i < motor_boards_.size(); i++)
-        {
-            auto status_timeseries = motor_boards_[i]->get_status();
-            if (status_timeseries->length() > 0)
-            {
-                std::string board_error_msg = "";
-                using ErrorCodes = blmc_drivers::MotorBoardStatus::ErrorCodes;
-                switch (status_timeseries->newest_element().error_code)
-                {
-                    case ErrorCodes::NONE:
-                        break;
-                    case ErrorCodes::ENCODER:
-                        board_error_msg = "Encoder Error";
-                        break;
-                    case ErrorCodes::CAN_RECV_TIMEOUT:
-                        board_error_msg = "CAN Receive Timeout";
-                        break;
-                    case ErrorCodes::CRIT_TEMP:
-                        board_error_msg = "Critical Temperature";
-                        break;
-                    case ErrorCodes::POSCONV:
-                        board_error_msg =
-                            "Error in SpinTAC Position Convert module";
-                        break;
-                    case ErrorCodes::POS_ROLLOVER:
-                        board_error_msg = "Position Rollover";
-                        break;
-                    case ErrorCodes::OTHER:
-                        board_error_msg = "Other Error";
-                        break;
-                    default:
-                        board_error_msg = "Unknown Error";
-                        break;
-                }
-
-                if (!board_error_msg.empty())
-                {
-                    if (!error_msg.empty())
-                    {
-                        error_msg += "  ";
-                    }
-
-                    // error of the board with board index to the error message
-                    // string
-                    error_msg +=
-                        "[Board " + std::to_string(i) + "] " + board_error_msg;
-                }
-            }
-        }
-
-        return error_msg;
-    }
-
-protected:
-    Action apply_action(const Action &desired_action) override
-    {
-        if (!is_initialized_)
-        {
-            throw std::runtime_error(
-                "Robot needs to be initialized before applying actions.  Run "
-                "the `initialize()` method.");
-        }
-
-        return apply_action_uninitialized(desired_action);
-    }
-
-    Action apply_action_uninitialized(const Action &desired_action)
-    {
-        double start_time_sec = real_time_tools::Timer::get_current_time_sec();
-
-        Observation observation = get_latest_observation();
-
-        Action applied_action =
-            robot_interfaces::NJointRobotFunctions<N_JOINTS>::
-                process_desired_action(desired_action,
-                                       observation,
-                                       max_torque_Nm_,
-                                       config_.safety_kd,
-                                       config_.position_control_gains.kp,
-                                       config_.position_control_gains.kd);
-
-        joint_modules_.set_torques(applied_action.torque);
-        joint_modules_.send_torques();
-
-        real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
-
-        return applied_action;
-    }
-
-    void shutdown() override
-    {
-        pause_motors();
-    }
-
-    /**
-     * @brief Homing on negative end stop and encoder index.
-     *
-     * Procedure for finding an absolute zero position (or "home" position) when
-     * using relative encoders.
-     *
-     * If the robot has end stops (according to configuration), all joints first
-     * move in negative direction until they hit the end stop.
-     * Then an encoder index search is started where each joint moves slowly in
-     * positive direction until the next encoder index.  The position of this
-     * encoder index is the "home position".
-     *
-     * By default, the zero position is the same as the home position.  The
-     * optional argument home_offset_rad provides a means to move the zero
-     * position
-     * relative to the home position.  The zero position is computed as
-     *
-     *     zero position = encoder index position + home offset
-     *
-     *
-     * @param endstop_search_torque_Nm Torque that is used to move the joints
-     *     while searching the end stop.
-     * @param home_offset_rad Offset between the home position and the desired
-     *     zero position.
-     */
-    bool home_on_index_after_negative_end_stop(
-        double endstop_search_torque_Nm,
-        Vector home_offset_rad = Vector::Zero())
-    {
-        //! Distance after which encoder index search is aborted.
-        //! Computed based on gear ratio to be 1.5 motor revolutions.
-        const double SEARCH_DISTANCE_LIMIT_RAD =
-            (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
-
-        rt_printf("Start homing.\n");
-        if (has_endstop_)
-        {
-            //! Min. number of steps when moving to the end stop.
-            constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
-            //! Size of the window when computing average velocity.
-            constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
-            //! Velocity limit at which the joints are considered to be stopped
-            constexpr double STOP_VELOCITY = 0.01;
-
-            static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
-                          "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
-                          " SIZE_VELOCITY_WINDOW to ensure correct computation"
-                          " of average velocity.");
-
-            // Move until velocity drops to almost zero (= joints hit the end
-            // stops) but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
-            // TODO: add timeout to this loop?
-            std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
-            Vector summed_velocities = Vector::Zero();
-            uint32_t step_count = 0;
-            while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
-                   (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
-                    STOP_VELOCITY))
-            {
-                Vector torques = Vector::Constant(-endstop_search_torque_Nm);
-                apply_action_uninitialized(torques);
-                Vector abs_velocities =
-                    get_latest_observation().velocity.cwiseAbs();
-
-                uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
-                if (step_count >= SIZE_VELOCITY_WINDOW)
-                {
-                    summed_velocities -= running_velocities[running_index];
-                }
-                running_velocities[running_index] = abs_velocities;
-                summed_velocities += abs_velocities;
-                step_count++;
-
-#ifdef VERBOSE
-                Eigen::IOFormat commainitfmt(
-                    4, Eigen::DontAlignCols, " ", " ", "", "", "", "");
-                std::cout << ((summed_velocities / SIZE_VELOCITY_WINDOW)
-                                  .array() > STOP_VELOCITY)
-                                 .format(commainitfmt)
-                          << std::endl;
-#endif
-            }
-            rt_printf("Reached end stop.\n");
-        }
-
-        // Home on encoder index
-        HomingReturnCode homing_status = joint_modules_.execute_homing(
-            SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad);
-
-        rt_printf("Finished homing.\n");
-
-        return homing_status == HomingReturnCode::SUCCEEDED;
-    }
-
-    /**
-     * @brief Move to given goal position using PD control.
-     *
-     * @param goal_pos Angular goal position for each joint.
-     * @param tolerance Allowed position error for reaching the goal.  This is
-     *     checked per joint, that is the maximal possible error is +/-tolerance
-     *     on each joint.
-     * @param timeout_cycles Timeout.  If exceeded before goal is reached, the
-     *     procedure is aborted. Unit: Number of control loop cycles.
-     * @return True if goal position is reached, false if timeout is exceeded.
-     */
-    bool move_to_position(const Vector &goal_pos,
-                          const double tolerance,
-                          const uint32_t timeout_cycles)
-    {
-        bool reached_goal = false;
-        uint32_t cycle_count = 0;
-
-        while (!reached_goal && cycle_count < timeout_cycles)
-        {
-            apply_action(Action::Position(goal_pos));
-
-            const Vector position_error =
-                goal_pos - get_latest_observation().position;
-            const Vector velocity = get_latest_observation().velocity;
-
-            // Check if the goal is reached (position error below tolerance and
-            // velocity close to zero).
-            constexpr double ZERO_VELOCITY = 1e-4;
-            reached_goal = ((position_error.array().abs() < tolerance).all() &&
-                            (velocity.array().abs() < ZERO_VELOCITY).all());
-
-            cycle_count++;
-        }
-
-        return reached_goal;
-    }
+    Vector get_measured_index_angles() const;
 
     /**
      * @brief Find home position of all joints and move to start position.
@@ -631,26 +130,74 @@ protected:
      * `config_.initial_position_rad`).
      *
      */
-    void initialize() override
-    {
-        // Initialization is moving the robot and thus needs to be executed in
-        // a real-time thread.  This method only starts the thread and waits
-        // for it to finish.  Actual implementation of initialization is in
-        // `_initialize()`.
+    void initialize() override;
 
-        real_time_tools::RealTimeThread realtime_thread;
-        realtime_thread.create_realtime_thread(
-            [](void *instance_pointer) {
-                // instance_pointer = this, cast to correct type and call the
-                // _initialize() method.
-                ((NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
-                      *)(instance_pointer))
-                    ->_initialize();
-                return (void *)nullptr;
-            },
-            this);
-        realtime_thread.join();
-    }
+    virtual Observation get_latest_observation() override = 0;
+    Action apply_action(const Action &desired_action) override;
+    std::string get_error() override;
+    void shutdown() override;
+
+    /**
+     * @brief Process the desired action provided by the user.
+     *
+     * Takes the desired action from the user and does the following processing:
+     *
+     * ## 1. Check position limits
+     *
+     *   If the observed position of a joint exceeds the limits, actions for
+     *   that joint that do not point back towards the allowed range are
+     *   replaced with a position command to the limit value.  Further custom
+     *   PD-gains are ignored in this case.
+     *
+     * ## 2. Run the position controller in case a target position is set.
+     *
+     *   If the target position is set to a value unequal to NaN for any joint,
+     *   a PD position controller is executed for this joint and the resulting
+     *   torque command is added to the torque command in the action.
+     *
+     *   If the P- and/or D-gains are set to a non-NaN value in the action, they
+     *   are used for the control.  NaN-values are replaced with the default
+     *   gains.
+     *
+     * ## 3. Apply safety checks.
+     *
+     *   - Limit the torque to the allowed maximum value.
+     *   - Dampen velocity using the given safety_kd gains.  Damping us done
+     *     joint-wise using this equation:
+     *
+     *         torque_damped = torque_desired - safety_kd * current_velocity
+     *
+     * The resulting action with modifications of all steps is returned.
+     *
+     * @param desired_action  Desired action given by the user.
+     * @param latest_observation  Latest observation from the robot.
+     * @param max_torque_Nm  Maximum allowed absolute torque.
+     * @param safety_kd  D-gain for velocity damping.
+     * @param default_position_control_kp  Default P-gain for position control.
+     * @param default_position_control_kd  Default D-gain for position control.
+     * @param lower_position_limits  Lower limits for joint positions.
+     * @param upper_position_limits  Upper limits for joint positions.
+     *
+     * @return Resulting action after applying all the processing.
+     */
+    static Action process_desired_action(
+        const Action &desired_action,
+        const Observation &latest_observation,
+        const double max_torque_Nm,
+        const Vector &safety_kd,
+        const Vector &default_position_control_kp,
+        const Vector &default_position_control_kd,
+        const Vector &lower_position_limits =
+            Vector::Constant(-std::numeric_limits<double>::infinity()),
+        const Vector &upper_position_limits =
+            Vector::Constant(std::numeric_limits<double>::infinity()));
+
+    /**
+     * @brief Check if the joint position is within the hard limits.
+     *
+     * @see Config::is_within_hard_position_limits
+     */
+    bool is_within_hard_position_limits(const Observation &observation) const;
 
 protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
@@ -672,44 +219,243 @@ protected:
 
     bool is_initialized_ = false;
 
+    Action apply_action_uninitialized(const Action &desired_action);
+
     //! \brief Actual initialization that is called in a real-time thread in
     //!        initialize().
-    void _initialize()
-    {
-        joint_modules_.set_position_control_gains(
-            config_.position_control_gains.kp,
-            config_.position_control_gains.kd);
+    void _initialize();
 
-        is_initialized_ = home_on_index_after_negative_end_stop(
-            config_.calibration.endstop_search_torque_Nm,
-            config_.home_offset_rad);
+    /**
+     * @brief Homing using end stops (optional) and encoder indices.
+     *
+     * Procedure for finding an absolute zero position (or "home" position) when
+     * using relative encoders.
+     *
+     * If the robot has end stops (according to configuration), all joints first
+     * move in negative direction until they hit the end stop.
+     * Then an encoder index search is started where each joint moves slowly in
+     * positive direction until the next encoder index.  The position of this
+     * encoder index is the "home position".
+     *
+     * By default, the zero position is the same as the home position.  The
+     * optional argument home_offset_rad provides a means to move the zero
+     * position
+     * relative to the home position.  The zero position is computed as
+     *
+     *     zero position = encoder index position + home offset
+     *
+     *
+     * @param endstop_search_torques_Nm Torques that are used to move the joints
+     *     while searching the end stop.
+     * @param home_offset_rad Offset between the home position and the desired
+     *     zero position.
+     */
+    bool homing(Vector endstop_search_torques_Nm,
+                Vector home_offset_rad = Vector::Zero());
 
-        if (is_initialized_)
-        {
-            bool reached_goal =
-                move_to_position(config_.initial_position_rad,
-                                 config_.calibration.position_tolerance_rad,
-                                 config_.calibration.move_timeout);
-            if (!reached_goal)
-            {
-                rt_printf("Failed to reach goal, timeout exceeded.\n");
-            }
-        }
-
-        pause_motors();
-    }
-
-public:
-    Vector get_max_torques() const
-    {
-        return max_torque_Nm_ * Vector::Ones();
-    }
+    /**
+     * @brief Move to given goal position using PD control.
+     *
+     * @param goal_pos Angular goal position for each joint.
+     * @param tolerance Allowed position error for reaching the goal.  This is
+     *     checked per joint, that is the maximal possible error is +/-tolerance
+     *     on each joint.
+     * @param timeout_cycles Timeout.  If exceeded before goal is reached, the
+     *     procedure is aborted. Unit: Number of control loop cycles.
+     * @return True if goal position is reached, false if timeout is exceeded.
+     */
+    bool move_to_position(const Vector &goal_pos,
+                          const double tolerance,
+                          const uint32_t timeout_cycles);
 };
 
+/**
+ * @brief Configuration of the robot that can be changed by the user.
+ */
+template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
+{
+    typedef std::array<std::string, N_MOTOR_BOARDS> CanPortArray;
+
+    // All parameters should have default values that should not result in
+    // dangerous behaviour in case someone forgets to specify them.
+
+    /**
+     * @brief List of CAN port names used by the robot.
+     *
+     * For each motor control board used by the robot, this specifies the
+     * CAN port through which it is connected.
+     *
+     * Example: `{"can0", "can1"}`
+     */
+    CanPortArray can_ports;
+
+    //! @brief Maximum current that can be sent to the motor [A].
+    double max_current_A = 0.0;
+
+    /**
+     * @brief Whether the joints have physical end stops or not.
+     *
+     * This is for example relevant for homing, where (in case this value
+     * is set to true) all joints move until they hit the end stop to
+     * determine their absolute position.
+     *
+     * Note that not having end stops does not mean that the joint can
+     * rotate freely in general.
+     */
+    bool has_endstop = false;
+
+    //! @brief Parameters related to calibration.
+    struct
+    {
+        //! @brief Torque that is used to find the end stop.
+        Vector endstop_search_torques_Nm = Vector::Zero();
+        //! @brief Tolerance for reaching the starting position.
+        double position_tolerance_rad = 0.0;
+        //! @brief Timeout for reaching the starting position.
+        double move_timeout = 0.0;
+    } calibration;
+
+    //! @brief D-gain to dampen velocity.  Set to zero to disable damping.
+    // set some rather high damping by default
+    Vector safety_kd = Vector::Constant(0.1);
+
+    //! @brief Default control gains for the position PD controller.
+    struct
+    {
+        Vector kp = Vector::Zero();
+        Vector kd = Vector::Zero();
+    } position_control_gains;
+
+    /**
+     * @brief Hard lower limits for joint position.
+     *
+     * Exceeding this limit results in an error and robot shutdown.
+     */
+    Vector hard_position_limits_lower = Vector::Zero();
+    /**
+     * @brief Hard upper limits for joint position.
+     *
+     * Exceeding this limit results in an error and robot shutdown.
+     */
+    Vector hard_position_limits_upper = Vector::Zero();
+
+    /**
+     * @brief Soft lower limits for joint position.
+     *
+     * Exceeding this limit results in the action being adjusted to move the
+     * joint back inside the limits.
+     */
+    Vector soft_position_limits_lower =
+        Vector::Constant(-std::numeric_limits<double>::infinity());
+    /**
+     * @brief Soft upper limits for joint position.
+     *
+     * Exceeding this limit results in the action being adjusted to move the
+     * joint back inside the limits.
+     */
+    Vector soft_position_limits_upper =
+        Vector::Constant(std::numeric_limits<double>::infinity());
+
+    //! @brief Offset between home position and zero.
+    Vector home_offset_rad = Vector::Zero();
+
+    /**
+     * @brief Initial position to which the robot moves after
+     *        initialization.
+     */
+    Vector initial_position_rad = Vector::Zero();
+
+
+    /**
+     * @brief Check if the given position is within the hard limits.
+     *
+     * @param position Joint positions.
+     *
+     * @return True if `hard_position_limits_lower <= position <=
+     *     hard_position_limits_upper`.
+     */
+    bool is_within_hard_position_limits(const Vector &position) const;
+
+    /**
+     * @brief Print the given configuration in a human-readable way.
+     */
+    void print() const;
+
+    /**
+     * @brief Load driver configuration from file.
+     *
+     * Load the configuration from the specified YAML file.  The file is
+     * expected to have the same structure/key naming as the Config struct.
+     * If a value can not be read from the file, the application exists
+     * with an error message.
+     *
+     * @param config_file_name  Path/name of the configuration YAML file.
+     *
+     * @return Configuration
+     */
+    static Config load_config(const std::string &config_file_name);
+
+private:
+    /**
+     * \brief Set value from user configuration to var if specified.
+     *
+     * Checks if a field `name` exists in `user_config`.  If yes, its value
+     * is written to `var`, otherwise `var` is unchanged.
+     *
+     * \param[in] user_config  YAML node containing the user configuration.
+     * \param[in] name  Name of the configuration entry.
+     * \param[out] var  Variable to which configuration is written.  Value
+     * is unchanged if the specified field name does not exist in
+     * user_config, i.e.  it can be initialized with a default value.
+     */
+    template <typename T>
+    static void set_config_value(const YAML::Node &user_config,
+                                 const std::string &name,
+                                 T *var);
+};
+
+/**
+ * @brief Simple n-joint robot driver that uses NJointObservation.
+ *
+ * @tparam N_JOINTS  Number of joints
+ * @tparam N_MOTOR_BOARDS  Number of motor boards.
+ */
+template <size_t N_JOINTS, size_t N_MOTOR_BOARDS = (N_JOINTS + 1) / 2>
+class SimpleNJointBlmcRobotDriver
+    : public NJointBlmcRobotDriver<
+          robot_interfaces::NJointObservation<N_JOINTS>,
+          N_JOINTS,
+          N_MOTOR_BOARDS>
+{
+public:
+    typedef robot_interfaces::NJointObservation<N_JOINTS> Observation;
+
+    using NJointBlmcRobotDriver<robot_interfaces::NJointObservation<N_JOINTS>,
+                                N_JOINTS,
+                                N_MOTOR_BOARDS>::NJointBlmcRobotDriver;
+
+    Observation get_latest_observation() override;
+};
+
+/**
+ * @brief Create backend using the specified driver.
+ *
+ * @tparam Driver  Type of the driver.  Expected to inherit from
+ *     NJointBlmcRobotDriver.
+ *
+ * @param robot_data  Instance of RobotData used for communication.
+ * @param config_file_path  Path to the driver configuration file.
+ * @param first_action_timeout  Duration for which the backend waits for the
+ *     first action to arrive.  If exceeded, the backend shuts down.
+ *
+ * @return A RobotBackend instances with a driver of the specified type.
+ */
 template <typename Driver>
 typename Driver::Types::BackendPtr create_backend(
-    typename Driver::Types::DataPtr robot_data,
-    const std::string &config_file_path)
+    typename Driver::Types::BaseDataPtr robot_data,
+    const std::string &config_file_path,
+    const double first_action_timeout = std::numeric_limits<double>::infinity())
 {
     constexpr double MAX_ACTION_DURATION_S = 0.003;
     constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
@@ -719,13 +465,21 @@ typename Driver::Types::BackendPtr create_backend(
     auto config = Driver::Config::load_config(config_file_path);
     config.print();
 
-    auto robot = std::make_shared<Driver>(config);
+    // wrap the actual robot driver directly in a MonitoredRobotDriver
+    auto monitored_driver =
+        std::make_shared<robot_interfaces::MonitoredRobotDriver<Driver>>(
+            std::make_shared<Driver>(config),
+            MAX_ACTION_DURATION_S,
+            MAX_INTER_ACTION_DURATION_S);
 
+    constexpr bool real_time_mode = true;
     auto backend = std::make_shared<typename Driver::Types::Backend>(
-        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+        monitored_driver, robot_data, real_time_mode, first_action_timeout);
     backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
 }
 
 }  // namespace blmc_robots
+
+#include "n_joint_blmc_robot_driver.hxx"

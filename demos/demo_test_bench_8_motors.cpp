@@ -7,10 +7,8 @@
  * This file uses the TestBench8Motors class in a small demo.
  */
 
-
-#include "blmc_robots/test_bench_8_motors.hpp"
 #include "blmc_robots/common_programs_header.hpp"
-
+#include "blmc_robots/test_bench_8_motors.hpp"
 
 using namespace blmc_robots;
 

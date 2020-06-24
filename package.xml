@@ -18,6 +18,8 @@
   <depend>robot_interfaces</depend>
   <depend>pybind11_catkin</depend>
   <depend>yaml_cpp_catkin</depend>
+  <depend>robot_properties_solo</depend>
+  <depend>robot_properties_teststand</depend>
 
   <depend>eigen</depend>
   <depend>yaml-cpp</depend>

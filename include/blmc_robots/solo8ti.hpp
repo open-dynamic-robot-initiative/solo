@@ -1,33 +1,31 @@
 /**
- * @file
- * @author Julian Viereck
- * @date 2020
- * @brief Solo8 robot with micro drivers.
- * @copyright Copyright (c) 2020, New York University & Max Planck Gesellschaft.
+ * \file quadruped.hpp
+ * \author Manuel Wuthrich
+ * \date 2018
+ * \copyright Copyright (c) 2019, New York University & Max Planck Gesellschaft.
  */
 
 #pragma once
 
-#include <blmc_drivers/serial_reader.hpp>
+#include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/slider.hpp>
-#include <blmc_robots/spi_joint_module.hpp>
 
 namespace blmc_robots
 {
-class Solo8
+class Solo8TI
 {
 public:
     /**
      * @brief Solo8 is the constructor of the class.
      */
-    Solo8();
+    Solo8TI();
 
     /**
      * @brief initialize the robot by setting aligning the motors and calibrate
      * the sensors to 0
      */
-    void initialize(const std::string& network_id);
+    void initialize();
 
     /**
      * @brief send_target_torques sends the target currents to the motors
@@ -312,45 +310,39 @@ private:
      */
     Eigen::Vector4d contact_sensors_states_;
 
-    /** @brief Map the joint id to the motor board id, @see Solo8 description.
-     */
-    std::array<int, 8> map_joint_id_to_motor_board_id_;
-
-    /** @brief Map the joint id to the motor port id, @see Solo8 description. */
-    std::array<int, 8> map_joint_id_to_motor_port_id_;
-
     /**
      * Drivers communication objects
      */
 
     /**
-     * @brief Main board drivers.
-     *
-     * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board
+     * @brief This map for every motor the card number.
      */
-    std::shared_ptr<MasterBoardInterface> main_board_ptr_;
+    std::array<int, 8> motor_to_card_index_;
 
     /**
-     * @brief Reader for serial port to read arduino slider values.
+     * @brief This map for every motor the card port.
      */
-    std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
+    std::array<int, 8> motor_to_card_port_index_;
 
     /**
-     * @brief For reading the raw slider values from the serial port.
+     * @brief can_buses_ are the 4 can buses on the robot.
      */
-    std::vector<int> slider_positions_vector_;
-
+    std::array<CanBus_ptr, 4> can_buses_;
     /**
-     * @brief joint_modules_ Used to communicate to the master board motor
-     * drivers and motors.
+     * @brief can_motor_boards_ are the 4 can motor board.
      */
-    std::shared_ptr<blmc_robots::SpiJointModules<8> > joints_;
+    std::array<CanBusMotorBoard_ptr, 4> can_motor_boards_;
 
     /**
      * @brief motors_ are the objects allowing us to send motor commands and
      * receive data.
      */
     std::array<MotorInterface_ptr, 8> motors_;
+
+    /**
+     * @brief This is the collection of joints that compose the robot.
+     */
+    BlmcJointModules<8> joints_;
 
     /**
      * @brief Address the rotation direction of the motor.
@@ -367,9 +359,6 @@ private:
      * also are analogue inputs.
      */
     std::array<ContactSensor_ptr, 4> contact_sensors_;
-
-    /** @brief If the physical estop is pressed or not. */
-    bool active_estop_;
 };
 
 }  // namespace blmc_robots
