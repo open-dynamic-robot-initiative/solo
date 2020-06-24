@@ -24,12 +24,12 @@ Solo12::Solo12()
     /**
      * Hardware status
      */
-    for(unsigned i=0 ; i<motor_enabled_.size(); ++i)
+    for(unsigned i = 0 ; i < motor_enabled_.size(); ++i)
     {
         motor_enabled_[i] = false;
         motor_ready_[i] = false;
     }
-    for(unsigned i=0 ; i<motor_board_enabled_.size(); ++i)
+    for(unsigned i = 0; i < motor_board_enabled_.size(); ++i)
     {
         motor_board_enabled_[0] = false;
         motor_board_errors_[0] = 0;
@@ -64,8 +64,8 @@ Solo12::Solo12()
     active_estop_= true;
 }
 
-void Solo12::initialize(const std::string &network_id, const
-                        std::string &serial_port)
+void Solo12::initialize(const std::string &network_id,
+                        const std::string &serial_port)
 {
     network_id_ = network_id;
 
@@ -79,19 +79,19 @@ void Solo12::initialize(const std::string &network_id, const
 
     // create the SpiBus (blmc_drivers wrapper around the MasterBoardInterface)
     spi_bus_ = std::make_shared<blmc_drivers::SpiBus>(main_board_ptr_,
-                                                        motor_boards_.size());
+                                                      motor_boards_.size());
 
     // create the motor board objects:
-    for(size_t mb_id = 0 ; mb_id < motor_boards_.size() ; ++mb_id)
+    for(size_t mb_id = 0; mb_id < motor_boards_.size(); ++mb_id)
     {
         motor_boards_[mb_id] =
             std::make_shared<blmc_drivers::SpiMotorBoard>(spi_bus_, mb_id);
     }
 
     // Create the motors object. j_id is the joint_id
-    for(unsigned j_id = 0; j_id < motors_.size(); ++j_id)
+    for (unsigned j_id = 0; j_id < motors_.size(); ++j_id)
     {
-        motors_[j_id] = std::make_shared<blmc_drivers::Motor> (
+        motors_[j_id] = std::make_shared<blmc_drivers::Motor>(
             motor_boards_[map_joint_id_to_motor_board_id_[j_id]],
             map_joint_id_to_motor_port_id_[j_id]);
     }
@@ -104,12 +104,22 @@ void Solo12::initialize(const std::string &network_id, const
                             joint_zero_positions_, motor_max_current_);
 
     // Set the maximum joint torque available
-    max_joint_torques_ = max_joint_torque_security_margin_ *
-                        joints_.get_max_torques().array();
+    max_joint_torques_ =
+        max_joint_torque_security_margin_ * joints_.get_max_torques().array();
 
     // fix the polarity to be the same as the urdf model.
-    reverse_polarities_ = {false, true, true, true, false, false,
-                            false, true, true, true, false, false};
+    reverse_polarities_ = {false,
+                           true,
+                           true,
+                           true,
+                           false,
+                           false,
+                           false,
+                           true,
+                           true,
+                           true,
+                           false,
+                           false};
     joints_.set_joint_polarities(reverse_polarities_);
 
     // The the control gains in order to perform the calibration
@@ -160,7 +170,7 @@ void Solo12::acquire_sensors()
      */
 
     // motor board status
-    for(size_t i = 0; i < motor_boards_.size(); ++i)
+    for (size_t i = 0; i < motor_boards_.size(); ++i)
     {
         const blmc_drivers::MotorBoardStatus& motor_board_status =
             motor_boards_[i]->get_status()->newest_element();
@@ -168,18 +178,18 @@ void Solo12::acquire_sensors()
         motor_board_errors_[i] = motor_board_status.error_code;
     }
     // motors status
-    for(size_t j_id = 0; j_id < motors_.size(); ++j_id)
+    for (size_t j_id = 0; j_id < motors_.size(); ++j_id)
     {
         const blmc_drivers::MotorBoardStatus& motor_board_status =
             motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
                 ->get_status()->newest_element();
 
-        motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
-                                motor_board_status.motor2_enabled:
-                                motor_board_status.motor1_enabled;
-        motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1) ?
-                            motor_board_status.motor2_ready:
-                            motor_board_status.motor1_ready;
+        motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
+                                   ? motor_board_status.motor2_enabled
+                                   : motor_board_status.motor1_enabled;
+        motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
+                                   ? motor_board_status.motor2_ready
+                                   : motor_board_status.motor1_ready;
     }
 }
 
@@ -201,7 +211,7 @@ void Solo12::send_target_joint_torque(
         }
     }
     ctrl_torque = ctrl_torque.array().min(max_joint_torques_);
-    ctrl_torque = ctrl_torque.array().max(- max_joint_torques_);
+    ctrl_torque = ctrl_torque.array().max(-max_joint_torques_);
     joints_.set_torques(ctrl_torque);
     joints_.send_torques();
 }
