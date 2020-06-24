@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 
     Solo12 robot;
 
-    robot.initialize(argv[1]);
+    robot.initialize(argv[1], "banana");
 
     rt_printf("Controller is set up.\n");
     rt_printf("Press enter to launch the calibration.\n");

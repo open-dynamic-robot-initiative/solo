@@ -33,7 +33,9 @@ PYBIND11_MODULE(py_solo12, m)
 
     py::class_<Solo12>(m, "Solo12")
         .def(py::init<>())
-        .def("initialize", &Solo12::initialize, py::arg("interface_name"))
+        .def("initialize", &Solo12::initialize,
+            py::arg("interface_name"),
+            py::arg("serial_port"))
         .def("acquire_sensors", &Solo12::acquire_sensors)
         .def("send_target_joint_torque",
              &Solo12::send_target_joint_torque,

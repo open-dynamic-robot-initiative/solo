@@ -9,6 +9,8 @@
 #pragma once
 
 #include <blmc_drivers/devices/spi_motor_board.hpp>
+#include "blmc_robots/common_header.hpp"
+#include "blmc_drivers/serial_reader.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "blmc_robots/common_header.hpp"
 
@@ -44,7 +46,8 @@ public:
      * the sensors to 0.
      * @param if_name Interface for connection to hardware.
      */
-    void initialize(const std::string& network_id);
+    void initialize(const std::string &network_id,
+                    const std::string &serial_port);
 
     /**
      * @brief Sets the maximum joint torques.
@@ -161,7 +164,7 @@ public:
      * The method <acquire_sensors>"()" has to be called
      * prior to any getter to have up to date data.
 
-     */
+    */
     const Eigen::Ref<Vector12d> get_joint_target_torques()
     {
         return joint_target_torques_;
@@ -284,9 +287,10 @@ private:
     static const double max_joint_torque_security_margin_;
 
     /**
-     * --------------------------------------------------------------------------
+     * -------------------------------------------------------------------------
      * Hardware status
      */
+
     /**
      * @brief This gives the status (enabled/disabled) of each motors using the
      * joint ordering convention.
@@ -300,20 +304,20 @@ private:
     std::array<bool, 12> motor_ready_;
 
     /**
-     * @brief This gives the status (enabled/disabled of the onboard control
-     * cards).
+     * @brief This gives the status
+     * (enabled/disabled of the onboard control cards).
      */
     std::array<bool, 6> motor_board_enabled_;
 
     /**
-     * @brief This gives the status (enabled/disabled of the onboard control
-     * cards).
+     * @brief This gives the status
+     * (enabled/disabled of the onboard control cards).
      */
     std::array<int, 6> motor_board_errors_;
 
     /**
-     * Joint data
-     */
+        * Joint data
+        */
 
     /**
      * @brief joint_positions_
@@ -337,7 +341,7 @@ private:
     Vector12d joint_encoder_index_;
 
     /**
-     * --------------------------------------------------------------------------
+     * -------------------------------------------------------------------------
      * Additional data
      */
 
@@ -346,6 +350,11 @@ private:
      * Can be used as a joystick input.
      */
     Eigen::Vector4d slider_positions_;
+
+    /**
+     * @brief For reading the raw slider values from the serial port.
+     */
+    std::vector<int> slider_positions_vector_;
 
     /**
      * @brief contact_sensors_ is contact sensors at each feet of teh quadruped.
@@ -367,9 +376,11 @@ private:
      * Drivers communication objects
      */
 
-    /** @brief Main board drivers.
+    /**
+     * @brief Main board drivers.
      *
-     * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board  */
+     * PC <- Ethernet/Wifi -> main board <- SPI -> Motor Board
+     */
     std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
     /** @brief Main board blmc_drivers overlay.
@@ -378,6 +389,11 @@ private:
      * BLMCJointModule(s).
      */
     std::shared_ptr<blmc_drivers::SpiBus> spi_bus_;
+
+    /**
+     * @brief Reader for serial port to read arduino slider values.
+     */
+    std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
 
     /** @brief These are the 6 motor boards of the robot. */
     std::array<std::shared_ptr<blmc_drivers::SpiMotorBoard>, 6> motor_boards_;
@@ -395,6 +411,9 @@ private:
 
     /** @brief Address the rotation direction of the motor. */
     std::array<bool, 12> reverse_polarities_;
+
+    /** @brief If the physical estop is pressed or not. */
+    bool active_estop_;
 };
 
 }  // namespace blmc_robots
