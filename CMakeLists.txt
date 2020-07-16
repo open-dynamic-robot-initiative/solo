@@ -27,6 +27,7 @@ set(CATKIN_PKGS ${CATKIN_PKGS}
   master_board_sdk_catkin
   real_time_tools
   mpi_cmake_modules
+  mpi_cpp_tools
   robot_interfaces
   pybind11_catkin
   yaml_cpp_catkin

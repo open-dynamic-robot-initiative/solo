@@ -15,6 +15,7 @@
   <depend>master_board_sdk_catkin</depend>
   <depend>real_time_tools</depend>
   <depend>mpi_cmake_modules</depend>
+  <depend>mpi_cpp_tools</depend>
   <depend>robot_interfaces</depend>
   <depend>pybind11_catkin</depend>
   <depend>yaml_cpp_catkin</depend>
