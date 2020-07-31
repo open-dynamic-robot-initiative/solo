@@ -43,6 +43,11 @@ typedef Eigen::Matrix<double, 1, 1> Vector1d;
 typedef Eigen::Matrix<double, 2, 1> Vector2d;
 
 /**
+ * @brief Vector3d shortcut for the eigen vector of size 3.
+ */
+typedef Eigen::Matrix<double, 3, 1> Vector3d;
+
+/**
  * @brief Vector2d shortcut for the eigen vector of size 6.
  */
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
