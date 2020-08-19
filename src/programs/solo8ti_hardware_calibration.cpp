@@ -8,13 +8,13 @@
  */
 
 #include "blmc_robots/common_programs_header.hpp"
-#include "blmc_robots/solo8.hpp"
+#include "blmc_robots/solo8ti.hpp"
 
 using namespace blmc_robots;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
-    Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
+    Solo8TI& robot = *(static_cast<Solo8TI*>(robot_void_ptr));
 
     blmc_robots::Vector8d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
@@ -37,17 +37,17 @@ int main(int argc, char** argv)
 {
     enable_ctrl_c();
 
-    if (argc != 2)
+    if (argc != 1)
     {
         throw std::runtime_error(
-            "Wrong number of argument: `./solo8_hardware_calibration network_id`.");
+            "Wrong number of argument: `./solo8ti_hardware_calibration`.");
     }
 
     real_time_tools::RealTimeThread thread;
 
-    Solo8 robot;
+    Solo8TI robot;
 
-    robot.initialize(std::string(argv[1]));
+    robot.initialize();
 
     rt_printf("controller is set up \n");
     rt_printf("Press enter to launch the calibration \n");
