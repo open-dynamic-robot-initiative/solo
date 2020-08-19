@@ -28,6 +28,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
             robot.acquire_sensors();
             print_vector("Joint Positions", robot.get_joint_positions());
         }
+        ++count;
+        real_time_tools::Timer::sleep_sec(0.001);
     }
 
     return THREAD_FUNCTION_RETURN_VALUE;
