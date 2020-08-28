@@ -154,7 +154,7 @@ int main(int argc, char** argv)
     enable_ctrl_c();
 
     Solo12 robot;
-    robot.initialize(std::string(argv[1]), std::string(argv[2]));
+    robot.initialize(std::string(argv[1]), "does_not_matter");
     robot.set_max_joint_torques(0.5);
 
     rt_printf("controller is set up \n");
