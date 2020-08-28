@@ -9,9 +9,11 @@
 
 #include <numeric>
 #include "blmc_robots/common_programs_header.hpp"
+#include "common_demo_header.hpp"
 #include "blmc_robots/solo12.hpp"
 
 using namespace blmc_robots;
+typedef ThreadCalibrationData<Solo12> ThreadCalibrationData_t;
 
 void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders,
                  Eigen::Ref<Vector12d> sliders_out)
@@ -35,12 +37,14 @@ void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders,
     sliders_out(9) *= -1;
 }
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
-    Solo12& robot = *static_cast<Solo12*>(args);
+    ThreadCalibrationData_t* thread_data_ptr =
+        (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
+    std::shared_ptr<Solo12> robot = thread_data_ptr->robot;
 
     // Using conversion from PD gains from example.cpp
-    double kp = 3.0 * 9 * 0.025;
+    double kp = 5.0 * 9 * 0.025;
     double kd = 0.1 * 9 * 0.025;
     double max_range = M_PI;
     Vector12d desired_joint_position;
@@ -61,25 +65,36 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
         sliders_filt_buffer[i].clear();
     }
 
-    robot.acquire_sensors();
-    map_sliders(robot.get_slider_positions(), sliders_zero);
+    robot->acquire_sensors();
+    map_sliders(robot->get_slider_positions(), sliders_zero);
 
     rt_printf("control loop started \n");
 
+    rt_printf("start calibration \n");
+
+    // Calibrate the robot.
+    blmc_robots::Vector12d joint_index_to_zero =
+        thread_data_ptr->joint_index_to_zero;
+
+    thread_data_ptr->robot->calibrate(joint_index_to_zero);
+
+    rt_printf("done calibrating \n");
+
+    // Run the main program.
     size_t count = 0;
     while (!CTRL_C_DETECTED)
     {
         // acquire the sensors
-        robot.acquire_sensors();
+        robot->acquire_sensors();
 
         // acquire the motor enabled signal.
-        motor_enabled = robot.get_motor_enabled();
+        motor_enabled = robot->get_motor_enabled();
 
         // HACK: Only read sliders from card0 if motors report enabled.
         if (motor_enabled[0] && motor_enabled[1])
         {
             // acquire the slider signal
-            map_sliders(robot.get_slider_positions(), sliders);
+            map_sliders(robot->get_slider_positions(), sliders);
         }
 
         // filter it
@@ -106,8 +121,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 
         // we implement here a small pd control at the current level
         desired_torque_tmp =
-            kp * (desired_joint_position - robot.get_joint_positions()) -
-            kd * robot.get_joint_velocities();
+            kp * (desired_joint_position - robot->get_joint_positions()) -
+            kd * robot->get_joint_velocities();
 
         // // HACK: Due to unstable SPI, only update torque for enabled motors.
         for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
@@ -124,10 +139,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
             printf("\33[H\33[2J");  // clear screen
             print_vector("sliders_filt", sliders_filt);
             print_vector("sliders_zero", sliders_zero);
-            print_vector("sliders_raw ", robot.get_slider_positions());
+            print_vector("sliders_raw ", robot->get_slider_positions());
             print_vector("des_joint_tau", desired_torque);
-            print_vector("    joint_pos", robot.get_joint_positions());
-            print_vector("    joint_vel", robot.get_joint_velocities());
+            print_vector("    joint_pos", robot->get_joint_positions());
+            print_vector("    joint_vel", robot->get_joint_velocities());
             print_vector("des_joint_pos", desired_joint_position);
             fflush(stdout);
         }
@@ -135,7 +150,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* args)
 
         // Send the current to the motor
         // desired_torque.setZero();
-        robot.send_target_joint_torque(desired_torque);
+        robot->send_target_joint_torque(desired_torque);
 
         real_time_tools::Timer::sleep_sec(0.001);
     }  // endwhile
@@ -153,12 +168,14 @@ int main(int argc, char** argv)
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
-    Solo12 robot;
-    robot.initialize(std::string(argv[1]), "does_not_matter");
-    robot.set_max_joint_torques(0.5);
+    std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
+    robot->initialize(argv[1], "does_not_matter");
+    robot->set_max_joint_torques(4.);
+
+    ThreadCalibrationData_t thread_data(robot);
 
     rt_printf("controller is set up \n");
-    thread.create_realtime_thread(&control_loop, &robot);
+    thread.create_realtime_thread(&control_loop, &thread_data);
 
     rt_printf("control loop started \n");
     while (!CTRL_C_DETECTED)
