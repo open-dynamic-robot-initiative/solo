@@ -33,6 +33,7 @@ struct ThreadCalibrationData
         YAML::ReadParameter(param["hardware_communication"]["calibration"],
                             "index_to_zero_angle",
                             joint_index_to_zero);
+        std::cout << "joint_index_to_zero: " << joint_index_to_zero << std::endl;
     }
 };
 
