@@ -174,7 +174,11 @@ int main(int argc, char** argv)
 
     ThreadCalibrationData_t thread_data(robot);
 
-    rt_printf("controller is set up \n");
+    rt_printf("Controller is set up.\n");
+    rt_printf("Press enter to launch the calibration.\n");
+    char str[256];
+    std::cin.get(str, 256);  // get c-string
+
     thread.create_realtime_thread(&control_loop, &thread_data);
 
     rt_printf("control loop started \n");
