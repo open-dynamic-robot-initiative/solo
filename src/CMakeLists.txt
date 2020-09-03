@@ -70,6 +70,14 @@ build_programs(solo8ti_hardware_calibration solo8ti)
 build_programs(solo12_hardware_calibration solo12)
 build_programs(teststand_hardware_calibration teststand)
 
+add_executable(can_encoder_index_test
+  programs/can_encoder_index_test.cpp
+)
+target_link_libraries(can_encoder_index_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 ######################################################
 # Export the libraries in the devel folder of catkin #
 ######################################################
