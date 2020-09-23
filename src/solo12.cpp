@@ -49,6 +49,11 @@ Solo12::Solo12()
      */
     slider_positions_.setZero();
     contact_sensors_states_.setZero();
+    imu_accelerometer_.setZero();
+    imu_gyroscope_.setZero();
+    imu_attitude_.setZero();
+    imu_linear_acceleration_.setZero();
+    imu_attitude_quaternion_.setIdentity();
 
     /**
      * Setup some known data
@@ -162,8 +167,31 @@ void Solo12::acquire_sensors()
         // acquire the slider
         slider_positions_(i) = double(slider_positions_vector_[i+1]) / 1024.;
     }
-
     active_estop_ = slider_positions_vector_[0] == 0;
+
+    // acquire imu
+    imu_accelerometer_ << main_board_ptr_->imu_data_accelerometer(0),
+                           main_board_ptr_->imu_data_accelerometer(1),
+                           main_board_ptr_->imu_data_accelerometer(2);
+    imu_gyroscope_ << main_board_ptr_->imu_data_gyroscope(0),
+                       main_board_ptr_->imu_data_gyroscope(1),
+                       main_board_ptr_->imu_data_gyroscope(2);
+    imu_attitude_ << main_board_ptr_->imu_data_attitude(0),
+                      main_board_ptr_->imu_data_attitude(1),
+                      main_board_ptr_->imu_data_attitude(2);
+    imu_linear_acceleration_ << main_board_ptr_->imu_data_linear_acceleration(0),
+                                 main_board_ptr_->imu_data_linear_acceleration(1),
+                                 main_board_ptr_->imu_data_linear_acceleration(2);
+    double sr = sin(imu_attitude_[0]/2.);
+    double cr = cos(imu_attitude_[0]/2.);
+    double sp = sin(imu_attitude_[1]/2.);
+    double cp = cos(imu_attitude_[1]/2.);
+    double sy = sin(imu_attitude_[2]/2.);
+    double cy = cos(imu_attitude_[2]/2.);
+    imu_attitude_quaternion_ << sr * cp * cy - cr * sp * sy,
+                                 cr * sp * cy + sr * cp * sy,
+                                 cr * cp * sy - sr * sp * cy,
+                                 cr * cp * cy + sr * sp * sy;
 
     /**
      * The different status.
