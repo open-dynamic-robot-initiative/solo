@@ -253,7 +253,7 @@ public:
         return imu_linear_acceleration_;
     }
 
-    /** @brief base attitude quaternion from imu.
+    /** @brief base attitude quaternion (ordered {x, y, z, w}) from imu.
      * @return
      * WARNING !!!!
      * The method <acquire_sensors>"()" has to be called
