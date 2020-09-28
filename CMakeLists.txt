@@ -1,7 +1,7 @@
 ######################
 # set up the project #
 ######################
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1)
 
 project(blmc_robots)
 
@@ -9,7 +9,11 @@ project(blmc_robots)
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-as-needed")
 endif()
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
+# Specify C++ Standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # ensuring path to libraries are set during install
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
