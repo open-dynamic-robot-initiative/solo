@@ -24,13 +24,14 @@ public:
     static constexpr double torque_constant_NmpA = 0.02;
     static constexpr double gear_ratio = 9.0;
     static constexpr double max_current_A = 2.0;
-    static constexpr double one_motor_rotation_distance = 2.0 * M_PI / gear_ratio;
+    static constexpr double one_motor_rotation_distance =
+        2.0 * M_PI / gear_ratio;
 
     EncoderIndexTester(const std::string &can_port,
                        int motor_index,
                        double torque,
                        unsigned int number_of_revolutions)
-        : torque_(torque)
+        : torque_(torque), number_of_revolutions_(number_of_revolutions)
     {
         std::cout << "CAN port: " << can_port << std::endl;
         std::cout << "Motor Index: " << motor_index << std::endl;
@@ -54,13 +55,12 @@ public:
             motor, torque_constant_NmpA, gear_ratio, 0, false, max_current_A);
     }
 
-    void run()
+    void run_print_occurences()
     {
         std::cout << "Start moving with constant torque" << std::endl;
         real_time_tools::Spinner spinner;
         spinner.set_period(0.001);
         double last_index_position = joint_module_->get_measured_index_angle();
-        unsigned int counter = 0;
 
         // Do not print, rotate 100 times, count index ticks
         // check after each rotation if tick was found
@@ -75,19 +75,49 @@ public:
             if (!std::isnan(index_position) &&
                 index_position != last_index_position)
             {
-                counter++;
                 double diff = index_position - last_index_position;
-                std::cout << "Found Encoder Index " << counter
+                std::cout << "Found Encoder Index"
                           << ".\tPosition: " << index_position
                           << ".\tDiff to last: " << diff << std::endl;
 
-                if (std::abs(std::abs(diff) - one_motor_rotation_distance) >
-                    0.01)
+                last_index_position = index_position;
+            }
+            spinner.spin();
+        }
+    }
+
+    void run_verify_occurences()
+    {
+        std::cout << "Start moving with constant torque" << std::endl;
+        real_time_tools::Spinner spinner;
+        spinner.set_period(0.001);
+        double last_index_position = joint_module_->get_measured_index_angle();
+        unsigned int counter = 0;
+
+        double current_position = joint_module_->get_measured_angle();
+        double target_position =
+            current_position +
+            number_of_revolutions_ * one_motor_rotation_distance;
+
+        // Do not print, rotate 100 times, count index ticks
+        // check after each rotation if tick was found
+
+        while (joint_module_->get_measured_angle() < target_position)
+        {
+            joint_module_->set_torque(torque_);
+            joint_module_->send_torque();
+
+            double index_position = joint_module_->get_measured_index_angle();
+
+            if (!std::isnan(index_position) &&
+                index_position != last_index_position)
+            {
+                counter++;
+                double diff = index_position - last_index_position;
+                if (std::abs(diff) > 1.5 * one_motor_rotation_distance)
                 {
-                    std::cout << std::endl
-                              << "!!!! DISTANCE TO LAST INDEX DOES NOT MATCH "
-                                 "ONE REVOLUTION !!!!"
-                              << std::endl
+                    std::cout << "FAILURE: Did not observe encoder index for "
+                                 "1.5 motor revolutions."
                               << std::endl;
                     exit(2);
                 }
@@ -96,22 +126,26 @@ public:
             }
             spinner.spin();
         }
+        std::cout << "Finished " << number_of_revolutions_ << " revolutions."
+                  << std::endl;
+        std::cout << "Observed encoder index tick " << counter << " times."
+                  << std::endl;
     }
 
 private:
     double torque_;
+    unsigned int number_of_revolutions_;
     std::unique_ptr<blmc_robots::BlmcJointModule> joint_module_;
 };
 
-
 int main(int argc, char *argv[])
 {
-    if (argc != 5)
+    if (argc != 4 && argc != 5)
     {
         std::cout << "Invalid number of arguments." << std::endl;
         std::cout
             << "Usage: " << argv[0]
-            << " <can port> <motor index> <torque> <number of revolutions>"
+            << " <can port> <motor index> <torque> [<number of revolutions>]"
             << std::endl;
         return 1;
     }
@@ -119,7 +153,7 @@ int main(int argc, char *argv[])
     std::string can_port = argv[1];
     int motor_index = std::stoi(argv[2]);
     double torque = std::stod(argv[3]);
-    int num_revolutions = std::stoi(argv[4]);
+    int num_revolutions = (argc == 5) ? std::stoi(argv[4]) : 0;
 
     if (motor_index != 0 && motor_index != 1)
     {
@@ -130,14 +164,31 @@ int main(int argc, char *argv[])
 
     EncoderIndexTester tester(can_port, motor_index, torque, num_revolutions);
 
-    // run in real-time thread
     real_time_tools::RealTimeThread thread;
-    thread.create_realtime_thread(
-        [](void *instance_pointer) {
-            ((EncoderIndexTester *)(instance_pointer))->run();
-            return (void *)nullptr;
-        },
-        &tester);
+
+    // If no number of revolutions are specified, use the "print occurrences"
+    // mode.  Otherwise use "verify occurrences" mode.
+    if (num_revolutions == 0)
+    {
+        thread.create_realtime_thread(
+            [](void *instance_pointer) {
+                ((EncoderIndexTester *)(instance_pointer))
+                    ->run_print_occurences();
+                return (void *)nullptr;
+            },
+            &tester);
+    }
+    else
+    {
+        thread.create_realtime_thread(
+            [](void *instance_pointer) {
+                ((EncoderIndexTester *)(instance_pointer))
+                    ->run_verify_occurences();
+                return (void *)nullptr;
+            },
+            &tester);
+
+    }
     thread.join();
 
     return 0;
