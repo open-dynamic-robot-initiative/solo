@@ -24,12 +24,12 @@ Solo12::Solo12()
     /**
      * Hardware status
      */
-    for(unsigned i = 0 ; i < motor_enabled_.size(); ++i)
+    for (unsigned i = 0; i < motor_enabled_.size(); ++i)
     {
         motor_enabled_[i] = false;
         motor_ready_[i] = false;
     }
-    for(unsigned i = 0; i < motor_board_enabled_.size(); ++i)
+    for (unsigned i = 0; i < motor_board_enabled_.size(); ++i)
     {
         motor_board_enabled_[0] = false;
         motor_board_errors_[0] = 0;
@@ -49,23 +49,28 @@ Solo12::Solo12()
      */
     slider_positions_.setZero();
     contact_sensors_states_.setZero();
+    imu_accelerometer_.setZero();
+    imu_gyroscope_.setZero();
+    imu_attitude_.setZero();
+    imu_linear_acceleration_.setZero();
+    imu_attitude_quaternion_.setIdentity();
 
     /**
      * Setup some known data
      */
 
     // for now this value is very small but it is currently for debug mode
-    motor_max_current_.fill(8.0); // TODO: set as paramters?
+    motor_max_current_.fill(8.0);  // TODO: set as paramters?
     motor_torque_constants_.fill(0.025);
     motor_inertias_.fill(0.045);
     joint_gear_ratios_.fill(9.0);
 
     // By default assume the estop is active.
-    active_estop_= true;
+    active_estop_ = true;
 }
 
-void Solo12::initialize(const std::string &network_id,
-                        const std::string &serial_port)
+void Solo12::initialize(const std::string& network_id,
+                        const std::string& serial_port)
 {
     network_id_ = network_id;
 
@@ -82,7 +87,7 @@ void Solo12::initialize(const std::string &network_id,
                                                       motor_boards_.size());
 
     // create the motor board objects:
-    for(size_t mb_id = 0; mb_id < motor_boards_.size(); ++mb_id)
+    for (size_t mb_id = 0; mb_id < motor_boards_.size(); ++mb_id)
     {
         motor_boards_[mb_id] =
             std::make_shared<blmc_drivers::SpiMotorBoard>(spi_bus_, mb_id);
@@ -97,11 +102,15 @@ void Solo12::initialize(const std::string &network_id,
     }
 
     // Use a serial port to read slider values.
-    serial_reader_ = std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
+    serial_reader_ =
+        std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
 
     // Create the joint module objects
-    joints_.set_motor_array(motors_, motor_torque_constants_, joint_gear_ratios_,
-                            joint_zero_positions_, motor_max_current_);
+    joints_.set_motor_array(motors_,
+                            motor_torque_constants_,
+                            joint_gear_ratios_,
+                            joint_zero_positions_,
+                            motor_max_current_);
 
     // Set the maximum joint torque available
     max_joint_torques_ =
@@ -160,10 +169,36 @@ void Solo12::acquire_sensors()
     for (unsigned i = 0; i < slider_positions_.size(); ++i)
     {
         // acquire the slider
-        slider_positions_(i) = double(slider_positions_vector_[i+1]) / 1024.;
+        slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
     }
-
     active_estop_ = slider_positions_vector_[0] == 0;
+
+    // acquire imu
+    imu_accelerometer_(0) = main_board_ptr_->imu_data_accelerometer(0);
+    imu_accelerometer_(1) = main_board_ptr_->imu_data_accelerometer(1);
+    imu_accelerometer_(2) = main_board_ptr_->imu_data_accelerometer(2);
+    imu_gyroscope_(0) = main_board_ptr_->imu_data_gyroscope(0);
+    imu_gyroscope_(1) = main_board_ptr_->imu_data_gyroscope(1);
+    imu_gyroscope_(2) = main_board_ptr_->imu_data_gyroscope(2);
+    imu_attitude_(0) = main_board_ptr_->imu_data_attitude(0);
+    imu_attitude_(1) = main_board_ptr_->imu_data_attitude(1);
+    imu_attitude_(2) = main_board_ptr_->imu_data_attitude(2);
+    imu_linear_acceleration_(0) =
+        main_board_ptr_->imu_data_linear_acceleration(0);
+    imu_linear_acceleration_(1) =
+        main_board_ptr_->imu_data_linear_acceleration(1);
+    imu_linear_acceleration_(2) =
+        main_board_ptr_->imu_data_linear_acceleration(2);
+    double sr = sin(imu_attitude_[0] / 2.);
+    double cr = cos(imu_attitude_[0] / 2.);
+    double sp = sin(imu_attitude_[1] / 2.);
+    double cp = cos(imu_attitude_[1] / 2.);
+    double sy = sin(imu_attitude_[2] / 2.);
+    double cy = cos(imu_attitude_[2] / 2.);
+    imu_attitude_quaternion_(0) = sr * cp * cy - cr * sp * sy;
+    imu_attitude_quaternion_(1) = cr * sp * cy + sr * cp * sy;
+    imu_attitude_quaternion_(2) = cr * cp * sy - sr * sp * cy;
+    imu_attitude_quaternion_(3) = cr * cp * cy + sr * sp * sy;
 
     /**
      * The different status.
@@ -182,14 +217,15 @@ void Solo12::acquire_sensors()
     {
         const blmc_drivers::MotorBoardStatus& motor_board_status =
             motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
-                ->get_status()->newest_element();
+                ->get_status()
+                ->newest_element();
 
         motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
                                    ? motor_board_status.motor2_enabled
                                    : motor_board_status.motor1_enabled;
         motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
-                                   ? motor_board_status.motor2_ready
-                                   : motor_board_status.motor1_ready;
+                                 ? motor_board_status.motor2_ready
+                                 : motor_board_status.motor1_ready;
     }
 }
 
@@ -203,11 +239,14 @@ void Solo12::send_target_joint_torque(
 {
     static int estop_msg_counter_ = 0;
     Vector12d ctrl_torque = target_joint_torque;
-    if (active_estop_) {
+    if (active_estop_)
+    {
         ctrl_torque.fill(0.);
         estop_msg_counter_ += 1;
-        if (estop_msg_counter_ % 5000 == 0) {
-            rt_printf("solo12: estop is active. Setting ctrl_torque to zero.\n");
+        if (estop_msg_counter_ % 5000 == 0)
+        {
+            rt_printf(
+                "solo12: estop is active. Setting ctrl_torque to zero.\n");
         }
     }
     ctrl_torque = ctrl_torque.array().min(max_joint_torques_);

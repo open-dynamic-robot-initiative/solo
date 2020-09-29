@@ -9,7 +9,6 @@
 #pragma once
 
 #include <blmc_drivers/devices/spi_motor_board.hpp>
-#include "blmc_robots/common_header.hpp"
 #include "blmc_drivers/serial_reader.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "blmc_robots/common_header.hpp"
@@ -46,8 +45,8 @@ public:
      * the sensors to 0.
      * @param if_name Interface for connection to hardware.
      */
-    void initialize(const std::string &network_id,
-                    const std::string &serial_port);
+    void initialize(const std::string& network_id,
+                    const std::string& serial_port);
 
     /**
      * @brief Sets the maximum joint torques.
@@ -163,8 +162,7 @@ public:
      * WARNING !!!!
      * The method <acquire_sensors>"()" has to be called
      * prior to any getter to have up to date data.
-
-    */
+     */
     const Eigen::Ref<Vector12d> get_joint_target_torques()
     {
         return joint_target_torques_;
@@ -181,6 +179,10 @@ public:
     {
         return joint_encoder_index_;
     }
+
+    /*
+     * Additional data
+     */
 
     /**
      * @brief get_contact_sensors_states
@@ -206,7 +208,62 @@ public:
         return slider_positions_;
     }
 
-    /**
+    /** @brief base accelerometer from imu.
+     * @return
+     * WARNING !!!!
+     * The method <acquire_sensors>"()" has to be called
+     * prior to any getter to have up to date data.
+     */
+    const Eigen::Ref<Eigen::Vector3d> get_imu_accelerometer()
+    {
+        return imu_accelerometer_;
+    }
+
+    /** @brief base gyroscope from imu.
+     * @return
+     * WARNING !!!!
+     * The method <acquire_sensors>"()" has to be called
+     * prior to any getter to have up to date data.
+     */
+    const Eigen::Ref<Eigen::Vector3d> get_imu_gyroscope()
+    {
+        return imu_gyroscope_;
+    }
+
+    /** @brief base attitude from imu.
+     * @return
+     * WARNING !!!!
+     * The method <acquire_sensors>"()" has to be called
+     * prior to any getter to have up to date data.
+     */
+    const Eigen::Ref<Eigen::Vector3d> get_imu_attitude()
+    {
+        return imu_attitude_;
+    }
+
+    /** @brief base linear acceleration from imu.
+     * @return
+     * WARNING !!!!
+     * The method <acquire_sensors>"()" has to be called
+     * prior to any getter to have up to date data.
+     */
+    const Eigen::Ref<Eigen::Vector3d> get_imu_linear_acceleration()
+    {
+        return imu_linear_acceleration_;
+    }
+
+    /** @brief base attitude quaternion (ordered {x, y, z, w}) from imu.
+     * @return
+     * WARNING !!!!
+     * The method <acquire_sensors>"()" has to be called
+     * prior to any getter to have up to date data.
+     */
+    const Eigen::Ref<Eigen::Vector4d> get_imu_attitude_quaternion()
+    {
+        return imu_attitude_quaternion_;
+    }
+
+    /*
      * Hardware Status
      */
 
@@ -316,8 +373,8 @@ private:
     std::array<int, 6> motor_board_errors_;
 
     /**
-        * Joint data
-        */
+     * Joint data
+     */
 
     /**
      * @brief joint_positions_
@@ -371,6 +428,21 @@ private:
     /** @brief Map the joint id to the motor port id, @see Solo12 description.
      */
     std::array<int, 12> map_joint_id_to_motor_port_id_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_accelerometer_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_gyroscope_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_attitude_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_linear_acceleration_;
+
+    /** @brief base attitude quaternion. */
+    Eigen::Vector4d imu_attitude_quaternion_;
 
     /**
      * Drivers communication objects

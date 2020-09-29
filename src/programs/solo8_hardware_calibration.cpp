@@ -42,7 +42,8 @@ int main(int argc, char** argv)
     if (argc != 2)
     {
         throw std::runtime_error(
-            "Wrong number of argument: `./solo8_hardware_calibration network_id`.");
+            "Wrong number of argument: `./solo8_hardware_calibration "
+            "network_id`.");
     }
 
     real_time_tools::RealTimeThread thread;
