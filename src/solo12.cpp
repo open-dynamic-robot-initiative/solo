@@ -170,28 +170,28 @@ void Solo12::acquire_sensors()
     active_estop_ = slider_positions_vector_[0] == 0;
 
     // acquire imu
-    imu_accelerometer_ << main_board_ptr_->imu_data_accelerometer(0),
-                           main_board_ptr_->imu_data_accelerometer(1),
-                           main_board_ptr_->imu_data_accelerometer(2);
-    imu_gyroscope_ << main_board_ptr_->imu_data_gyroscope(0),
-                       main_board_ptr_->imu_data_gyroscope(1),
-                       main_board_ptr_->imu_data_gyroscope(2);
-    imu_attitude_ << main_board_ptr_->imu_data_attitude(0),
-                      main_board_ptr_->imu_data_attitude(1),
-                      main_board_ptr_->imu_data_attitude(2);
-    imu_linear_acceleration_ << main_board_ptr_->imu_data_linear_acceleration(0),
-                                 main_board_ptr_->imu_data_linear_acceleration(1),
-                                 main_board_ptr_->imu_data_linear_acceleration(2);
+    imu_accelerometer_(0) = main_board_ptr_->imu_data_accelerometer(0);
+    imu_accelerometer_(1) = main_board_ptr_->imu_data_accelerometer(1);
+    imu_accelerometer_(2) = main_board_ptr_->imu_data_accelerometer(2);
+    imu_gyroscope_(0) = main_board_ptr_->imu_data_gyroscope(0);
+    imu_gyroscope_(1) = main_board_ptr_->imu_data_gyroscope(1);
+    imu_gyroscope_(2) = main_board_ptr_->imu_data_gyroscope(2);
+    imu_attitude_(0) = main_board_ptr_->imu_data_attitude(0);
+    imu_attitude_(1) = main_board_ptr_->imu_data_attitude(1);
+    imu_attitude_(2) = main_board_ptr_->imu_data_attitude(2);
+    imu_linear_acceleration_(0) = main_board_ptr_->imu_data_linear_acceleration(0);
+    imu_linear_acceleration_(1) = main_board_ptr_->imu_data_linear_acceleration(1);
+    imu_linear_acceleration_(2) = main_board_ptr_->imu_data_linear_acceleration(2);
     double sr = sin(imu_attitude_[0]/2.);
     double cr = cos(imu_attitude_[0]/2.);
     double sp = sin(imu_attitude_[1]/2.);
     double cp = cos(imu_attitude_[1]/2.);
     double sy = sin(imu_attitude_[2]/2.);
     double cy = cos(imu_attitude_[2]/2.);
-    imu_attitude_quaternion_ << sr * cp * cy - cr * sp * sy,
-                                 cr * sp * cy + sr * cp * sy,
-                                 cr * cp * sy - sr * sp * cy,
-                                 cr * cp * cy + sr * sp * sy;
+    imu_attitude_quaternion_(0) = sr * cp * cy - cr * sp * sy;
+    imu_attitude_quaternion_(1) = cr * sp * cy + sr * cp * sy;
+    imu_attitude_quaternion_(2) = cr * cp * sy - sr * sp * cy;
+    imu_attitude_quaternion_(3) = cr * cp * cy + sr * sp * sy;
 
     /**
      * The different status.
