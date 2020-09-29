@@ -9,8 +9,8 @@
 
 #include <numeric>
 #include "blmc_robots/common_programs_header.hpp"
-#include "common_demo_header.hpp"
 #include "blmc_robots/solo12.hpp"
+#include "common_demo_header.hpp"
 
 using namespace blmc_robots;
 typedef ThreadCalibrationData<Solo12> ThreadCalibrationData_t;

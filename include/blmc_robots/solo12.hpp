@@ -9,7 +9,6 @@
 #pragma once
 
 #include <blmc_drivers/devices/spi_motor_board.hpp>
-#include "blmc_robots/common_header.hpp"
 #include "blmc_drivers/serial_reader.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "blmc_robots/common_header.hpp"
@@ -46,8 +45,8 @@ public:
      * the sensors to 0.
      * @param if_name Interface for connection to hardware.
      */
-    void initialize(const std::string &network_id,
-                    const std::string &serial_port);
+    void initialize(const std::string& network_id,
+                    const std::string& serial_port);
 
     /**
      * @brief Sets the maximum joint torques.
@@ -374,8 +373,8 @@ private:
     std::array<int, 6> motor_board_errors_;
 
     /**
-        * Joint data
-        */
+     * Joint data
+     */
 
     /**
      * @brief joint_positions_

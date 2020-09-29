@@ -1,4 +1,5 @@
-// From: https://github.com/crayzeewulf/libserial/blob/master/examples/serial_stream_read.cpp
+// From:
+// https://github.com/crayzeewulf/libserial/blob/master/examples/serial_stream_read.cpp
 //
 // Installation notes:
 // - install from source following github readme
@@ -8,10 +9,10 @@
  *  @example serial_stream_read.cpp
  */
 
+#include <unistd.h>
 #include <cstdlib>
 #include <iostream>
-#include <unistd.h>
-#include <sstream>      // std::stringstream, std::stringbuf
+#include <sstream>  // std::stringstream, std::stringbuf
 
 #include "blmc_drivers/serial_reader.hpp"
 #include "blmc_robots/common_programs_header.hpp"
@@ -24,8 +25,11 @@ using namespace blmc_robots;
  */
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
-        rt_printf("Usage: demo_arduino_slider serial_port. (serial_port like /dev/ttyACM0)\n");
+    if (argc < 2)
+    {
+        rt_printf(
+            "Usage: demo_arduino_slider serial_port. (serial_port like "
+            "/dev/ttyACM0)\n");
         return -1;
     }
 
@@ -36,7 +40,8 @@ int main(int argc, char** argv)
     while (!CTRL_C_DETECTED)
     {
         serial_reader.fill_vector(values);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             std::cout << values[i] << " ";
         }
         std::cout << std::endl;
