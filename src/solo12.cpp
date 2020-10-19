@@ -145,6 +145,8 @@ void Solo12::initialize(const std::string& network_id,
 
 void Solo12::acquire_sensors()
 {
+    static int motor_error_msg_counter_ = 0;
+
     /**
      * Joint data
      */
@@ -228,6 +230,25 @@ void Solo12::acquire_sensors()
         motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
                                  ? motor_board_status.motor2_ready
                                  : motor_board_status.motor1_ready;
+    }
+
+    // Check if any of the motor boards has an error.
+    bool got_motor_error = false;
+    for (size_t i = 0; i < motor_boards_.size(); ++i)
+    {
+        if (motor_board_errors_[i] != 0) {
+            // Increase the error number only once per call to acquire_sensors.
+            // This way it will print all motor errors on the count of 2000.
+            if (!got_motor_error) {
+                motor_error_msg_counter_ += 1;
+                got_motor_error = true;
+            }
+
+            if (motor_error_msg_counter_ % 2000 == 0) {
+                rt_printf("solo12: Got motor_board #%d reported error %d\n",
+                    i, motor_board_errors_[i]);
+            }
+        }
     }
 }
 
