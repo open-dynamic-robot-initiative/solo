@@ -65,8 +65,8 @@ Solo12::Solo12()
     motor_inertias_.fill(0.045);
     joint_gear_ratios_.fill(9.0);
 
-    // By default assume the estop is active.
-    active_estop_ = true;
+    // By default assume the estop is inactive.
+    active_estop_= false;
 }
 
 void Solo12::initialize(const std::string& network_id,
@@ -171,7 +171,9 @@ void Solo12::acquire_sensors()
         // acquire the slider
         slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
     }
-    active_estop_ = slider_positions_vector_[0] == 0;
+
+    // Active the estop if button is pressed or the estop was active before.
+    active_estop_ = slider_positions_vector_[0] == 0 || active_estop_;
 
     // acquire imu
     imu_accelerometer_(0) = main_board_ptr_->imu_data_accelerometer(0);
