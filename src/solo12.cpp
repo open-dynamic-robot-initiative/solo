@@ -175,7 +175,7 @@ void Solo12::acquire_sensors()
     }
 
     // Active the estop if button is pressed or the estop was active before.
-    active_estop_ = slider_positions_vector_[0] == 0 || active_estop_;
+    active_estop_ |= slider_positions_vector_[0] == 0;
 
     // acquire imu
     imu_accelerometer_(0) = main_board_ptr_->imu_data_accelerometer(0);
