@@ -65,8 +65,8 @@ Solo12::Solo12()
     motor_inertias_.fill(0.045);
     joint_gear_ratios_.fill(9.0);
 
-    // By default assume the estop is active.
-    active_estop_ = true;
+    // By default assume the estop is inactive.
+    active_estop_= false;
 }
 
 void Solo12::initialize(const std::string& network_id,
@@ -145,6 +145,8 @@ void Solo12::initialize(const std::string& network_id,
 
 void Solo12::acquire_sensors()
 {
+    static int motor_error_msg_counter_ = 0;
+
     /**
      * Joint data
      */
@@ -171,7 +173,9 @@ void Solo12::acquire_sensors()
         // acquire the slider
         slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
     }
-    active_estop_ = slider_positions_vector_[0] == 0;
+
+    // Active the estop if button is pressed or the estop was active before.
+    active_estop_ |= slider_positions_vector_[0] == 0;
 
     // acquire imu
     imu_accelerometer_(0) = main_board_ptr_->imu_data_accelerometer(0);
@@ -227,6 +231,25 @@ void Solo12::acquire_sensors()
                                  ? motor_board_status.motor2_ready
                                  : motor_board_status.motor1_ready;
     }
+
+    // Check if any of the motor boards has an error.
+    bool got_motor_error = false;
+    for (size_t i = 0; i < motor_boards_.size(); ++i)
+    {
+        if (motor_board_errors_[i] != 0) {
+              if (motor_error_msg_counter_ % 2000 == 0) {
+                rt_printf("solo12: Got motor_board #%d reporting error %d\n",
+                    i, motor_board_errors_[i]);
+            }
+
+            // Increase the error number only once per call to acquire_sensors.
+            // This way it will print all motor errors on the count of 2000.
+            if (!got_motor_error) {
+                motor_error_msg_counter_ += 1;
+                got_motor_error = true;
+            }
+        }
+    }
 }
 
 void Solo12::set_max_joint_torques(const double& max_joint_torques)
@@ -261,6 +284,12 @@ bool Solo12::calibrate(const Vector12d& home_offset_rad)
     double search_distance_limit_rad =
         10.0 * (2.0 * M_PI / joint_gear_ratios_(0));
     Vector12d profile_step_size_rad = Vector12d::Constant(0.001);
+
+    // Calibrate the right side of the robot in the "other direction".
+    // Do this by running the calibration of the HAA joints in the other direction.
+    profile_step_size_rad(3) *= -1;
+    profile_step_size_rad(9) *= -1;
+
     HomingReturnCode homing_return_code = joints_.execute_homing(
         search_distance_limit_rad, home_offset_rad, profile_step_size_rad);
     if (homing_return_code == HomingReturnCode::FAILED)
