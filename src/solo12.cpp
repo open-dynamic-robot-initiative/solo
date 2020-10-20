@@ -237,16 +237,16 @@ void Solo12::acquire_sensors()
     for (size_t i = 0; i < motor_boards_.size(); ++i)
     {
         if (motor_board_errors_[i] != 0) {
+              if (motor_error_msg_counter_ % 2000 == 0) {
+                rt_printf("solo12: Got motor_board #%d reporting error %d\n",
+                    i, motor_board_errors_[i]);
+            }
+
             // Increase the error number only once per call to acquire_sensors.
             // This way it will print all motor errors on the count of 2000.
             if (!got_motor_error) {
                 motor_error_msg_counter_ += 1;
                 got_motor_error = true;
-            }
-
-            if (motor_error_msg_counter_ % 2000 == 0) {
-                rt_printf("solo12: Got motor_board #%d reported error %d\n",
-                    i, motor_board_errors_[i]);
             }
         }
     }
