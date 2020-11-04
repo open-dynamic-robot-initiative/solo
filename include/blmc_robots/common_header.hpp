@@ -11,7 +11,7 @@
 #pragma once
 
 // read some parameters
-#include "yaml_cpp_catkin/yaml_cpp_fwd.hpp"
+#include "yaml_utils/yaml_cpp_fwd.hpp"
 
 // For mathematical operation
 #include <Eigen/Eigen>

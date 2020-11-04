@@ -9,6 +9,7 @@
  *
  */
 
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "blmc_robots/common_programs_header.hpp"
 
 namespace blmc_robots
@@ -28,8 +29,15 @@ struct ThreadCalibrationData
     ThreadCalibrationData(std::shared_ptr<ROBOT_TYPE> robot_in)
         : robot(robot_in)
     {
-        std::cout << "Loading paramters from " << YAML_PARAMS << std::endl;
-        YAML::Node param = YAML::LoadFile(YAML_PARAMS);
+        // Reconstruct the path to the DGM yaml file
+        std::string shared_directory =
+            ament_index_cpp::get_package_share_directory(
+                ROBOT_PROPERTIES_PACKAGE_NAME);
+        std::string yaml_path =
+            shared_directory + "/" + ROBOT_PROPERTIES_YAML_PATH;
+
+        std::cout << "Loading paramters from " << yaml_path << std::endl;
+        YAML::Node param = YAML::LoadFile(yaml_path);
         YAML::ReadParameter(param["hardware_communication"]["calibration"],
                             "index_to_zero_angle",
                             joint_index_to_zero);

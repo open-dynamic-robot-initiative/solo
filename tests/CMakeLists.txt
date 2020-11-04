@@ -1,29 +1,28 @@
-###################################################
-## Set a general config folder path for all tests #
-###################################################
-set(TEST_CONFIG_PATH ${PROJECT_SOURCE_DIR}/tests/config/)
+#
+# Add unit tests.
+#
 
-###################
-## add unit tests #
-###################
+# Use gtest
+find_package(ament_cmake_gtest)
 
+# Create a usefull macro to build different unit tests suits.
 macro(create_blmc_robots_unittest test_name)
 
-# create the executable
-catkin_add_gtest(${test_name}_ut
-  main.cpp
-  test_${test_name}.cpp
-)
-# link the dependecies to it
-target_link_libraries(${test_name}_ut
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
-# add some preprocessor variable
-target_compile_definitions(${test_name}_ut PUBLIC
-  TEST_CONFIG_PATH="${PROJECT_SOURCE_DIR}/tests/config/"
-)
+  set(test_target_name test_${test_name})
+
+  # create the executable
+  ament_add_gtest(${test_target_name} main.cpp ${test_target_name}.cpp)
+  # Add the include dependencies.
+  target_include_directories(
+    ${test_target_name}
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+           $<INSTALL_INTERFACE:include>)
+  # link the dependecies to it
+  target_link_libraries(${test_target_name} ${PROJECT_NAME})
+  # add some preprocessor variable
+  target_compile_definitions(
+    ${test_target_name}
+    PUBLIC TEST_CONFIG_PATH="${PROJECT_SOURCE_DIR}/tests/config/")
 
 endmacro(create_blmc_robots_unittest test_name)
 
