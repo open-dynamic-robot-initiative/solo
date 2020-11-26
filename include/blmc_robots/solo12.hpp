@@ -323,6 +323,15 @@ public:
         return false;
     }
 
+    /**
+     * @brief is_calibrating()
+     * @return Returns true if the calibration procedure is running right now.
+     */
+    bool is_calibrating()
+    {
+        return _is_calibrating;
+    }
+
 private:
     /**
      * Joint properties
@@ -486,6 +495,9 @@ private:
 
     /** @brief If the physical estop is pressed or not. */
     bool active_estop_;
+
+    /** @brief If the joint calibration is active or not. */
+    bool _is_calibrating;
 };
 
 }  // namespace blmc_robots

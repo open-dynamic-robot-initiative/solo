@@ -290,8 +290,13 @@ bool Solo12::calibrate(const Vector12d& home_offset_rad)
     profile_step_size_rad(3) *= -1;
     profile_step_size_rad(9) *= -1;
 
+    _is_calibrating = true;
+
     HomingReturnCode homing_return_code = joints_.execute_homing(
         search_distance_limit_rad, home_offset_rad, profile_step_size_rad);
+
+    _is_calibrating = false;
+
     if (homing_return_code == HomingReturnCode::FAILED)
     {
         return false;
