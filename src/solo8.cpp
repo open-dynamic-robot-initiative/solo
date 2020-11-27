@@ -91,7 +91,7 @@ void Solo8::initialize(const std::string& network_id)
 
     while (!joints_->is_ready() && !CTRL_C_DETECTED)
     {
-        joints_->send_torques();
+        joints_->send_commands();
         joints_->acquire_sensors();
         real_time_tools::Timer::sleep_sec(0.001);
     }
@@ -157,7 +157,7 @@ void Solo8::acquire_sensors()
     motor_ready_ = joints_->get_motor_ready();
 }
 
-void Solo8::send_target_joint_torque(
+void Solo8::set_target_joint_torque(
     const Eigen::Ref<Vector8d> target_joint_torque)
 {
     static int estop_msg_counter_ = 0;
@@ -172,8 +172,69 @@ void Solo8::send_target_joint_torque(
         }
     }
     joints_->set_torques(ctrl_torque);
-    joints_->send_torques();
 }
+
+void Solo8::set_joint_desired_position(
+    const Eigen::Ref<Vector8d> joint_desired_position)
+{
+    Vector8d ctrl_joint_desired_position = joint_desired_position;
+    joints_->set_joint_desired_position(ctrl_joint_desired_position);
+}
+
+void Solo8::set_joint_desired_velocity(
+    const Eigen::Ref<Vector8d> joint_desired_velocity)
+{
+    Vector8d ctrl_joint_desired_velocity = joint_desired_velocity;
+    joints_->set_joint_desired_velocity(ctrl_joint_desired_velocity);
+}
+
+void Solo8::set_joint_torque_saturation(
+    const Eigen::Ref<Vector8d> joint_torque_saturation)
+{
+    Vector8d ctrl_joint_torque_saturation = joint_torque_saturation;
+    joints_->set_joint_torque_saturation(ctrl_joint_torque_saturation);
+}
+
+void Solo8::set_joint_kp(
+    const Eigen::Ref<Vector8d> joint_kp)
+{
+    static int estop_msg_counter_ = 0;
+    Vector8d ctrl_joint_kp = joint_kp;
+    if (active_estop_)
+    {
+        ctrl_joint_kp.fill(0.);
+        estop_msg_counter_ += 1;
+        if (estop_msg_counter_ % 5000 == 0)
+        {
+            rt_printf("solo8: estop is active. Setting ctrl_joint_kp to zero.\n");
+        }
+    }
+    joints_->set_joint_kp(ctrl_joint_kp);
+}
+
+void Solo8::set_joint_kd(
+    const Eigen::Ref<Vector8d> joint_kd)
+{
+    static int estop_msg_counter_ = 0;
+    Vector8d ctrl_joint_kd = joint_kd;
+    if (active_estop_)
+    {
+        ctrl_joint_kd.fill(0.);
+        estop_msg_counter_ += 1;
+        if (estop_msg_counter_ % 5000 == 0)
+        {
+            rt_printf("solo8: estop is active. Setting ctrl_joint_kd to zero.\n");
+        }
+    }
+    joints_->set_joint_kd(ctrl_joint_kd);
+}
+
+
+void Solo8::send_commands() {
+    joints_->send_commands();
+}
+
+
 
 bool Solo8::calibrate(const Vector8d& home_offset_rad)
 {

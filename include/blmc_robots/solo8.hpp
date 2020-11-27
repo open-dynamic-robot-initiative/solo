@@ -30,10 +30,29 @@ public:
     void initialize(const std::string& network_id);
 
     /**
-     * @brief send_target_torques sends the target currents to the motors
+     * @brief set_target_joint_torque sets the target currents to the motors
      */
-    void send_target_joint_torque(
+    void set_target_joint_torque(
         const Eigen::Ref<Vector8d> target_joint_torque);
+
+    void set_joint_desired_position(
+        const Eigen::Ref<Vector8d> joint_desired_position);
+
+    void set_joint_desired_velocity(
+        const Eigen::Ref<Vector8d> joint_desired_velocity);
+
+    void set_joint_torque_saturation(
+        const Eigen::Ref<Vector8d> joint_torque_saturation);
+
+    void set_joint_kp(
+        const Eigen::Ref<Vector8d> joint_kp);
+
+    void set_joint_kd(
+        const Eigen::Ref<Vector8d> joint_kd);
+
+
+    void send_commands();
+
 
     /**
      * @brief acquire_sensors acquire all available sensors, WARNING !!!!

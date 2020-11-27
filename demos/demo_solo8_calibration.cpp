@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     if (argc != 2)
     {
         throw std::runtime_error(
-            "Wrong number of argument: `./demo_solo12 network_id`.");
+            "Wrong number of argument: `./demo_solo8_calibration network_id`.");
     }
 
     std::shared_ptr<Solo8> robot = std::make_shared<Solo8>();

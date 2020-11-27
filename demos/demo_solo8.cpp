@@ -78,7 +78,8 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
             kd * robot.get_joint_velocities();
 
         // Send the current to the motor
-        robot.send_target_joint_torque(desired_torque);
+        robot.set_target_joint_torque(desired_torque);
+        robot.send_commands();
 
         // print -----------------------------------------------------------
         real_time_tools::Timer::sleep_sec(0.001);
