@@ -1,42 +1,39 @@
-###############################
-# Declare the project library #
-###############################
+set(all_src_targets)
 
-add_library(${PROJECT_NAME} SHARED
-  blmc_joint_module.cpp
-  mathematics/polynome.cpp
-)
+#
+# Declare the project library.
+#
+add_library(${PROJECT_NAME} SHARED blmc_joint_module.cpp
+                                   mathematics/polynome.cpp)
+# Add the include dependencies.
+target_include_directories(
+  ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                         $<INSTALL_INTERFACE:include>)
+# Link the dependencies.
+target_link_libraries(${PROJECT_NAME} ament_index_cpp::ament_index_cpp)
+target_link_libraries(${PROJECT_NAME} ati_ft_sensor::ati_ft_sensor)
+target_link_libraries(${PROJECT_NAME} blmc_drivers::blmc_drivers)
+target_link_libraries(${PROJECT_NAME} real_time_tools::real_time_tools)
+target_link_libraries(${PROJECT_NAME} robot_interfaces::robot_interfaces)
+target_link_libraries(${PROJECT_NAME} yaml_utils::yaml_utils)
+target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
+# Export the target.
+list(APPEND all_src_targets ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(${PROJECT_NAME} rt pthread)
-endif()
-
-set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${PROJECT_NAME})
-
-###############################################
-# Declare a simple macro to build the library #
-###############################################
-
+#
+# `create_robots_library` builds a robot driver library.
+#
 macro(create_robots_library lib_name)
-  add_library(${lib_name} SHARED
-    ${lib_name}.cpp
-  )
-
-  target_link_libraries(${lib_name} ${catkin_LIBRARIES} ${PROJECT_NAME})
-
-  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(${lib_name} rt pthread)
-  endif()
-
-  set(LIBRARIES_TO_BE_EXPORTED ${LIBRARIES_TO_BE_EXPORTED} ${lib_name})
+  add_library(${lib_name} SHARED ${lib_name}.cpp)
+  # Add the include dependencies.
+  target_include_directories(
+    ${lib_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                       $<INSTALL_INTERFACE:include>)
+  # Link the dependencies.
+  target_link_libraries(${lib_name} ${PROJECT_NAME})
+  # Export the target.
+  list(APPEND all_src_targets ${lib_name})
 endmacro()
-
-####################
-# build the Robots #
-####################
-
 create_robots_library(test_bench_8_motors)
 create_robots_library(solo8)
 create_robots_library(solo8ti)
@@ -46,33 +43,33 @@ create_robots_library(stuggihop)
 create_robots_library(single_motor)
 create_robots_library(single_leg)
 
-################################################
-# Declare a simple macro to build the programs #
-################################################
-
+#
+# Build executables like the calibration programs.
+#
 macro(build_programs program_name robot_name)
-  add_executable(${program_name}
-    programs/${program_name}.cpp
-  )
-  target_link_libraries(${program_name}
-    ${robot_name}
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-  )
-endmacro(build_programs program_name robot_name)
-
-######################
-# Build the programs #
-######################
-
+  add_executable(${program_name} programs/${program_name}.cpp)
+  # Add the include dependencies.
+  target_include_directories(
+    ${program_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                           $<INSTALL_INTERFACE:include>)
+  # Link the dependencies.
+  target_link_libraries(${program_name} ${robot_name})
+  # Export the target.
+  list(APPEND all_src_targets ${program_name})
+endmacro()
 build_programs(solo8_hardware_calibration solo8)
 build_programs(solo8ti_hardware_calibration solo8ti)
 build_programs(solo12_hardware_calibration solo12)
 build_programs(teststand_hardware_calibration teststand)
 
-######################################################
-# Export the libraries in the devel folder of catkin #
-######################################################
-
-set(EXPORTED_LIBRAIRIES ${EXPORTED_LIBRAIRIES} ${LIBRARIES_TO_BE_EXPORTED}
-    PARENT_SCOPE)
+#
+# Install and Export the libraries.
+#
+install(
+  TARGETS ${all_src_targets}
+  EXPORT export_${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  INCLUDES
+  DESTINATION include)

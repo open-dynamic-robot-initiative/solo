@@ -1,66 +1,71 @@
-#####################
-# create some demos #
-#####################
+#
+# Declare a simple macro to build the demos.
+#
 
-
-include_directories(
-  ${PROJECT_SOURCE_DIR}/demos
-)
-
-#############################################
-# Declare a simple macro to build the demos #
-#############################################
+set(all_demo_targets)
 
 macro(create_demo demo_name)
-  # Cannot use ARGN directly with list() command,
-  # so copy it to a variable first.
-  set (extra_macro_args ${ARGN})
+  # Cannot use ARGN directly with list() command, so copy it to a variable
+  # first.
+  set(extra_macro_args ${ARGN})
 
   # Did we get any optional args?
   list(LENGTH extra_macro_args num_extra_args)
-  if (${num_extra_args} GREATER 0)
-      list(GET extra_macro_args 0 robot_name)
-  endif ()
-  if (${num_extra_args} GREATER 1)
-      list(GET extra_macro_args 1 config_file)
-  endif ()
-
-  add_executable(demo_${demo_name}
-    demo_${demo_name}.cpp
-    common_demo_header.hpp
-  )
-
-  target_link_libraries(demo_${demo_name}
-    ${robot_name}
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${YAML_CPP_LIBRARIES}
-  )
-
-  # first look if a robot_properties_${robot_name} package contain a config file.
-  if(config_file)
-    if(NOT EXISTS ${config_file})
-      message(FATAL_ERROR "demo_${demo_name}: Error cannot find ${config_file}")
-    endif()
-    target_compile_definitions(demo_${demo_name} PUBLIC
-      YAML_PARAMS="${config_file}")
+  if(${num_extra_args} GREATER 0)
+    list(GET extra_macro_args 0 robot_name)
+  endif()
+  if(${num_extra_args} GREATER 1)
+    list(GET extra_macro_args 1 package_name)
+  endif()
+  if(${num_extra_args} GREATER 2)
+    list(GET extra_macro_args 2 resource_path)
   endif()
 
+  # Check if the given config exists. Otherwise do not compile.
+  add_executable(demo_${demo_name} demo_${demo_name}.cpp common_demo_header.hpp)
+  # Add the include dependencies.
+  target_include_directories(
+    demo_${demo_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                             $<INSTALL_INTERFACE:include>)
+  # Link the dependecies to it.
+  target_link_libraries(demo_${demo_name} ${robot_name} ${PROJECT_NAME})
+
+  # Export targets
+  list(APPEND all_demo_targets demo_${demo_name})
+
+  if(package_name AND resource_path)
+    target_compile_definitions(
+      demo_${demo_name} PUBLIC ROBOT_PROPERTIES_PACKAGE_NAME="${package_name}"
+                               ROBOT_PROPERTIES_YAML_PATH="${resource_path}")
+  endif()
 endmacro(create_demo demo_name)
 
-###############
-# build demos #
-###############
+#
+# Build the demos.
+#
 
 create_demo(test_bench_8_motors test_bench_8_motors)
 create_demo(solo8 solo8)
 create_demo(solo8ti solo8ti)
-create_demo(solo12 solo12 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo12.yaml")
+create_demo(solo12 solo12 robot_properties_solo
+            dynamic_graph_manager/dgm_parameters_solo12.yaml)
 create_demo(teststand teststand)
-create_demo(stuggihop stuggihop)
-
 create_demo(arduino_slider)
+create_demo(solo8_calibration solo8 robot_properties_solo
+            dynamic_graph_manager/dgm_parameters_solo8.yaml)
+create_demo(solo12_calibration solo12 robot_properties_solo
+            dynamic_graph_manager/dgm_parameters_solo12.yaml)
+create_demo(teststand_calibration teststand robot_properties_teststand
+            dynamic_graph_manager/dgm_parameters.yaml)
 
-create_demo(solo8_calibration solo8 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo8.yaml")
-create_demo(solo12_calibration solo12 "${robot_properties_solo_SOURCE_PREFIX}/config/dgm_parameters_solo12.yaml")
-create_demo(teststand_calibration teststand "${robot_properties_teststand_SOURCE_PREFIX}/config/dgm_parameters.yaml")
+#
+# Install and Export the libraries.
+#
+install(
+  TARGETS ${all_demo_targets}
+  EXPORT export_${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  INCLUDES
+  DESTINATION include)

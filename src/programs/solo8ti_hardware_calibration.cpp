@@ -35,7 +35,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     return THREAD_FUNCTION_RETURN_VALUE;
 }  // end control_loop
 
-int main(int argc, char** argv)
+int main(int argc, char** /*argv*/)
 {
     enable_ctrl_c();
 

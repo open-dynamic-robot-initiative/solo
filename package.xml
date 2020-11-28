@@ -1,27 +1,45 @@
 <?xml version="1.0"?>
-<package format="2">
-  <name>blmc_robots</name>
-  <version>1.0.0</version>
-  <description>Interfaces to the BLMC robots.</description>
-  <author email="mnaveau@tue.mpg.de">Maximilien Naveau</author>
-  <maintainer email="mnaveau@tue.mpg.de">Maximilien Naveau</maintainer>
-  <maintainer email="felix.widmaier@tuebingen.mpg.de">Felix Widmaier</maintainer>
-  <license>BSD 3-clause</license>
+<?xml-model
+   href="http://download.ros.org/schema/package_format3.xsd"
+   schematypens="http://www.w3.org/2001/XMLSchema"?>
 
-  <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>ati_ft_sensor</depend>
-  <depend>blmc_drivers</depend>
-  <depend>master_board_sdk_catkin</depend>
-  <depend>real_time_tools</depend>
-  <depend>mpi_cmake_modules</depend>
-  <depend>robot_interfaces</depend>
-  <depend>pybind11_catkin</depend>
-  <depend>yaml_cpp_catkin</depend>
-  <depend>robot_properties_solo</depend>
-  <depend>robot_properties_teststand</depend>
+<package format="3">
 
-  <depend>eigen</depend>
-  <depend>yaml-cpp</depend>
+    <name>blmc_robots</name>
+    <version>1.0.0</version>
+    
+    <description>
+        Drivers to the BLMC (https://github.com/open-dynamic-robot-initiative)
+        robots.
+    </description>
+
+    <maintainer email="vberenz@tuebingen.mpg.de">Vincent Berenz</maintainer>
+    <maintainer email="mnaveau@tue.mpg.de">Maximilien Naveau</maintainer>
+    <maintainer email="felix.widmaier@tuebingen.mpg.de">Felix Widmaier</maintainer>
+
+    <license>BSD-3-clause</license>
+
+    <!-- ROS2 build -->
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>pybind11_vendor</buildtool_depend>
+    <buildtool_depend>mpi_cmake_modules</buildtool_depend>
+
+    <!-- CMake module containing helper to find the OS, boost, python, etc. -->
+    <depend>ament_index</depend>
+    <depend>ati_ft_sensor</depend>
+    <depend>blmc_drivers</depend>
+    <depend>real_time_tools</depend>
+    <depend>robot_interfaces</depend>
+    <depend>pybind11</depend>
+    <depend>yaml_utils</depend>
+    <depend>Eigen3</depend>
+
+    <!-- Unit tests -->
+    <test_depend>ament_cmake_gtest</test_depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
 
 </package>
