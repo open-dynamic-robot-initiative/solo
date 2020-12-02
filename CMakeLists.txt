@@ -31,6 +31,7 @@ find_package(mpi_cmake_modules REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(ati_ft_sensor REQUIRED)
 find_package(blmc_drivers REQUIRED)
+find_package(odri_control_interface REQUIRED)
 find_package(real_time_tools REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(pybind11 REQUIRED)
@@ -44,6 +45,7 @@ ament_export_dependencies(
   ament_index_cpp
   ati_ft_sensor
   blmc_drivers
+  odri_control_interface
   real_time_tools
   robot_interfaces
   pybind11

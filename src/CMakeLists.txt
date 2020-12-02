@@ -13,6 +13,7 @@ target_include_directories(
 target_link_libraries(${PROJECT_NAME} ament_index_cpp::ament_index_cpp)
 target_link_libraries(${PROJECT_NAME} ati_ft_sensor::ati_ft_sensor)
 target_link_libraries(${PROJECT_NAME} blmc_drivers::blmc_drivers)
+target_link_libraries(${PROJECT_NAME} odri_control_interface::odri_control_interface)
 target_link_libraries(${PROJECT_NAME} real_time_tools::real_time_tools)
 target_link_libraries(${PROJECT_NAME} robot_interfaces::robot_interfaces)
 target_link_libraries(${PROJECT_NAME} yaml_utils::yaml_utils)

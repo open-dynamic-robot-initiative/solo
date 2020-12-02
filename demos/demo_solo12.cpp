@@ -51,6 +51,9 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
     Vector12d desired_torque_tmp;
     Vector12d desired_torque;
 
+    robot->initialize("ens3", "does_not_matter");
+    robot->set_max_current(1.);
+
     desired_torque.setZero();
 
     Vector12d sliders;
@@ -134,7 +137,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
         }
 
         // print -----------------------------------------------------------
-        if ((count % 1000) == 0)
+        if ((count % 5000) == 0)
         {
             printf("\33[H\33[2J");  // clear screen
             print_vector("sliders_filt", sliders_filt);
@@ -168,16 +171,14 @@ int main(int argc, char** argv)
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
-    std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
-    robot->initialize(argv[1], "does_not_matter");
-    robot->set_max_joint_torques(4.);
-
-    ThreadCalibrationData_t thread_data(robot);
-
     rt_printf("Controller is set up.\n");
     rt_printf("Press enter to launch the calibration.\n");
     char str[256];
     std::cin.get(str, 256);  // get c-string
+
+    std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
+
+    ThreadCalibrationData_t thread_data(robot);
 
     thread.create_realtime_thread(&control_loop, &thread_data);
 

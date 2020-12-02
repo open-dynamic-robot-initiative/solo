@@ -3,6 +3,7 @@
 #include "blmc_robots/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
 
+
 namespace blmc_robots
 {
 const double Solo12::max_joint_torque_security_margin_ = 0.99;
@@ -74,93 +75,80 @@ void Solo12::initialize(const std::string& network_id,
 {
     network_id_ = network_id;
 
-    // Create the different mapping
-    map_joint_id_to_motor_board_id_ = {0, 1, 1, 0, 2, 2, 3, 4, 4, 3, 5, 5};
-    map_joint_id_to_motor_port_id_ = {0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
-
-    // Initialize the communication with the main board.
-    main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
-    main_board_ptr_->Init();
-
-    // create the SpiBus (blmc_drivers wrapper around the MasterBoardInterface)
-    spi_bus_ = std::make_shared<blmc_drivers::SpiBus>(main_board_ptr_,
-                                                      motor_boards_.size());
-
-    // create the motor board objects:
-    for (size_t mb_id = 0; mb_id < motor_boards_.size(); ++mb_id)
-    {
-        motor_boards_[mb_id] =
-            std::make_shared<blmc_drivers::SpiMotorBoard>(spi_bus_, mb_id);
-    }
-
-    // Create the motors object. j_id is the joint_id
-    for (unsigned j_id = 0; j_id < motors_.size(); ++j_id)
-    {
-        motors_[j_id] = std::make_shared<blmc_drivers::Motor>(
-            motor_boards_[map_joint_id_to_motor_board_id_[j_id]],
-            map_joint_id_to_motor_port_id_[j_id]);
-    }
-
     // Use a serial port to read slider values.
     serial_reader_ =
         std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
 
-    // Create the joint module objects
-    joints_.set_motor_array(motors_,
-                            motor_torque_constants_,
-                            joint_gear_ratios_,
-                            joint_zero_positions_,
-                            motor_max_current_);
+    auto main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 
-    // Set the maximum joint torque available
-    max_joint_torques_ =
-        max_joint_torque_security_margin_ * joints_.get_max_torques().array();
+    std::array<int, 12> motor_numbers = {
+        0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10};
+    std::array<bool, 12> motor_reversed = {
+        true, false, true, true, false, false,
+        true, false, true, true, false, false};
 
-    // fix the polarity to be the same as the urdf model.
-    reverse_polarities_ = {false,
-                           true,
-                           true,
-                           true,
-                           false,
-                           false,
-                           false,
-                           true,
-                           true,
-                           true,
-                           false,
-                           false};
-    joints_.set_joint_polarities(reverse_polarities_);
+    std::array<double, 12> joint_lower_limits = {
+            -1.2, -1.7, -3.4, -1.2, -1.7, -3.4,
+            -1.2, -1.7, -3.4, -1.2, -1.7, -3.4
+    };
+    std::array<double, 12> joint_upper_limits = {
+            1.2,  1.7, +3.4, +1.2, +1.7, +3.4,
+            1.2,  1.7, +3.4, +1.2, +1.7, +3.4
+    };
 
-    // The the control gains in order to perform the calibration
-    blmc_robots::Vector12d kp, kd;
-    kp.fill(2.0);
-    kd.fill(0.05);
-    joints_.set_position_control_gains(kp, kd);
+    // Define the joint module.
+    auto joints = std::make_shared<odri_control_interface::JointModules<12> >(
+        main_board_ptr_,
+        motor_numbers,
+        0.025, 9., 1.,
+        motor_reversed,
+        joint_lower_limits, joint_upper_limits, 80., 0.5
+    );
 
-    // Wait until all the motors are ready.
-    spi_bus_->wait_until_ready();
+    // Define the IMU.
+    std::array<int, 3> rotate_vector = {1, 2, 3};
+    std::array<int, 4> orientation_vector = {1, 2, 3, 4};
+    auto imu = std::make_shared<odri_control_interface::IMU>(main_board_ptr_,
+        rotate_vector, orientation_vector);
+
+    // Define the robot.
+    robot_ = std::make_shared<odri_control_interface::Robot<12> >(
+        main_board_ptr_, joints, imu
+    );
+
+    // Start the robot.
+    robot_->Start();
+    robot_->WaitUntilReady();
 
     rt_printf("All motors and boards are ready.\n");
 }
 
+#define Map3(arr) Eigen::Map<Eigen::Vector3d>(arr.data())
+#define Map4(arr) Eigen::Map<Eigen::Vector4d>(arr.data())
+#define Map12(arr) Eigen::Map<Vector12d>(arr.data())
+
 void Solo12::acquire_sensors()
 {
-    static int motor_error_msg_counter_ = 0;
+    robot_->ParseSensorData();
+
+    auto joints = robot_->joints;
+    auto imu = robot_->imu;
 
     /**
      * Joint data
      */
     // acquire the joint position
-    joint_positions_ = joints_.get_measured_angles();
+    joint_positions_ = Map12(joints->GetPositions());
     // acquire the joint velocities
-    joint_velocities_ = joints_.get_measured_velocities();
+    joint_velocities_ = Map12(joints->GetVelocities());
     // acquire the joint torques
-    joint_torques_ = joints_.get_measured_torques();
+    joint_torques_ = Map12(joints->GetMeasuredTorques());
     // acquire the target joint torques
-    joint_target_torques_ = joints_.get_sent_torques();
+    joint_target_torques_ = Map12(joints->GetSentTorques());
 
+    // TODO.
     // The index angle is not transmitted.
-    joint_encoder_index_ = joints_.get_measured_index_angles();
+    // joint_encoder_index_ = joints_.get_measured_index_angles();
 
     /**
      * Additional data
@@ -178,131 +166,77 @@ void Solo12::acquire_sensors()
     active_estop_ |= slider_positions_vector_[0] == 0;
 
     // acquire imu
-    imu_accelerometer_(0) = main_board_ptr_->imu_data_accelerometer(0);
-    imu_accelerometer_(1) = main_board_ptr_->imu_data_accelerometer(1);
-    imu_accelerometer_(2) = main_board_ptr_->imu_data_accelerometer(2);
-    imu_gyroscope_(0) = main_board_ptr_->imu_data_gyroscope(0);
-    imu_gyroscope_(1) = main_board_ptr_->imu_data_gyroscope(1);
-    imu_gyroscope_(2) = main_board_ptr_->imu_data_gyroscope(2);
-    imu_attitude_(0) = main_board_ptr_->imu_data_attitude(0);
-    imu_attitude_(1) = main_board_ptr_->imu_data_attitude(1);
-    imu_attitude_(2) = main_board_ptr_->imu_data_attitude(2);
-    imu_linear_acceleration_(0) =
-        main_board_ptr_->imu_data_linear_acceleration(0);
-    imu_linear_acceleration_(1) =
-        main_board_ptr_->imu_data_linear_acceleration(1);
-    imu_linear_acceleration_(2) =
-        main_board_ptr_->imu_data_linear_acceleration(2);
-    double sr = sin(imu_attitude_[0] / 2.);
-    double cr = cos(imu_attitude_[0] / 2.);
-    double sp = sin(imu_attitude_[1] / 2.);
-    double cp = cos(imu_attitude_[1] / 2.);
-    double sy = sin(imu_attitude_[2] / 2.);
-    double cy = cos(imu_attitude_[2] / 2.);
-    imu_attitude_quaternion_(0) = sr * cp * cy - cr * sp * sy;
-    imu_attitude_quaternion_(1) = cr * sp * cy + sr * cp * sy;
-    imu_attitude_quaternion_(2) = cr * cp * sy - sr * sp * cy;
-    imu_attitude_quaternion_(3) = cr * cp * cy + sr * sp * sy;
+    imu_accelerometer_ = Map3(imu->GetAccelerometer());
+    imu_gyroscope_ = Map3(imu->GetGyroscope());
+    imu_attitude_ = Map3(imu->GetAttitudeEuler());
+    imu_attitude_quaternion_ = Map4(imu->GetAttitudeQuaternion());
 
     /**
      * The different status.
      */
 
     // motor board status
-    for (size_t i = 0; i < motor_boards_.size(); ++i)
-    {
-        const blmc_drivers::MotorBoardStatus& motor_board_status =
-            motor_boards_[i]->get_status()->newest_element();
-        motor_board_enabled_[i] = motor_board_status.system_enabled;
-        motor_board_errors_[i] = motor_board_status.error_code;
-    }
+    motor_board_enabled_ = joints->GetMotorDriverEnabled();
+    motor_board_errors_ = joints->GetMotorDriverErrors();
+
     // motors status
-    for (size_t j_id = 0; j_id < motors_.size(); ++j_id)
-    {
-        const blmc_drivers::MotorBoardStatus& motor_board_status =
-            motor_boards_[map_joint_id_to_motor_board_id_[j_id]]
-                ->get_status()
-                ->newest_element();
-
-        motor_enabled_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
-                                   ? motor_board_status.motor2_enabled
-                                   : motor_board_status.motor1_enabled;
-        motor_ready_[j_id] = (map_joint_id_to_motor_port_id_[j_id] == 1)
-                                 ? motor_board_status.motor2_ready
-                                 : motor_board_status.motor1_ready;
-    }
-
-    // Check if any of the motor boards has an error.
-    bool got_motor_error = false;
-    for (size_t i = 0; i < motor_boards_.size(); ++i)
-    {
-        if (motor_board_errors_[i] != 0) {
-              if (motor_error_msg_counter_ % 2000 == 0) {
-                rt_printf("solo12: Got motor_board #%d reporting error %d\n",
-                    i, motor_board_errors_[i]);
-            }
-
-            // Increase the error number only once per call to acquire_sensors.
-            // This way it will print all motor errors on the count of 2000.
-            if (!got_motor_error) {
-                motor_error_msg_counter_ += 1;
-                got_motor_error = true;
-            }
-        }
-    }
+    motor_enabled_ = joints->GetEnabled();
+    motor_ready_ = joints->GetReady();
 }
 
-void Solo12::set_max_joint_torques(const double& max_joint_torques)
+void Solo12::set_max_current(const double& max_current)
 {
-    max_joint_torques_.fill(max_joint_torques);
+    robot_->joints->SetMaximumCurrents(max_current);
 }
 
 void Solo12::send_target_joint_torque(
     const Eigen::Ref<Vector12d> target_joint_torque)
 {
-    static int estop_msg_counter_ = 0;
-    Vector12d ctrl_torque = target_joint_torque;
-    if (active_estop_)
+    std::array<double, 12> torques;
+    for (int i = 0; i < 12; i++)
     {
-        ctrl_torque.fill(0.);
-        estop_msg_counter_ += 1;
-        if (estop_msg_counter_ % 5000 == 0)
-        {
-            rt_printf(
-                "solo12: estop is active. Setting ctrl_torque to zero.\n");
-        }
+        torques[i] = target_joint_torque(i);
     }
-    ctrl_torque = ctrl_torque.array().min(max_joint_torques_);
-    ctrl_torque = ctrl_torque.array().max(-max_joint_torques_);
-    joints_.set_torques(ctrl_torque);
-    joints_.send_torques();
+    robot_->joints->SetTorques(torques);
+    robot_->SendCommand();
 }
 
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
-    // Maximum distance is twice the angle between joint indexes
-    double search_distance_limit_rad =
-        10.0 * (2.0 * M_PI / joint_gear_ratios_(0));
-    Vector12d profile_step_size_rad = Vector12d::Constant(0.001);
-
-    // Calibrate the right side of the robot in the "other direction".
-    // Do this by running the calibration of the HAA joints in the other direction.
-    profile_step_size_rad(3) *= -1;
-    profile_step_size_rad(9) *= -1;
-
-    _is_calibrating = true;
-
-    HomingReturnCode homing_return_code = joints_.execute_homing(
-        search_distance_limit_rad, home_offset_rad, profile_step_size_rad);
-
-    _is_calibrating = false;
-
-    if (homing_return_code == HomingReturnCode::FAILED)
-    {
-        return false;
+    std::array<odri_control_interface::CalibrationMethod, 12> directions = {
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE
+    };
+    std::array<double, 12> position_offsets;
+    for (int i = 0; i < 12; i++) {
+        position_offsets[i] = home_offset_rad(i);
     }
-    Vector12d zero_pose = Vector12d::Zero();
-    joints_.go_to(zero_pose);
+    auto calib_ctrl = std::make_shared<odri_control_interface::JointCalibrator<12> >(
+        robot_->joints,
+        directions,
+        position_offsets,
+        5., 0.05, 0.001
+    );
+
+    bool calibration_done = false;
+    std::chrono::time_point<std::chrono::system_clock> last = std::chrono::system_clock::now();
+    while (!robot_->HasError() && !calibration_done)
+    {
+        if (((std::chrono::duration<double>)(std::chrono::system_clock::now() - last)).count() > 0.001)
+        {
+            last += std::chrono::milliseconds(1);
+            robot_->ParseSensorData();
+            calibration_done |= calib_ctrl->Run();
+            robot_->SendCommand();
+        } else {
+            std::this_thread::yield();
+        }
+    }
+
     return true;
 }
 

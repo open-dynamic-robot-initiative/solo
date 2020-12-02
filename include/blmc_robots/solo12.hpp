@@ -12,6 +12,8 @@
 #include "blmc_drivers/serial_reader.hpp"
 #include "blmc_robots/blmc_joint_module.hpp"
 #include "blmc_robots/common_header.hpp"
+#include <odri_control_interface/robot.hpp>
+#include <odri_control_interface/calibration.hpp>
 
 namespace blmc_robots
 {
@@ -51,7 +53,7 @@ public:
     /**
      * @brief Sets the maximum joint torques.
      */
-    void set_max_joint_torques(const double& max_joint_torques);
+    void set_max_current(const double& max_current);
 
     /**
      * @brief send_target_torques sends the target currents to the motors.
@@ -464,31 +466,15 @@ private:
      */
     std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
-    /** @brief Main board blmc_drivers overlay.
-     *
-     * This object contains the API compatible with the blmc_drivers and
-     * BLMCJointModule(s).
-     */
-    std::shared_ptr<blmc_drivers::SpiBus> spi_bus_;
+
 
     /**
      * @brief Reader for serial port to read arduino slider values.
      */
     std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
 
-    /** @brief These are the 6 motor boards of the robot. */
-    std::array<std::shared_ptr<blmc_drivers::SpiMotorBoard>, 6> motor_boards_;
+    std::shared_ptr<odri_control_interface::Robot<12> > robot_;
 
-    /** @brief motors_ are the objects allowing us to send motor commands and
-     * receive data. */
-    std::array<MotorInterface_ptr, 12> motors_;
-
-    /** @brief sliders_ these are analogue input, typically from linear
-     * potentiometers. */
-    std::array<Slider_ptr, 4> sliders_;
-
-    /** @brief Joint modules containing the driving system paramters */
-    BlmcJointModules<12> joints_;
 
     /** @brief Address the rotation direction of the motor. */
     std::array<bool, 12> reverse_polarities_;
