@@ -132,7 +132,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
             blmc_robots::Vector12d current_index_to_zero =
                 joint_index_to_zero - robot->get_joint_positions();
 
-            // printf("\33[H\33[2J");  // clear screen
+            printf("\33[H\33[2J");  // clear screen
             print_vector(" sliders_filt", sliders_filt);
             print_vector(" sliders_zero", sliders_zero);
             print_vector(" sliders_raw ", robot->get_slider_positions());
