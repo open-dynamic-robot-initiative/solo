@@ -68,6 +68,8 @@ Solo12::Solo12()
 
     // By default assume the estop is inactive.
     active_estop_= false;
+
+    state_ = Solo12State::initial;
 }
 
 void Solo12::initialize(const std::string& network_id,
@@ -116,9 +118,26 @@ void Solo12::initialize(const std::string& network_id,
         main_board_ptr_, joints, imu
     );
 
-    // Start the robot.
-    robot_->Start();
-    robot_->WaitUntilReady();
+    std::array<odri_control_interface::CalibrationMethod, 12> directions = {
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE
+    };
+
+    // Use zero position offsets for now. Gets updated in the calibration method.
+    std::array<double, 12> position_offsets;
+    calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator<12> >(
+        robot_->joints,
+        directions,
+        position_offsets,
+        5., 0.05, 0.001
+    );
+
+    // Initialize the robot.
+    robot_->Init();
 
     rt_printf("All motors and boards are ready.\n");
 }
@@ -129,6 +148,8 @@ void Solo12::initialize(const std::string& network_id,
 
 void Solo12::acquire_sensors()
 {
+    static int estop_counter_ = 0;
+
     robot_->ParseSensorData();
 
     auto joints = robot_->joints;
@@ -165,6 +186,10 @@ void Solo12::acquire_sensors()
     // Active the estop if button is pressed or the estop was active before.
     active_estop_ |= slider_positions_vector_[0] == 0;
 
+    if (active_estop_ && estop_counter_++ % 2000 == 0) {
+        robot_->ReportError("Soft E-Stop is active.");
+    }
+
     // acquire imu
     imu_accelerometer_ = Map3(imu->GetAccelerometer());
     imu_gyroscope_ = Map3(imu->GetGyroscope());
@@ -198,44 +223,53 @@ void Solo12::send_target_joint_torque(
         torques[i] = target_joint_torque(i);
     }
     robot_->joints->SetTorques(torques);
-    robot_->SendCommand();
+
+    switch (state_)
+    {
+        case Solo12State::initial:
+            robot_->joints->SetZeroCommand();
+            if (!robot_->IsTimeout() && !robot_->IsAckMsgReceived())
+            {
+                robot_->SendInit();
+            }
+            else if(!robot_->IsReady())
+            {
+                robot_->SendCommand();
+            }
+            else
+            {
+                state_ = Solo12State::ready;
+            }
+            break;
+
+        case Solo12State::ready:
+            if (calibrate_request_)
+            {
+                calibrate_request_ = false;
+                state_ = Solo12State::calibrate;
+                robot_->joints->SetZeroCommand();
+            }
+            robot_->SendCommand();
+            break;
+
+        case Solo12State::calibrate:
+            if (calib_ctrl_->Run())
+            {
+                state_ = Solo12State::ready;
+            }
+            robot_->SendCommand();
+            break;
+    }
 }
 
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
-    std::array<odri_control_interface::CalibrationMethod, 12> directions = {
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE
-    };
-    std::array<double, 12> position_offsets;
+    std::array<double, 12> joint_offsets;
     for (int i = 0; i < 12; i++) {
-        position_offsets[i] = home_offset_rad(i);
+        joint_offsets[i] = home_offset_rad(i);
     }
-    auto calib_ctrl = std::make_shared<odri_control_interface::JointCalibrator<12> >(
-        robot_->joints,
-        directions,
-        position_offsets,
-        5., 0.05, 0.001
-    );
-
-    bool calibration_done = false;
-    std::chrono::time_point<std::chrono::system_clock> last = std::chrono::system_clock::now();
-    while (!robot_->HasError() && !calibration_done)
-    {
-        if (((std::chrono::duration<double>)(std::chrono::system_clock::now() - last)).count() > 0.001)
-        {
-            last += std::chrono::milliseconds(1);
-            robot_->ParseSensorData();
-            calibration_done |= calib_ctrl->Run();
-            robot_->SendCommand();
-        } else {
-            std::this_thread::yield();
-        }
-    }
+    calib_ctrl_->UpdatePositionOffsets(joint_offsets);
+    calibrate_request_ = true;
 
     return true;
 }

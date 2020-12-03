@@ -51,9 +51,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
     Vector12d desired_torque_tmp;
     Vector12d desired_torque;
 
-    robot->initialize("ens3", "does_not_matter");
-    robot->set_max_current(1.);
-
     desired_torque.setZero();
 
     Vector12d sliders;
@@ -63,13 +60,13 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 
     std::vector<std::deque<double> > sliders_filt_buffer(12);
     size_t max_filt_dim = 200;
+
+    robot->acquire_sensors();
+    map_sliders(robot->get_slider_positions(), sliders_zero);
     for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
     {
         sliders_filt_buffer[i].clear();
     }
-
-    robot->acquire_sensors();
-    map_sliders(robot->get_slider_positions(), sliders_zero);
 
     rt_printf("control loop started \n");
 
@@ -81,8 +78,6 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 
-    rt_printf("done calibrating \n");
-
     // Run the main program.
     size_t count = 0;
     while (!CTRL_C_DETECTED)
@@ -93,12 +88,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
         // acquire the motor enabled signal.
         motor_enabled = robot->get_motor_enabled();
 
-        // HACK: Only read sliders from card0 if motors report enabled.
-        if (motor_enabled[0] && motor_enabled[1])
-        {
-            // acquire the slider signal
-            map_sliders(robot->get_slider_positions(), sliders);
-        }
+        map_sliders(robot->get_slider_positions(), sliders);
 
         // filter it
         for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
@@ -137,9 +127,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
         }
 
         // print -----------------------------------------------------------
-        if ((count % 5000) == 0)
+        if ((count % 1000) == 0)
         {
             printf("\33[H\33[2J");  // clear screen
+            std::cout << "Count: " << count << std::endl;
             print_vector("sliders_filt", sliders_filt);
             print_vector("sliders_zero", sliders_zero);
             print_vector("sliders_raw ", robot->get_slider_positions());
@@ -171,12 +162,13 @@ int main(int argc, char** argv)
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
-    rt_printf("Controller is set up.\n");
     rt_printf("Press enter to launch the calibration.\n");
     char str[256];
     std::cin.get(str, 256);  // get c-string
 
     std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
+    robot->initialize(argv[1], "does_not_matter");
+    robot->set_max_current(1.0);
 
     ThreadCalibrationData_t thread_data(robot);
 

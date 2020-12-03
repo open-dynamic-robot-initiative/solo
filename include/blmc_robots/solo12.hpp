@@ -17,6 +17,13 @@
 
 namespace blmc_robots
 {
+enum Solo12State
+{
+    initial,
+    ready,
+    calibrate
+};
+
 /**
  * @brief Definition and drivers for the Solo12 robot.
  *
@@ -455,6 +462,15 @@ private:
     /** @brief base attitude quaternion. */
     Eigen::Vector4d imu_attitude_quaternion_;
 
+    /** @brief State of the solo robot. */
+    Solo12State state_;
+
+    /** @brief Controller to run the calibration procedure */
+    std::shared_ptr<odri_control_interface::JointCalibrator<12> > calib_ctrl_;
+
+    /** @brief Indicator if calibration should start. */
+    bool calibrate_request_;
+
     /**
      * Drivers communication objects
      */
@@ -466,15 +482,15 @@ private:
      */
     std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
-
-
     /**
      * @brief Reader for serial port to read arduino slider values.
      */
     std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
 
+    /**
+     * @brief The odri robot abstraction.
+     */
     std::shared_ptr<odri_control_interface::Robot<12> > robot_;
-
 
     /** @brief Address the rotation direction of the motor. */
     std::array<bool, 12> reverse_polarities_;
