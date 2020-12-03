@@ -86,16 +86,19 @@ void Solo12::initialize(const std::string& network_id,
     std::array<int, 12> motor_numbers = {
         0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10};
     std::array<bool, 12> motor_reversed = {
-        true, false, true, true, false, false,
-        true, false, true, true, false, false};
+        false, true, true, true, false, false,
+        false, true, true, true, false, false};
 
+    double lHAA = 0.9;
+    double lHFE = 1.45;
+    double lKFE = 2.80;
     std::array<double, 12> joint_lower_limits = {
-            -1.2, -1.7, -3.4, -1.2, -1.7, -3.4,
-            -1.2, -1.7, -3.4, -1.2, -1.7, -3.4
+            -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE,
+            -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE
     };
     std::array<double, 12> joint_upper_limits = {
-            1.2,  1.7, +3.4, +1.2, +1.7, +3.4,
-            1.2,  1.7, +3.4, +1.2, +1.7, +3.4
+            lHAA, lHFE, lKFE, lHAA, lHFE, lKFE,
+            lHAA, lHFE, lKFE, lHAA, lHFE, lKFE
     };
 
     // Define the joint module.
@@ -120,10 +123,10 @@ void Solo12::initialize(const std::string& network_id,
 
     std::array<odri_control_interface::CalibrationMethod, 12> directions = {
         odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::NEGATIVE,
         odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE, odri_control_interface::NEGATIVE,
         odri_control_interface::POSITIVE, odri_control_interface::POSITIVE
     };
 
@@ -133,7 +136,7 @@ void Solo12::initialize(const std::string& network_id,
         robot_->joints,
         directions,
         position_offsets,
-        5., 0.05, 0.001
+        5., 0.05, 1.0, 0.001
     );
 
     // Initialize the robot.

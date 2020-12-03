@@ -59,7 +59,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
     std::array<bool, 12> motor_enabled;
 
     std::vector<std::deque<double> > sliders_filt_buffer(12);
-    size_t max_filt_dim = 200;
+    size_t max_filt_dim = 50;
 
     robot->acquire_sensors();
     map_sliders(robot->get_slider_positions(), sliders_zero);
@@ -129,15 +129,18 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
         // print -----------------------------------------------------------
         if ((count % 1000) == 0)
         {
-            printf("\33[H\33[2J");  // clear screen
-            std::cout << "Count: " << count << std::endl;
-            print_vector("sliders_filt", sliders_filt);
-            print_vector("sliders_zero", sliders_zero);
-            print_vector("sliders_raw ", robot->get_slider_positions());
-            print_vector("des_joint_tau", desired_torque);
-            print_vector("    joint_pos", robot->get_joint_positions());
-            print_vector("    joint_vel", robot->get_joint_velocities());
-            print_vector("des_joint_pos", desired_joint_position);
+            blmc_robots::Vector12d current_index_to_zero =
+                joint_index_to_zero - robot->get_joint_positions();
+
+            // printf("\33[H\33[2J");  // clear screen
+            print_vector(" sliders_filt", sliders_filt);
+            print_vector(" sliders_zero", sliders_zero);
+            print_vector(" sliders_raw ", robot->get_slider_positions());
+            print_vector(" des_joint_tau", desired_torque);
+            print_vector("     joint_pos", robot->get_joint_positions());
+            print_vector("     joint_vel", robot->get_joint_velocities());
+            print_vector(" des_joint_pos", desired_joint_position);
+            print_vector("zero_joint_pos", current_index_to_zero);
             fflush(stdout);
         }
         ++count;
@@ -145,6 +148,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
         // Send the current to the motor
         // desired_torque.setZero();
         robot->send_target_joint_torque(desired_torque);
+        fflush(stdout);
 
         real_time_tools::Timer::sleep_sec(0.001);
     }  // endwhile
@@ -162,6 +166,8 @@ int main(int argc, char** argv)
     real_time_tools::RealTimeThread thread;
     enable_ctrl_c();
 
+    rt_printf("Please put the robot in zero position.\n");
+    rt_printf("\n");
     rt_printf("Press enter to launch the calibration.\n");
     char str[256];
     std::cin.get(str, 256);  // get c-string
