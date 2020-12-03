@@ -53,8 +53,6 @@ create_demo(teststand teststand)
 create_demo(arduino_slider)
 create_demo(solo8_calibration solo8 robot_properties_solo
             dynamic_graph_manager/dgm_parameters_solo8.yaml)
-create_demo(solo12_calibration solo12 robot_properties_solo
-            dynamic_graph_manager/dgm_parameters_solo12.yaml)
 create_demo(teststand_calibration teststand robot_properties_teststand
             dynamic_graph_manager/dgm_parameters.yaml)
 
