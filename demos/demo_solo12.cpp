@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 
     std::shared_ptr<Solo12> robot = std::make_shared<Solo12>();
     robot->initialize(argv[1], "does_not_matter");
-    robot->set_max_current(1.0);
+    robot->set_max_current(4.0);
 
     ThreadCalibrationData_t thread_data(robot);
 
