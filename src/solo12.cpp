@@ -2,11 +2,13 @@
 #include <cmath>
 #include "blmc_robots/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
-
+#include <odri_control_interface/common.hpp>
 
 namespace blmc_robots
 {
 const double Solo12::max_joint_torque_security_margin_ = 0.99;
+
+using namespace odri_control_interface;
 
 Solo12::Solo12()
 {
@@ -19,7 +21,6 @@ Solo12::Solo12()
     motor_max_current_.setZero();
     max_joint_torques_.setZero();
     joint_zero_positions_.setZero();
-    reverse_polarities_.fill(false);
     slider_positions_vector_.resize(5);
 
     /**
@@ -81,28 +82,26 @@ void Solo12::initialize(const std::string& network_id,
     serial_reader_ =
         std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
 
-    auto main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
+    auto main_board_ptr_ = new MasterBoardInterface(network_id_);
 
-    std::array<int, 12> motor_numbers = {
-        0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10};
-    std::array<bool, 12> motor_reversed = {
-        false, true, true, true, false, false,
-        false, true, true, true, false, false};
+    VectorXl motor_numbers(12);
+    motor_numbers << 0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10;
+    VectorXb motor_reversed(12);
+    motor_reversed << false, true, true, true, false, false,
+                      false, true, true, true, false, false;
 
     double lHAA = 0.9;
     double lHFE = 1.45;
     double lKFE = 2.80;
-    std::array<double, 12> joint_lower_limits = {
-            -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE,
-            -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE
-    };
-    std::array<double, 12> joint_upper_limits = {
-            lHAA, lHFE, lKFE, lHAA, lHFE, lKFE,
-            lHAA, lHFE, lKFE, lHAA, lHFE, lKFE
-    };
+    Eigen::VectorXd joint_lower_limits(12);
+    joint_lower_limits << -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE,
+                          -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE;
+    Eigen::VectorXd joint_upper_limits(12);
+    joint_upper_limits << lHAA, lHFE, lKFE, lHAA, lHFE, lKFE,
+                          lHAA, lHFE, lKFE, lHAA, lHFE, lKFE;
 
     // Define the joint module.
-    auto joints = std::make_shared<odri_control_interface::JointModules<12> >(
+    auto joints = new odri_control_interface::JointModules(
         main_board_ptr_,
         motor_numbers,
         0.025, 9., 1.,
@@ -111,17 +110,19 @@ void Solo12::initialize(const std::string& network_id,
     );
 
     // Define the IMU.
-    std::array<int, 3> rotate_vector = {1, 2, 3};
-    std::array<int, 4> orientation_vector = {1, 2, 3, 4};
-    auto imu = std::make_shared<odri_control_interface::IMU>(main_board_ptr_,
+    VectorXl rotate_vector(3);
+    rotate_vector << 1, 2, 3;
+    VectorXl orientation_vector(4);
+    orientation_vector << 1, 2, 3, 4;
+    auto imu = new odri_control_interface::IMU(main_board_ptr_,
         rotate_vector, orientation_vector);
 
     // Define the robot.
-    robot_ = std::make_shared<odri_control_interface::Robot<12> >(
+    robot_ = std::make_shared<odri_control_interface::Robot>(
         main_board_ptr_, joints, imu
     );
 
-    std::array<odri_control_interface::CalibrationMethod, 12> directions = {
+    std::vector<odri_control_interface::CalibrationMethod> directions {
         odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE, odri_control_interface::NEGATIVE,
         odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
@@ -131,8 +132,9 @@ void Solo12::initialize(const std::string& network_id,
     };
 
     // Use zero position offsets for now. Gets updated in the calibration method.
-    std::array<double, 12> position_offsets;
-    calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator<12> >(
+    Eigen::VectorXd position_offsets(12);
+    position_offsets.fill(0.);
+    calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
         robot_->joints,
         directions,
         position_offsets,
@@ -144,10 +146,6 @@ void Solo12::initialize(const std::string& network_id,
 
     rt_printf("All motors and boards are ready.\n");
 }
-
-#define Map3(arr) Eigen::Map<Eigen::Vector3d>(arr.data())
-#define Map4(arr) Eigen::Map<Eigen::Vector4d>(arr.data())
-#define Map12(arr) Eigen::Map<Vector12d>(arr.data())
 
 void Solo12::acquire_sensors()
 {
@@ -162,13 +160,13 @@ void Solo12::acquire_sensors()
      * Joint data
      */
     // acquire the joint position
-    joint_positions_ = Map12(joints->GetPositions());
+    joint_positions_ = joints->GetPositions();
     // acquire the joint velocities
-    joint_velocities_ = Map12(joints->GetVelocities());
+    joint_velocities_ = joints->GetVelocities();
     // acquire the joint torques
-    joint_torques_ = Map12(joints->GetMeasuredTorques());
+    joint_torques_ = joints->GetMeasuredTorques();
     // acquire the target joint torques
-    joint_target_torques_ = Map12(joints->GetSentTorques());
+    joint_target_torques_ = joints->GetSentTorques();
 
     // TODO.
     // The index angle is not transmitted.
@@ -194,22 +192,33 @@ void Solo12::acquire_sensors()
     }
 
     // acquire imu
-    imu_accelerometer_ = Map3(imu->GetAccelerometer());
-    imu_gyroscope_ = Map3(imu->GetGyroscope());
-    imu_attitude_ = Map3(imu->GetAttitudeEuler());
-    imu_attitude_quaternion_ = Map4(imu->GetAttitudeQuaternion());
+    imu_accelerometer_ = imu->GetAccelerometer();
+    imu_gyroscope_ = imu->GetGyroscope();
+    imu_attitude_ = imu->GetAttitudeEuler();
+    imu_attitude_quaternion_ = imu->GetAttitudeQuaternion();
 
     /**
      * The different status.
      */
 
     // motor board status
-    motor_board_enabled_ = joints->GetMotorDriverEnabled();
-    motor_board_errors_ = joints->GetMotorDriverErrors();
+    RefVectorXb motor_board_errors = joints->GetMotorDriverErrors();
+    RefVectorXb motor_driver_enabled = joints->GetMotorDriverEnabled();
+    for (int i = 0; i < 6; i++)
+    {
+        motor_board_errors_[i] = motor_board_errors[i];
+        motor_board_enabled_[i] = motor_driver_enabled[i];
+    }
+
 
     // motors status
-    motor_enabled_ = joints->GetEnabled();
-    motor_ready_ = joints->GetReady();
+    RefVectorXb motor_enabled = joints->GetEnabled();
+    RefVectorXb motor_ready = joints->GetReady();
+    for (int i = 0; i < 12; i++)
+    {
+        motor_enabled_[i] = motor_enabled[i];
+        motor_ready_[i] = motor_ready[i];
+    }
 }
 
 void Solo12::set_max_current(const double& max_current)
@@ -220,17 +229,12 @@ void Solo12::set_max_current(const double& max_current)
 void Solo12::send_target_joint_torque(
     const Eigen::Ref<Vector12d> target_joint_torque)
 {
-    std::array<double, 12> torques;
-    for (int i = 0; i < 12; i++)
-    {
-        torques[i] = target_joint_torque(i);
-    }
-    robot_->joints->SetTorques(torques);
+    robot_->joints->SetTorques(target_joint_torque);
 
     switch (state_)
     {
         case Solo12State::initial:
-            robot_->joints->SetZeroCommand();
+            robot_->joints->SetZeroCommands();
             if (!robot_->IsTimeout() && !robot_->IsAckMsgReceived())
             {
                 robot_->SendInit();
@@ -250,7 +254,7 @@ void Solo12::send_target_joint_torque(
             {
                 calibrate_request_ = false;
                 state_ = Solo12State::calibrate;
-                robot_->joints->SetZeroCommand();
+                robot_->joints->SetZeroCommands();
             }
             robot_->SendCommand();
             break;
@@ -267,11 +271,8 @@ void Solo12::send_target_joint_torque(
 
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
-    std::array<double, 12> joint_offsets;
-    for (int i = 0; i < 12; i++) {
-        joint_offsets[i] = home_offset_rad(i);
-    }
-    calib_ctrl_->UpdatePositionOffsets(joint_offsets);
+    Eigen::VectorXd hor = home_offset_rad;
+    calib_ctrl_->UpdatePositionOffsets(hor);
     calibrate_request_ = true;
 
     return true;

@@ -466,7 +466,7 @@ private:
     Solo12State state_;
 
     /** @brief Controller to run the calibration procedure */
-    std::shared_ptr<odri_control_interface::JointCalibrator<12> > calib_ctrl_;
+    std::shared_ptr<odri_control_interface::JointCalibrator > calib_ctrl_;
 
     /** @brief Indicator if calibration should start. */
     bool calibrate_request_;
@@ -490,10 +490,7 @@ private:
     /**
      * @brief The odri robot abstraction.
      */
-    std::shared_ptr<odri_control_interface::Robot<12> > robot_;
-
-    /** @brief Address the rotation direction of the motor. */
-    std::array<bool, 12> reverse_polarities_;
+    std::shared_ptr<odri_control_interface::Robot > robot_;
 
     /** @brief If the physical estop is pressed or not. */
     bool active_estop_;
