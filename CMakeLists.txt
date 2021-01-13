@@ -28,7 +28,6 @@ find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 
 # depend on ament macros
-find_package(ament_index_cpp REQUIRED)
 find_package(ati_ft_sensor REQUIRED)
 find_package(blmc_drivers REQUIRED)
 find_package(real_time_tools REQUIRED)
@@ -36,6 +35,8 @@ find_package(robot_interfaces REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
 find_package(Eigen3 REQUIRED)
+# Find resources from robot_properties packages.
+find_package(PythonModules COMPONENTS robot_properties_solo robot_properties_teststand)
 
 # export de dependencies
 ament_export_dependencies(

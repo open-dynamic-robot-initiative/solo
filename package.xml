@@ -35,8 +35,12 @@
     <depend>yaml_utils</depend>
     <depend>Eigen3</depend>
 
+    <!-- Python dependencies. -->
+    <depend>robot_properties_solo</depend>
+    <depend>robot_properties_teststand</depend>
+
     <!-- Unit tests -->
-    <test_depend>ament_cmake_gtest</test_depend>
+    <test_depend>googletest-distribution</test_depend>
 
     <export>
         <build_type>ament_cmake</build_type>

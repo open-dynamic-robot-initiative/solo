@@ -10,7 +10,6 @@ target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include>)
 # Link the dependencies.
-target_link_libraries(${PROJECT_NAME} ament_index_cpp::ament_index_cpp)
 target_link_libraries(${PROJECT_NAME} ati_ft_sensor::ati_ft_sensor)
 target_link_libraries(${PROJECT_NAME} blmc_drivers::blmc_drivers)
 target_link_libraries(${PROJECT_NAME} real_time_tools::real_time_tools)
