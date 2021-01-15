@@ -15,10 +15,7 @@ macro(create_demo demo_name)
     list(GET extra_macro_args 0 robot_name)
   endif()
   if(${num_extra_args} GREATER 1)
-    list(GET extra_macro_args 1 package_name)
-  endif()
-  if(${num_extra_args} GREATER 2)
-    list(GET extra_macro_args 2 resource_path)
+    list(GET extra_macro_args 1 yaml_path)
   endif()
 
   # Check if the given config exists. Otherwise do not compile.
@@ -33,28 +30,44 @@ macro(create_demo demo_name)
   # Export targets
   list(APPEND all_demo_targets demo_${demo_name})
 
-  if(package_name AND resource_path)
-    target_compile_definitions(
-      demo_${demo_name} PUBLIC ROBOT_PROPERTIES_PACKAGE_NAME="${package_name}"
-                               ROBOT_PROPERTIES_YAML_PATH="${resource_path}")
+  if(yaml_path)
+    if(EXISTS ${yaml_path})
+        target_compile_definitions(demo_${demo_name}
+                                PUBLIC ROBOT_PROPERTIES_YAML_PATH="${yaml_path}")
+    else()
+        message(FATAL_ERROR "The yaml path ${yaml_path} is invalid!")
+    endif()
   endif()
 endmacro(create_demo demo_name)
 
 #
 # Build the demos.
 #
-
 create_demo(test_bench_8_motors test_bench_8_motors)
 create_demo(solo8 solo8)
 create_demo(solo8ti solo8ti)
-create_demo(solo12 solo12 robot_properties_solo
-            dynamic_graph_manager/dgm_parameters_solo12.yaml)
+create_demo(
+  solo12
+  solo12
+  ${PythonModules_robot_properties_solo_PATH}/robot_properties_solo/robot_properties_solo/dynamic_graph_manager/dgm_parameters_solo12.yaml
+)
 create_demo(teststand teststand)
 create_demo(arduino_slider)
-create_demo(solo8_calibration solo8 robot_properties_solo
-            dynamic_graph_manager/dgm_parameters_solo8.yaml)
-create_demo(teststand_calibration teststand robot_properties_teststand
-            dynamic_graph_manager/dgm_parameters.yaml)
+create_demo(
+  solo8_calibration
+  solo8
+  ${PythonModules_robot_properties_solo_PATH}/robot_properties_solo/robot_properties_solo/dynamic_graph_manager/dgm_parameters_solo8.yaml
+)
+create_demo(
+  solo12_calibration
+  solo12
+  ${PythonModules_robot_properties_solo_PATH}/robot_properties_solo/robot_properties_solo/dynamic_graph_manager/dgm_parameters_solo12.yaml
+)
+create_demo(
+  teststand_calibration
+  teststand
+  ${PythonModules_robot_properties_teststand_PATH}/robot_properties_teststand/robot_properties_teststand/dynamic_graph_manager/dgm_parameters_teststand.yaml
+)
 
 #
 # Install and Export the libraries.
