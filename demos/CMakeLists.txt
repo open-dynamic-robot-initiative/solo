@@ -59,11 +59,6 @@ create_demo(
   ${PythonModules_robot_properties_solo_PATH}/robot_properties_solo/robot_properties_solo/dynamic_graph_manager/dgm_parameters_solo8.yaml
 )
 create_demo(
-  solo12_calibration
-  solo12
-  ${PythonModules_robot_properties_solo_PATH}/robot_properties_solo/robot_properties_solo/dynamic_graph_manager/dgm_parameters_solo12.yaml
-)
-create_demo(
   teststand_calibration
   teststand
   ${PythonModules_robot_properties_teststand_PATH}/robot_properties_teststand/robot_properties_teststand/dynamic_graph_manager/dgm_parameters_teststand.yaml

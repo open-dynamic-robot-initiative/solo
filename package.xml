@@ -8,7 +8,7 @@
 
     <name>blmc_robots</name>
     <version>1.0.0</version>
-    
+
     <description>
         Drivers to the BLMC (https://github.com/open-dynamic-robot-initiative)
         robots.
@@ -31,6 +31,7 @@
     <depend>blmc_drivers</depend>
     <depend>real_time_tools</depend>
     <depend>robot_interfaces</depend>
+    <depend>odri_control_interface</depend>
     <depend>pybind11</depend>
     <depend>yaml_utils</depend>
     <depend>Eigen3</depend>
