@@ -322,14 +322,7 @@ public:
      */
     bool has_error() const
     {
-        for (const auto& error_code : motor_board_errors_)
-        {
-            if (error_code != 0)
-            {
-                return true;
-            }
-        }
-        return false;
+        return robot_->HasError();
     }
 
     /**
