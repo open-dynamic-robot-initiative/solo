@@ -105,7 +105,7 @@ void Solo12::initialize(const std::string& network_id,
     auto joints = new odri_control_interface::JointModules(
         main_board_ptr_,
         motor_numbers,
-        0.025, 9., 1.,
+        motor_torque_constants_(0), joint_gear_ratios_(0), motor_max_current_(0),
         motor_reversed,
         joint_lower_limits, joint_upper_limits, 80., 0.5
     );
