@@ -69,6 +69,7 @@ Solo12::Solo12()
 
     // By default assume the estop is inactive.
     active_estop_= false;
+    calibrate_request_ = false;
 
     state_ = Solo12State::initial;
 }
@@ -254,6 +255,7 @@ void Solo12::send_target_joint_torque(
             {
                 calibrate_request_ = false;
                 state_ = Solo12State::calibrate;
+                _is_calibrating = true;
                 robot_->joints->SetZeroCommands();
             }
             robot_->SendCommand();
@@ -263,6 +265,7 @@ void Solo12::send_target_joint_torque(
             if (calib_ctrl_->Run())
             {
                 state_ = Solo12State::ready;
+                _is_calibrating = false;
             }
             robot_->SendCommand();
             break;
@@ -271,6 +274,7 @@ void Solo12::send_target_joint_torque(
 
 bool Solo12::calibrate(const Vector12d& home_offset_rad)
 {
+    printf("Solo12::calibrate called\n");
     Eigen::VectorXd hor = home_offset_rad;
     calib_ctrl_->UpdatePositionOffsets(hor);
     calibrate_request_ = true;
