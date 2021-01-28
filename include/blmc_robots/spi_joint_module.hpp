@@ -18,7 +18,6 @@
 
 #include "blmc_drivers/devices/motor.hpp"
 #include "blmc_robots/common_header.hpp"
-#include "blmc_robots/mathematics/polynome.hpp"
 
 #include "master_board_sdk/defines.h"
 #include "master_board_sdk/master_board_interface.h"
