@@ -62,13 +62,6 @@ ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 add_subdirectory(src)
 
 #
-# Manage the unit tests.
-#
-if(BUILD_TESTING)
-  add_subdirectory(tests)
-endif()
-
-#
 # Manage the demos.
 #
 add_subdirectory(demos)
