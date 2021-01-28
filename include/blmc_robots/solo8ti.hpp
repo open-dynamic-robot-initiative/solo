@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_drivers/blmc_joint_module.hpp>
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/slider.hpp>
 
@@ -342,7 +342,7 @@ private:
     /**
      * @brief This is the collection of joints that compose the robot.
      */
-    BlmcJointModules<8> joints_;
+    blmc_drivers::BlmcJointModules<8> joints_;
 
     /**
      * @brief Address the rotation direction of the motor.

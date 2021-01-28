@@ -8,7 +8,7 @@
 #ifndef SingleMotor_H
 #define SingleMotor_H
 
-#include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_drivers/blmc_joint_module.hpp>
 #include <blmc_robots/common_header.hpp>
 #include <blmc_robots/slider.hpp>
 

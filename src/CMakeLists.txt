@@ -3,8 +3,7 @@ set(all_src_targets)
 #
 # Declare the project library.
 #
-add_library(${PROJECT_NAME} SHARED blmc_joint_module.cpp
-                                   mathematics/polynome.cpp)
+add_library(${PROJECT_NAME} SHARED mathematics/polynome.cpp)
 # Add the include dependencies.
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
