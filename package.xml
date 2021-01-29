@@ -30,7 +30,6 @@
     <depend>ati_ft_sensor</depend>
     <depend>blmc_drivers</depend>
     <depend>real_time_tools</depend>
-    <depend>robot_interfaces</depend>
     <depend>odri_control_interface</depend>
     <depend>pybind11</depend>
     <depend>yaml_utils</depend>

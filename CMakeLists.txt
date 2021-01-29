@@ -32,7 +32,6 @@ find_package(ati_ft_sensor REQUIRED)
 find_package(blmc_drivers REQUIRED)
 find_package(odri_control_interface REQUIRED)
 find_package(real_time_tools REQUIRED)
-find_package(robot_interfaces REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -48,7 +47,6 @@ ament_export_dependencies(
   blmc_drivers
   odri_control_interface
   real_time_tools
-  robot_interfaces
   pybind11
   yaml_utils
   Eigen3)

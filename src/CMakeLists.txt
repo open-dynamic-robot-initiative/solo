@@ -13,7 +13,6 @@ target_link_libraries(${PROJECT_NAME} INTERFACE ati_ft_sensor::ati_ft_sensor)
 target_link_libraries(${PROJECT_NAME} INTERFACE blmc_drivers::blmc_drivers)
 target_link_libraries(${PROJECT_NAME} INTERFACE odri_control_interface::odri_control_interface)
 target_link_libraries(${PROJECT_NAME} INTERFACE real_time_tools::real_time_tools)
-target_link_libraries(${PROJECT_NAME} INTERFACE robot_interfaces::robot_interfaces)
 target_link_libraries(${PROJECT_NAME} INTERFACE yaml_utils::yaml_utils)
 target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 # Export the target.
