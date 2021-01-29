@@ -9,7 +9,7 @@
 #define TESTSTAND_H
 
 #include <AtiFTSensor.h>
-#include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_drivers/blmc_joint_module.hpp>
 #include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
@@ -387,7 +387,7 @@ private:
      * receive data at the joint level. It also ones some self calibration
      * routines.
      */
-    BlmcJointModules<2> joints_;
+    blmc_drivers::BlmcJointModules<2> joints_;
 
     /**
      * @brief sliders_ these are analogue input from linear potentiometers.
