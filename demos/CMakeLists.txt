@@ -32,10 +32,10 @@ macro(create_demo demo_name)
 
   if(yaml_path)
     if(EXISTS ${yaml_path})
-        target_compile_definitions(demo_${demo_name}
-                                PUBLIC ROBOT_PROPERTIES_YAML_PATH="${yaml_path}")
+      target_compile_definitions(
+        demo_${demo_name} PUBLIC ROBOT_PROPERTIES_YAML_PATH="${yaml_path}")
     else()
-        message(FATAL_ERROR "The yaml path ${yaml_path} is invalid!")
+      message(FATAL_ERROR "The yaml path ${yaml_path} is invalid!")
     endif()
   endif()
 endmacro(create_demo demo_name)

@@ -36,7 +36,8 @@ find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
 find_package(Eigen3 REQUIRED)
 # Find resources from robot_properties packages.
-find_package(PythonModules COMPONENTS robot_properties_solo robot_properties_teststand)
+find_package(PythonModules COMPONENTS robot_properties_solo
+                                      robot_properties_teststand)
 
 # export de dependencies
 ament_export_dependencies(
