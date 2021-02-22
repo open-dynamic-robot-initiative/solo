@@ -83,9 +83,9 @@ void Solo12::initialize(const std::string& network_id,
     serial_reader_ =
         std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
 
-    auto main_board_ptr_ = new MasterBoardInterface(network_id_);
+    main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 
-    VectorXl motor_numbers(12);
+    VectorXi motor_numbers(12);
     motor_numbers << 0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10;
     VectorXb motor_reversed(12);
     motor_reversed << false, true, true, true, false, false,
@@ -102,7 +102,7 @@ void Solo12::initialize(const std::string& network_id,
                           lHAA, lHFE, lKFE, lHAA, lHFE, lKFE;
 
     // Define the joint module.
-    auto joints = new odri_control_interface::JointModules(
+    joints_ = std::make_shared<odri_control_interface::JointModules>(
         main_board_ptr_,
         motor_numbers,
         motor_torque_constants_(0), joint_gear_ratios_(0), motor_max_current_(0),
@@ -115,12 +115,12 @@ void Solo12::initialize(const std::string& network_id,
     rotate_vector << 1, 2, 3;
     VectorXl orientation_vector(4);
     orientation_vector << 1, 2, 3, 4;
-    auto imu = new odri_control_interface::IMU(main_board_ptr_,
-        rotate_vector, orientation_vector);
+    imu_ = std::make_shared<odri_control_interface::IMU>(
+        main_board_ptr_, rotate_vector, orientation_vector);
 
     // Define the robot.
     robot_ = std::make_shared<odri_control_interface::Robot>(
-        main_board_ptr_, joints, imu
+        main_board_ptr_, joints_, imu_
     );
 
     std::vector<odri_control_interface::CalibrationMethod> directions {
@@ -169,8 +169,7 @@ void Solo12::acquire_sensors()
     // acquire the target joint torques
     joint_target_torques_ = joints->GetSentTorques();
 
-    // TODO.
-    // The index angle is not transmitted.
+    // TODO: The index angle is not transmitted.
     // joint_encoder_index_ = joints_.get_measured_index_angles();
 
     /**
@@ -203,8 +202,8 @@ void Solo12::acquire_sensors()
      */
 
     // motor board status
-    RefVectorXb motor_board_errors = joints->GetMotorDriverErrors();
-    RefVectorXb motor_driver_enabled = joints->GetMotorDriverEnabled();
+    ConstRefVectorXb motor_board_errors = joints->GetMotorDriverErrors();
+    ConstRefVectorXb motor_driver_enabled = joints->GetMotorDriverEnabled();
     for (int i = 0; i < 6; i++)
     {
         motor_board_errors_[i] = motor_board_errors[i];
@@ -213,8 +212,8 @@ void Solo12::acquire_sensors()
 
 
     // motors status
-    RefVectorXb motor_enabled = joints->GetEnabled();
-    RefVectorXb motor_ready = joints->GetReady();
+    ConstRefVectorXb motor_enabled = joints->GetEnabled();
+    ConstRefVectorXb motor_ready = joints->GetReady();
     for (int i = 0; i < 12; i++)
     {
         motor_enabled_[i] = motor_enabled[i];

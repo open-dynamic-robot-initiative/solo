@@ -485,6 +485,16 @@ private:
      */
     std::shared_ptr<odri_control_interface::Robot > robot_;
 
+    /**
+     * @brief Collection of Joints for solo12.
+     */
+    std::shared_ptr<odri_control_interface::JointModules> joints_;
+
+    /**
+     * @brief Robot Imu drivers.
+     */
+    std::shared_ptr<odri_control_interface::IMU> imu_;
+
     /** @brief If the physical estop is pressed or not. */
     bool active_estop_;
 
