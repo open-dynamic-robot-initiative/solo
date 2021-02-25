@@ -202,7 +202,7 @@ void Solo12::acquire_sensors()
      */
 
     // motor board status
-    ConstRefVectorXb motor_board_errors = joints->GetMotorDriverErrors();
+    ConstRefVectorXi motor_board_errors = joints->GetMotorDriverErrors();
     ConstRefVectorXb motor_driver_enabled = joints->GetMotorDriverEnabled();
     for (int i = 0; i < 6; i++)
     {
