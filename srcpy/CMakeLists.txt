@@ -23,8 +23,8 @@ target_link_libraries(py_solo12 PRIVATE pybind11::module)
 target_link_libraries(py_solo12 PRIVATE ${PYTHON_LIBRARIES})
 target_link_libraries(py_solo12 PRIVATE ${PROJECT_NAME})
 target_link_libraries(py_solo12 PRIVATE solo12)
-set_target_properties(py_solo12
-                      PROPERTIES PREFIX "" SUFFIX "${PYTHON_MODULE_EXTENSION}")
+set_target_properties(py_solo12 PROPERTIES PREFIX ""
+                                           SUFFIX "${PYTHON_MODULE_EXTENSION}")
 target_include_directories(
   py_solo12
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

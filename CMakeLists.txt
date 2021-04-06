@@ -31,12 +31,14 @@ find_package(mpi_cmake_modules REQUIRED)
 find_package(ati_ft_sensor REQUIRED)
 find_package(blmc_drivers REQUIRED)
 find_package(odri_control_interface REQUIRED)
+find_package(master_board_sdk REQUIRED)
 find_package(real_time_tools REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
 find_package(Eigen3 REQUIRED)
 # Find resources from robot_properties packages.
-find_package(PythonModules COMPONENTS robot_properties_solo robot_properties_teststand)
+find_package(PythonModules COMPONENTS robot_properties_solo
+                                      robot_properties_teststand)
 
 # export de dependencies
 ament_export_dependencies(
@@ -46,6 +48,7 @@ ament_export_dependencies(
   ati_ft_sensor
   blmc_drivers
   odri_control_interface
+  master_board_sdk
   real_time_tools
   pybind11
   yaml_utils

@@ -6,13 +6,17 @@ set(all_src_targets)
 add_library(${PROJECT_NAME} INTERFACE)
 # Add the include dependencies.
 target_include_directories(
-    ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-                              $<INSTALL_INTERFACE:include>)
+  ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                            $<INSTALL_INTERFACE:include>)
 # Link the dependencies.
 target_link_libraries(${PROJECT_NAME} INTERFACE ati_ft_sensor::ati_ft_sensor)
 target_link_libraries(${PROJECT_NAME} INTERFACE blmc_drivers::blmc_drivers)
-target_link_libraries(${PROJECT_NAME} INTERFACE odri_control_interface::odri_control_interface)
-target_link_libraries(${PROJECT_NAME} INTERFACE real_time_tools::real_time_tools)
+target_link_libraries(${PROJECT_NAME}
+                      INTERFACE odri_control_interface::odri_control_interface)
+target_link_libraries(${PROJECT_NAME}
+                      INTERFACE master_board_sdk::master_board_sdk)
+target_link_libraries(${PROJECT_NAME}
+                      INTERFACE real_time_tools::real_time_tools)
 target_link_libraries(${PROJECT_NAME} INTERFACE yaml_utils::yaml_utils)
 target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 # Export the target.
