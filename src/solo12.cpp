@@ -192,6 +192,7 @@ void Solo12::acquire_sensors()
     }
 
     // acquire imu
+    imu_linear_acceleration_ = imu->GetLinearAcceleration();
     imu_accelerometer_ = imu->GetAccelerometer();
     imu_gyroscope_ = imu->GetGyroscope();
     imu_attitude_ = imu->GetAttitudeEuler();
