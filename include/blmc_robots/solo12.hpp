@@ -8,12 +8,12 @@
 
 #pragma once
 
+#include <blmc_drivers/blmc_joint_module.hpp>
 #include <blmc_drivers/devices/spi_motor_board.hpp>
 #include <blmc_drivers/serial_reader.hpp>
-#include <blmc_drivers/blmc_joint_module.hpp>
-#include "blmc_robots/common_header.hpp"
-#include <odri_control_interface/robot.hpp>
 #include <odri_control_interface/calibration.hpp>
+#include <odri_control_interface/robot.hpp>
+#include "blmc_robots/common_header.hpp"
 
 namespace blmc_robots
 {
@@ -459,7 +459,7 @@ private:
     Solo12State state_;
 
     /** @brief Controller to run the calibration procedure */
-    std::shared_ptr<odri_control_interface::JointCalibrator > calib_ctrl_;
+    std::shared_ptr<odri_control_interface::JointCalibrator> calib_ctrl_;
 
     /** @brief Indicator if calibration should start. */
     bool calibrate_request_;
@@ -483,7 +483,7 @@ private:
     /**
      * @brief The odri robot abstraction.
      */
-    std::shared_ptr<odri_control_interface::Robot > robot_;
+    std::shared_ptr<odri_control_interface::Robot> robot_;
 
     /**
      * @brief Collection of Joints for solo12.
