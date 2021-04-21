@@ -9,7 +9,6 @@ target_include_directories(
   ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>)
 # Link the dependencies.
-target_link_libraries(${PROJECT_NAME} INTERFACE ati_ft_sensor::ati_ft_sensor)
 target_link_libraries(${PROJECT_NAME} INTERFACE blmc_drivers::blmc_drivers)
 target_link_libraries(${PROJECT_NAME}
                       INTERFACE odri_control_interface::odri_control_interface)
@@ -36,14 +35,9 @@ macro(create_robots_library lib_name)
   # Export the target.
   list(APPEND all_src_targets ${lib_name})
 endmacro()
-create_robots_library(test_bench_8_motors)
 create_robots_library(solo8)
 create_robots_library(solo8ti)
 create_robots_library(solo12)
-create_robots_library(teststand)
-create_robots_library(stuggihop)
-create_robots_library(single_motor)
-create_robots_library(single_leg)
 
 #
 # Build executables like the calibration programs.
@@ -62,7 +56,6 @@ endmacro()
 build_programs(solo8_hardware_calibration solo8)
 build_programs(solo8ti_hardware_calibration solo8ti)
 build_programs(solo12_hardware_calibration solo12)
-build_programs(teststand_hardware_calibration teststand)
 
 #
 # Install and Export the libraries.

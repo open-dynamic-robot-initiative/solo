@@ -8,9 +8,7 @@
 
 #pragma once
 
-#include <blmc_drivers/devices/spi_motor_board.hpp>
 #include <blmc_drivers/serial_reader.hpp>
-#include <blmc_drivers/blmc_joint_module.hpp>
 #include "blmc_robots/common_header.hpp"
 #include <odri_control_interface/robot.hpp>
 #include <odri_control_interface/calibration.hpp>
