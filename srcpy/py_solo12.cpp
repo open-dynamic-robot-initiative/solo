@@ -41,9 +41,8 @@ PYBIND11_MODULE(py_solo12, m)
         .def("send_target_joint_torque",
              &Solo12::send_target_joint_torque,
              py::arg("target_joint_torque"))
-        .def("set_max_current",
-             &Solo12::set_max_current,
-             py::arg("max_current"))
+        .def(
+            "set_max_current", &Solo12::set_max_current, py::arg("max_current"))
         .def("get_motor_board_errors", &Solo12::get_motor_board_errors)
         .def("get_motor_board_enabled", &Solo12::get_motor_board_enabled)
         .def("get_motor_enabled", &Solo12::get_motor_enabled)

@@ -1,8 +1,8 @@
 #include "blmc_robots/solo12.hpp"
 #include <cmath>
+#include <odri_control_interface/common.hpp>
 #include "blmc_robots/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
-#include <odri_control_interface/common.hpp>
 
 namespace blmc_robots
 {
@@ -68,7 +68,7 @@ Solo12::Solo12()
     joint_gear_ratios_.fill(9.0);
 
     // By default assume the estop is inactive.
-    active_estop_= false;
+    active_estop_ = false;
     calibrate_request_ = false;
 
     state_ = Solo12State::initial;
@@ -88,27 +88,31 @@ void Solo12::initialize(const std::string& network_id,
     VectorXi motor_numbers(12);
     motor_numbers << 0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10;
     VectorXb motor_reversed(12);
-    motor_reversed << false, true, true, true, false, false,
-                      false, true, true, true, false, false;
+    motor_reversed << false, true, true, true, false, false, false, true, true,
+        true, false, false;
 
     double lHAA = 0.9;
     double lHFE = 1.45;
     double lKFE = 2.80;
     Eigen::VectorXd joint_lower_limits(12);
-    joint_lower_limits << -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE,
-                          -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE;
+    joint_lower_limits << -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE, -lHAA,
+        -lHFE, -lKFE, -lHAA, -lHFE, -lKFE;
     Eigen::VectorXd joint_upper_limits(12);
-    joint_upper_limits << lHAA, lHFE, lKFE, lHAA, lHFE, lKFE,
-                          lHAA, lHFE, lKFE, lHAA, lHFE, lKFE;
+    joint_upper_limits << lHAA, lHFE, lKFE, lHAA, lHFE, lKFE, lHAA, lHFE, lKFE,
+        lHAA, lHFE, lKFE;
 
     // Define the joint module.
     joints_ = std::make_shared<odri_control_interface::JointModules>(
         main_board_ptr_,
         motor_numbers,
-        motor_torque_constants_(0), joint_gear_ratios_(0), motor_max_current_(0),
+        motor_torque_constants_(0),
+        joint_gear_ratios_(0),
+        motor_max_current_(0),
         motor_reversed,
-        joint_lower_limits, joint_upper_limits, 80., 0.5
-    );
+        joint_lower_limits,
+        joint_upper_limits,
+        80.,
+        0.5);
 
     // Define the IMU.
     VectorXl rotate_vector(3);
@@ -120,27 +124,28 @@ void Solo12::initialize(const std::string& network_id,
 
     // Define the robot.
     robot_ = std::make_shared<odri_control_interface::Robot>(
-        main_board_ptr_, joints_, imu_
-    );
+        main_board_ptr_, joints_, imu_);
 
-    std::vector<odri_control_interface::CalibrationMethod> directions {
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::NEGATIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::NEGATIVE,
-        odri_control_interface::POSITIVE, odri_control_interface::POSITIVE
-    };
+    std::vector<odri_control_interface::CalibrationMethod> directions{
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::NEGATIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::NEGATIVE,
+        odri_control_interface::POSITIVE,
+        odri_control_interface::POSITIVE};
 
-    // Use zero position offsets for now. Gets updated in the calibration method.
+    // Use zero position offsets for now. Gets updated in the calibration
+    // method.
     Eigen::VectorXd position_offsets(12);
     position_offsets.fill(0.);
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        robot_->joints,
-        directions,
-        position_offsets,
-        5., 0.05, 1.0, 0.001
-    );
+        robot_->joints, directions, position_offsets, 5., 0.05, 1.0, 0.001);
 
     // Initialize the robot.
     robot_->Init();
@@ -187,7 +192,8 @@ void Solo12::acquire_sensors()
     // Active the estop if button is pressed or the estop was active before.
     active_estop_ |= slider_positions_vector_[0] == 0;
 
-    if (active_estop_ && estop_counter_++ % 2000 == 0) {
+    if (active_estop_ && estop_counter_++ % 2000 == 0)
+    {
         robot_->ReportError("Soft E-Stop is active.");
     }
 
@@ -210,7 +216,6 @@ void Solo12::acquire_sensors()
         motor_board_errors_[i] = motor_board_errors[i];
         motor_board_enabled_[i] = motor_driver_enabled[i];
     }
-
 
     // motors status
     ConstRefVectorXb motor_enabled = joints->GetEnabled();
@@ -240,7 +245,7 @@ void Solo12::send_target_joint_torque(
             {
                 robot_->SendInit();
             }
-            else if(!robot_->IsReady())
+            else if (!robot_->IsReady())
             {
                 robot_->SendCommand();
             }
