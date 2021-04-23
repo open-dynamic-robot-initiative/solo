@@ -1,4 +1,4 @@
-# Solo {#mainpage}
+# Solo
 
 Low level interface to control the solo robots.
 
