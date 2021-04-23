@@ -1,4 +1,4 @@
-# BLMC-Robots {#mainpage}
+# Solo {#mainpage}
 
 Low level interface to control the solo robots.
 
