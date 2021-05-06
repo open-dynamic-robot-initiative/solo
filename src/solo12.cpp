@@ -112,7 +112,7 @@ void Solo12::initialize(const std::string& network_id,
         joint_lower_limits,
         joint_upper_limits,
         80.,
-        0.5);
+        0.2);
 
     // Define the IMU.
     VectorXl rotate_vector(3);
