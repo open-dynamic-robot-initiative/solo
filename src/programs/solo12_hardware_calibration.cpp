@@ -16,18 +16,26 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
     Solo12& robot = *(static_cast<Solo12*>(robot_void_ptr));
 
-    solo::Vector12d joint_index_to_zero;
-    joint_index_to_zero.fill(0.0);
-    bool good_calibration = robot.calibrate(joint_index_to_zero);
+    // Wait until the robot is ready.
+    robot.wait_until_ready();
 
+    // Calibrate the robot.
+    Vector12d twelve_zeros = Vector12d::Zero();
+    bool good_calibration = robot.calibrate(twelve_zeros);
+
+    // Prints the home-offset angle.
     long int count = 0;
+    real_time_tools::Spinner spinner;
+    spinner.set_period(0.001);
     while (!CTRL_C_DETECTED && good_calibration)
     {
+        robot.acquire_sensors();
         if (count % 200 == 0)
         {
-            robot.acquire_sensors();
-            print_vector("Joint Positions", robot.get_joint_positions());
+            print_vector("Home offset angle [Rad]", -robot.get_joint_positions());
         }
+        robot.send_target_joint_torque(twelve_zeros);
+        spinner.spin();
     }
 
     return THREAD_FUNCTION_RETURN_VALUE;

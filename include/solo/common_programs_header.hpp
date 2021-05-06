@@ -50,7 +50,7 @@ void enable_ctrl_c()
  * @param v_name  is a string defining the data to print.
  * @param v the vector to print.
  */
-void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
+void print_vector(std::string v_name, const Eigen::Ref<const Eigen::VectorXd> v)
 {
     v_name += ": [";
     rt_printf("%s", v_name.c_str());

@@ -61,6 +61,11 @@ public:
     void set_max_current(const double& max_current);
 
     /**
+     * @brief Wait that the robto enters into the ready states.
+     */
+    void wait_until_ready();
+
+    /**
      * @brief send_target_torques sends the target currents to the motors.
      */
     void send_target_joint_torque(
@@ -81,6 +86,16 @@ public:
      * @return false in case of failure.
      */
     bool calibrate(const Vector12d& home_offset_rad);
+
+    /**
+     * @brief Asynchronously request for the calibration.
+     *
+     * @param home_offset_rad This is the angle between the index and the zero
+     * pose.
+     * @return true in case of success.
+     * @return false in case of failure.
+     */
+    bool request_calibration(const Vector12d& home_offset_rad);
 
     /**
      * Joint properties

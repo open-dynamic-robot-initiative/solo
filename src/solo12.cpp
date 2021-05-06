@@ -145,12 +145,10 @@ void Solo12::initialize(const std::string& network_id,
     Eigen::VectorXd position_offsets(12);
     position_offsets.fill(0.);
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        robot_->joints, directions, position_offsets, 5., 0.05, 1.0, 0.001);
+        robot_->joints, directions, position_offsets, 5., 0.05, 3.0, 0.001);
 
     // Initialize the robot.
     robot_->Init();
-
-    rt_printf("All motors and boards are ready.\n");
 }
 
 void Solo12::acquire_sensors()
@@ -258,6 +256,7 @@ void Solo12::send_target_joint_torque(
         case Solo12State::ready:
             if (calibrate_request_)
             {
+                printf("Solo12::Change to calibration state\n");
                 calibrate_request_ = false;
                 state_ = Solo12State::calibrate;
                 _is_calibrating = true;
@@ -267,23 +266,64 @@ void Solo12::send_target_joint_torque(
             break;
 
         case Solo12State::calibrate:
+            printf("Solo12::Calibrating...\n");
             if (calib_ctrl_->Run())
             {
                 state_ = Solo12State::ready;
                 _is_calibrating = false;
+                printf("Solo12::Calibrating... Done\n");
             }
             robot_->SendCommand();
             break;
     }
 }
 
-bool Solo12::calibrate(const Vector12d& home_offset_rad)
+void Solo12::wait_until_ready()
 {
-    printf("Solo12::calibrate called\n");
+    Vector12d twelve_zeros = Vector12d::Zero();
+    real_time_tools::Spinner spinner;
+    spinner.set_period(0.001);
+    static long int count_wait_until_ready = 0;
+    while(state_ != Solo12State::ready)
+    {
+        send_target_joint_torque(twelve_zeros);
+        if (count_wait_until_ready % 200 == 0)
+        {
+            printf("Solo12::wait_until_ready Getting ready\n");
+        }
+        spinner.spin();
+        count_wait_until_ready++;
+    }
+}
+
+bool Solo12::request_calibration(const Vector12d& home_offset_rad)
+{
+    printf("Solo12::request_calibration called\n");
     Eigen::VectorXd hor = home_offset_rad;
     calib_ctrl_->UpdatePositionOffsets(hor);
     calibrate_request_ = true;
+    return true;
+}
 
+bool Solo12::calibrate(const Vector12d& home_offset_rad)
+{
+    printf("Solo12::calibrate called\n");
+    Vector12d twelve_zeros = Vector12d::Zero();
+    request_calibration(home_offset_rad);
+
+    real_time_tools::Spinner spinner;
+    spinner.set_period(0.001);
+    static long int count = 0;
+    while(calibrate_request_ || _is_calibrating)
+    {
+        if (count % 200 == 0)
+        {
+            printf("Solo12::calibrate while loop\n");
+        }
+        send_target_joint_torque(twelve_zeros);
+        spinner.spin();
+        ++count;
+    }
     return true;
 }
 
