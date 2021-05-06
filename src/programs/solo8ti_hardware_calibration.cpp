@@ -7,16 +7,16 @@
  * This file uses the Solo8 class in a small demo.
  */
 
-#include "blmc_robots/common_programs_header.hpp"
-#include "blmc_robots/solo8ti.hpp"
+#include "solo/common_programs_header.hpp"
+#include "solo/solo8ti.hpp"
 
-using namespace blmc_robots;
+using namespace solo;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
     Solo8TI& robot = *(static_cast<Solo8TI*>(robot_void_ptr));
 
-    blmc_robots::Vector8d joint_index_to_zero;
+    solo::Vector8d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
     robot.calibrate(joint_index_to_zero);
 

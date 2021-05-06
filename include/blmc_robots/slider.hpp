@@ -12,9 +12,9 @@
 #include <math.h>
 #include <Eigen/Eigen>
 #include <blmc_drivers/devices/analog_sensor.hpp>
-#include <blmc_robots/common_header.hpp>
+#include <solo/common_header.hpp>
 
-namespace blmc_robots
+namespace solo
 {
 class Slider
 {
@@ -110,4 +110,4 @@ private:
     }
 };
 
-}  // namespace blmc_robots
+}  // namespace solo

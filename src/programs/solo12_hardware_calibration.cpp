@@ -7,16 +7,16 @@
  * This file uses the Solo12 class in a small demo.
  */
 
-#include "blmc_robots/common_programs_header.hpp"
-#include "blmc_robots/solo12.hpp"
+#include "solo/common_programs_header.hpp"
+#include "solo/solo12.hpp"
 
-using namespace blmc_robots;
+using namespace solo;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
     Solo12& robot = *(static_cast<Solo12*>(robot_void_ptr));
 
-    blmc_robots::Vector12d joint_index_to_zero;
+    solo::Vector12d joint_index_to_zero;
     joint_index_to_zero.fill(0.0);
     bool good_calibration = robot.calibrate(joint_index_to_zero);
 

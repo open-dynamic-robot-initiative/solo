@@ -1,10 +1,10 @@
-#include "blmc_robots/solo12.hpp"
+#include "solo/solo12.hpp"
 #include <cmath>
 #include <odri_control_interface/common.hpp>
-#include "blmc_robots/common_programs_header.hpp"
+#include "solo/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 const double Solo12::max_joint_torque_security_margin_ = 0.99;
 
@@ -287,4 +287,4 @@ bool Solo12::calibrate(const Vector12d& home_offset_rad)
     return true;
 }
 
-}  // namespace blmc_robots
+}  // namespace solo

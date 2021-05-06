@@ -11,9 +11,9 @@
 #include <blmc_drivers/serial_reader.hpp>
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
-#include "blmc_robots/common_header.hpp"
+#include "solo/common_header.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 enum Solo12State
 {
@@ -500,4 +500,4 @@ private:
     bool _is_calibrating;
 };
 
-}  // namespace blmc_robots
+}  // namespace solo

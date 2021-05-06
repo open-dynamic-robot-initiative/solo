@@ -9,7 +9,7 @@
 #
 cmake_minimum_required(VERSION 3.10.2)
 
-project(blmc_robots)
+project(solo)
 
 # Using C++17
 if(NOT CMAKE_C_STANDARD)

@@ -19,10 +19,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-#include <blmc_robots/solo12.hpp>
+#include <solo/solo12.hpp>
 
 namespace py = pybind11;
-using namespace blmc_robots;
+using namespace solo;
 
 PYBIND11_MODULE(py_solo12, m)
 {

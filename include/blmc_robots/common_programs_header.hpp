@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "blmc_robots/common_header.hpp"
+#include "solo/common_header.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 /**
  * @brief This boolean is here to kill cleanly the application upon ctrl+c
@@ -61,4 +61,4 @@ void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
     rt_printf("]\n");
 }
 
-}  // namespace blmc_robots
+}  // namespace solo

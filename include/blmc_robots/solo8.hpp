@@ -9,11 +9,11 @@
 #pragma once
 
 #include <blmc_drivers/serial_reader.hpp>
-#include <blmc_robots/common_header.hpp>
-#include <blmc_robots/slider.hpp>
-#include <blmc_robots/spi_joint_module.hpp>
+#include <solo/common_header.hpp>
+#include <solo/slider.hpp>
+#include <solo/spi_joint_module.hpp>
 
-namespace blmc_robots
+namespace solo
 {
 class Solo8
 {
@@ -344,7 +344,7 @@ private:
      * @brief joint_modules_ Used to communicate to the master board motor
      * drivers and motors.
      */
-    std::shared_ptr<blmc_robots::SpiJointModules<8> > joints_;
+    std::shared_ptr<solo::SpiJointModules<8> > joints_;
 
     /**
      * @brief motors_ are the objects allowing us to send motor commands and
@@ -372,4 +372,4 @@ private:
     bool active_estop_;
 };
 
-}  // namespace blmc_robots
+}  // namespace solo

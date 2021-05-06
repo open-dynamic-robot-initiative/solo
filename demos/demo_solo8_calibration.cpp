@@ -9,17 +9,17 @@
  *
  */
 
-#include "blmc_robots/solo8.hpp"
+#include "solo/solo8.hpp"
 #include "common_demo_header.hpp"
 
-using namespace blmc_robots;
+using namespace solo;
 typedef ThreadCalibrationData<Solo8> ThreadCalibrationData_t;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
     ThreadCalibrationData_t* thread_data_ptr =
         (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
-    blmc_robots::Vector8d joint_index_to_zero =
+    solo::Vector8d joint_index_to_zero =
         thread_data_ptr->joint_index_to_zero;
     thread_data_ptr->robot->calibrate(joint_index_to_zero);
 

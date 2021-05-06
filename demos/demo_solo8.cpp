@@ -8,10 +8,10 @@
  */
 
 #include <numeric>
-#include "blmc_robots/common_programs_header.hpp"
-#include "blmc_robots/solo8.hpp"
+#include "solo/common_programs_header.hpp"
+#include "solo/solo8.hpp"
 
-using namespace blmc_robots;
+using namespace solo;
 
 static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 {
