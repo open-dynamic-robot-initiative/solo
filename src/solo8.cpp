@@ -175,7 +175,7 @@ void Solo8::send_target_joint_torque(
     joints_->send_torques();
 }
 
-bool Solo8::calibrate(const Vector8d& home_offset_rad)
+bool Solo8::calibrate(const Vector8d& /*home_offset_rad*/)
 {
     /** @TODO: Implement calibration procedure. */
     return true;
