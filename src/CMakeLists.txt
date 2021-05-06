@@ -1,4 +1,5 @@
 set(all_src_targets)
+set(all_exe_targets)
 
 #
 # Declare the project library.
@@ -52,10 +53,45 @@ macro(build_programs program_name robot_name)
   target_link_libraries(${program_name} ${robot_name})
   # Export the target.
   list(APPEND all_src_targets ${program_name})
+  list(APPEND all_exe_targets ${program_name})
 endmacro()
 build_programs(solo8_hardware_calibration solo8)
 build_programs(solo8ti_hardware_calibration solo8ti)
 build_programs(solo12_hardware_calibration solo12)
+
+#
+# Optionally build the DynamiGraphManager main programs.
+#
+if(${dynamic_graph_manager_FOUND})
+  message(STATUS "Build the dynamic_graph_manager main programs.")
+  macro(build_dgm_programs robot_name)
+    add_executable(dg_main_${robot_name}
+      dynamic_graph_manager/dgm_${robot_name}.cpp
+      dynamic_graph_manager/dg_main_${robot_name}.cpp
+    )
+    # Add the include dependencies.
+    target_include_directories(
+      dg_main_${robot_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                            $<INSTALL_INTERFACE:include>)
+    # Link the dependencies.
+    target_link_libraries(dg_main_${robot_name}
+      ${robot_name} dynamic_graph_manager::dynamic_graph_manager)
+    # Get the yaml configuration for the DGM.
+    string(
+    CONCAT dgm_yaml_path
+         "${PythonModules_robot_properties_solo_PATH}/"
+         "robot_properties_solo/robot_properties_solo/dynamic_graph_manager/"
+         "dgm_parameters_" ${robot_name} ".yaml")
+    target_compile_definitions(dg_main_${robot_name}
+      PUBLIC ROBOT_PROPERTIES_YAML_PATH="${dgm_yaml_path}")
+    # Export the target.
+    list(APPEND all_src_targets dg_main_${robot_name})
+    list(APPEND all_exe_targets dg_main_${robot_name})
+  endmacro()
+  build_dgm_programs(solo8)
+  build_dgm_programs(solo8ti)
+  build_dgm_programs(solo12)
+endif(${dynamic_graph_manager_FOUND})
 
 #
 # Install and Export the libraries.

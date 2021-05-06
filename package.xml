@@ -34,6 +34,7 @@
     <depend>pybind11</depend>
     <depend>yaml_utils</depend>
     <depend>Eigen3</depend>
+    <depend>dynamic_graph_manager</depend>
 
     <!-- Python dependencies. -->
     <depend>robot_properties_solo</depend>

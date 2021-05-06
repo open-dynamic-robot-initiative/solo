@@ -38,6 +38,8 @@ find_package(Eigen3 REQUIRED)
 # Find resources from robot_properties packages.
 find_package(PythonModules COMPONENTS robot_properties_solo)
 
+find_package(dynamic_graph_manager QUIET)
+
 # export de dependencies
 ament_export_dependencies(
   ament_cmake
@@ -49,7 +51,8 @@ ament_export_dependencies(
   real_time_tools
   pybind11
   yaml_utils
-  Eigen3)
+  Eigen3
+  dynamic_graph_manager)
 
 # prepare the final export
 ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
