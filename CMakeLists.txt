@@ -75,7 +75,17 @@ add_subdirectory(srcpy)
 #
 # Install the package
 #
+
+# Install the include files
 install(DIRECTORY include/ DESTINATION include)
+
+# Install python files.
+get_python_install_dir(python_install_dir)
+install(
+  DIRECTORY python/${PROJECT_NAME}
+  DESTINATION "${python_install_dir}"
+  PATTERN "*.pyc" EXCLUDE
+  PATTERN "__pycache__" EXCLUDE)
 
 #
 # Building documentation.

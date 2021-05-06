@@ -104,3 +104,18 @@ install(
   RUNTIME DESTINATION lib/${PROJECT_NAME}
   INCLUDES
   DESTINATION include)
+
+foreach(target ${all_exe_targets})
+  # install a symlink of the executable in lib/bolt
+  string(
+    CONCAT symlink_command
+           "execute_process("
+           "  COMMAND ${CMAKE_COMMAND} -E make_directory "
+           "  ${CMAKE_INSTALL_PREFIX}/bin/)\n"
+           "execute_process("
+           "  COMMAND ${CMAKE_COMMAND} -E create_symlink "
+           "  ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${target}"
+           "  ${CMAKE_INSTALL_PREFIX}/bin/${target} )"
+  )
+  install(CODE ${symlink_command})
+endforeach()
