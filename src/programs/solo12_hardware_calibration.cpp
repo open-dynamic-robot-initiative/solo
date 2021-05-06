@@ -20,14 +20,23 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     joint_index_to_zero.fill(0.0);
     bool good_calibration = robot.calibrate(joint_index_to_zero);
 
+    Vector12d zero_torque;
+    zero_torque.setZero();
+
     long int count = 0;
     while (!CTRL_C_DETECTED && good_calibration)
     {
-        if (count % 200 == 0)
+        robot.acquire_sensors();
+
+        if (count++ % 1000 == 0)
         {
-            robot.acquire_sensors();
             print_vector("Joint Positions", robot.get_joint_positions());
         }
+
+        // Send the current to the motor
+        robot.send_target_joint_torque(zero_torque);
+
+        real_time_tools::Timer::sleep_sec(0.001);
     }
 
     return THREAD_FUNCTION_RETURN_VALUE;
