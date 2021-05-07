@@ -256,7 +256,6 @@ void Solo12::send_target_joint_torque(
         case Solo12State::ready:
             if (calibrate_request_)
             {
-                printf("Solo12::Change to calibration state\n");
                 calibrate_request_ = false;
                 state_ = Solo12State::calibrate;
                 _is_calibrating = true;
@@ -266,12 +265,10 @@ void Solo12::send_target_joint_torque(
             break;
 
         case Solo12State::calibrate:
-            printf("Solo12::Calibrating...\n");
             if (calib_ctrl_->Run())
             {
                 state_ = Solo12State::ready;
                 _is_calibrating = false;
-                printf("Solo12::Calibrating... Done\n");
             }
             robot_->SendCommand();
             break;
@@ -280,13 +277,11 @@ void Solo12::send_target_joint_torque(
 
 void Solo12::wait_until_ready()
 {
-    Vector12d twelve_zeros = Vector12d::Zero();
     real_time_tools::Spinner spinner;
     spinner.set_period(0.001);
     static long int count_wait_until_ready = 0;
     while(state_ != Solo12State::ready)
     {
-        send_target_joint_torque(twelve_zeros);
         if (count_wait_until_ready % 200 == 0)
         {
             printf("Solo12::wait_until_ready Getting ready\n");
@@ -294,6 +289,11 @@ void Solo12::wait_until_ready()
         spinner.spin();
         count_wait_until_ready++;
     }
+}
+
+bool Solo12::is_ready()
+{
+    return state_ != Solo12State::ready;
 }
 
 bool Solo12::request_calibration(const Vector12d& home_offset_rad)

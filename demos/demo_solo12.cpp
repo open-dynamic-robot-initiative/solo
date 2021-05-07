@@ -76,7 +76,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
     solo::Vector12d joint_index_to_zero =
         thread_data_ptr->joint_index_to_zero;
 
-    thread_data_ptr->robot->calibrate(joint_index_to_zero);
+    thread_data_ptr->robot->request_calibration(joint_index_to_zero);
 
     // Run the main program.
     size_t count = 0;

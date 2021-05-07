@@ -61,9 +61,14 @@ public:
     void set_max_current(const double& max_current);
 
     /**
-     * @brief Wait that the robto enters into the ready states.
+     * @brief Wait that the robot enters into the ready states.
      */
     void wait_until_ready();
+
+    /**
+     * @brief Check if the robot is ready.
+     */
+    bool is_ready();
 
     /**
      * @brief send_target_torques sends the target currents to the motors.
