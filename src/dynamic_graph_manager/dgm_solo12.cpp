@@ -187,7 +187,7 @@ void DGMSolo12::calibrate_joint_position_callback(
 void DGMSolo12::calibrate_joint_position(
     const solo::Vector12d& zero_to_index_angle)
 {
-    solo_.calibrate(zero_to_index_angle);
+    solo_.request_calibration(zero_to_index_angle);
 }
 
 }  // namespace solo

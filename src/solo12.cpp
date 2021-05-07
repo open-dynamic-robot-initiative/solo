@@ -305,26 +305,4 @@ bool Solo12::request_calibration(const Vector12d& home_offset_rad)
     return true;
 }
 
-bool Solo12::calibrate(const Vector12d& home_offset_rad)
-{
-    printf("Solo12::calibrate called\n");
-    Vector12d twelve_zeros = Vector12d::Zero();
-    request_calibration(home_offset_rad);
-
-    real_time_tools::Spinner spinner;
-    spinner.set_period(0.001);
-    static long int count = 0;
-    while(calibrate_request_ || _is_calibrating)
-    {
-        if (count % 200 == 0)
-        {
-            printf("Solo12::calibrate while loop\n");
-        }
-        send_target_joint_torque(twelve_zeros);
-        spinner.spin();
-        ++count;
-    }
-    return true;
-}
-
 }  // namespace solo

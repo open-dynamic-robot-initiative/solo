@@ -83,16 +83,6 @@ public:
     void acquire_sensors();
 
     /**
-     * @brief Calibrate the joints by moving to the next joint index position.
-     *
-     * @param home_offset_rad This is the angle between the index and the zero
-     * pose.
-     * @return true in case of success.
-     * @return false in case of failure.
-     */
-    bool calibrate(const Vector12d& home_offset_rad);
-
-    /**
      * @brief Asynchronously request for the calibration.
      *
      * @param home_offset_rad This is the angle between the index and the zero
