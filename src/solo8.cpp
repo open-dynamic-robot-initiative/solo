@@ -1,8 +1,8 @@
-#include "blmc_robots/solo8.hpp"
+#include "solo/solo8.hpp"
 #include <cmath>
-#include "blmc_robots/common_programs_header.hpp"
+#include "solo/common_programs_header.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 const double Solo8::max_joint_torque_security_margin_ = 0.99;
 
@@ -77,7 +77,7 @@ void Solo8::initialize(const std::string& network_id)
     std::array<bool, 8> reverse_polarities = {
         true, true, false, false, true, true, false, false};
 
-    joints_ = std::make_shared<blmc_robots::SpiJointModules<8> >(
+    joints_ = std::make_shared<solo::SpiJointModules<8> >(
         main_board_ptr_,
         map_joint_id_to_motor_board_id_,
         map_joint_id_to_motor_port_id_,
@@ -175,10 +175,10 @@ void Solo8::send_target_joint_torque(
     joints_->send_torques();
 }
 
-bool Solo8::calibrate(const Vector8d& home_offset_rad)
+bool Solo8::calibrate(const Vector8d& /*home_offset_rad*/)
 {
     /** @TODO: Implement calibration procedure. */
     return true;
 }
 
-}  // namespace blmc_robots
+}  // namespace solo

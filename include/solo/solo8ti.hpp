@@ -8,10 +8,10 @@
 #pragma once
 
 #include <blmc_drivers/blmc_joint_module.hpp>
-#include <blmc_robots/common_header.hpp>
-#include <blmc_robots/slider.hpp>
+#include <solo/common_header.hpp>
+#include <solo/slider.hpp>
 
-namespace blmc_robots
+namespace solo
 {
 class Solo8TI
 {
@@ -361,4 +361,4 @@ private:
     std::array<ContactSensor_ptr, 4> contact_sensors_;
 };
 
-}  // namespace blmc_robots
+}  // namespace solo

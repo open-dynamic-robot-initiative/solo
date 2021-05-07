@@ -17,14 +17,14 @@
 #include <stdexcept>
 
 #include "blmc_drivers/devices/motor.hpp"
-#include "blmc_robots/common_header.hpp"
+#include "solo/common_header.hpp"
 
 #include "master_board_sdk/defines.h"
 #include "master_board_sdk/master_board_interface.h"
 
 #include <stdexcept>
 
-namespace blmc_robots
+namespace solo
 {
 /**
  * @brief This class defines an interface to a collection of BLMC joints. It
@@ -181,7 +181,7 @@ public:
         // Vector desired_current;
         // desired_current.setZero();
 
-        for (int i = 0; i < motors_.size(); i++)
+        for (std::size_t i = 0; i < motors_.size(); i++)
         {
             motors_[i]->SetCurrentReference(desired_current(i));
         }
@@ -320,4 +320,4 @@ private:
     std::shared_ptr<MasterBoardInterface> robot_if_;
 };
 
-}  // namespace blmc_robots
+}  // namespace solo

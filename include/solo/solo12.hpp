@@ -11,9 +11,9 @@
 #include <blmc_drivers/serial_reader.hpp>
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
-#include "blmc_robots/common_header.hpp"
+#include "solo/common_header.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 enum Solo12State
 {
@@ -61,6 +61,16 @@ public:
     void set_max_current(const double& max_current);
 
     /**
+     * @brief Wait that the robot enters into the ready states.
+     */
+    void wait_until_ready();
+
+    /**
+     * @brief Check if the robot is ready.
+     */
+    bool is_ready();
+
+    /**
      * @brief send_target_torques sends the target currents to the motors.
      */
     void send_target_joint_torque(
@@ -73,14 +83,14 @@ public:
     void acquire_sensors();
 
     /**
-     * @brief Calibrate the joints by moving to the next joint index position.
+     * @brief Asynchronously request for the calibration.
      *
      * @param home_offset_rad This is the angle between the index and the zero
      * pose.
      * @return true in case of success.
      * @return false in case of failure.
      */
-    bool calibrate(const Vector12d& home_offset_rad);
+    bool request_calibration(const Vector12d& home_offset_rad);
 
     /**
      * Joint properties
@@ -500,4 +510,4 @@ private:
     bool _is_calibrating;
 };
 
-}  // namespace blmc_robots
+}  // namespace solo

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "blmc_robots/common_header.hpp"
+#include "solo/common_header.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 /**
  * @brief This boolean is here to kill cleanly the application upon ctrl+c
@@ -50,7 +50,7 @@ void enable_ctrl_c()
  * @param v_name  is a string defining the data to print.
  * @param v the vector to print.
  */
-void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
+void print_vector(std::string v_name, const Eigen::Ref<const Eigen::VectorXd> v)
 {
     v_name += ": [";
     rt_printf("%s", v_name.c_str());
@@ -61,4 +61,4 @@ void print_vector(std::string v_name, Eigen::Ref<Eigen::VectorXd> v)
     rt_printf("]\n");
 }
 
-}  // namespace blmc_robots
+}  // namespace solo

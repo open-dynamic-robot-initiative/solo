@@ -8,11 +8,11 @@
  */
 
 #include <numeric>
-#include "blmc_robots/common_programs_header.hpp"
-#include "blmc_robots/solo12.hpp"
+#include "solo/common_programs_header.hpp"
+#include "solo/solo12.hpp"
 #include "common_demo_header.hpp"
 
-using namespace blmc_robots;
+using namespace solo;
 typedef ThreadCalibrationData<Solo12> ThreadCalibrationData_t;
 
 void map_sliders(Eigen::Ref<Eigen::Vector4d> sliders,
@@ -73,10 +73,10 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
     rt_printf("start calibration \n");
 
     // Calibrate the robot.
-    blmc_robots::Vector12d joint_index_to_zero =
+    solo::Vector12d joint_index_to_zero =
         thread_data_ptr->joint_index_to_zero;
 
-    thread_data_ptr->robot->calibrate(joint_index_to_zero);
+    thread_data_ptr->robot->request_calibration(joint_index_to_zero);
 
     // Run the main program.
     size_t count = 0;
@@ -129,7 +129,7 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
         // print -----------------------------------------------------------
         if ((count % 1000) == 0)
         {
-            blmc_robots::Vector12d current_index_to_zero =
+            solo::Vector12d current_index_to_zero =
                 joint_index_to_zero - robot->get_joint_positions();
 
             // printf("\33[H\33[2J");  // clear screen

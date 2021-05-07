@@ -30,7 +30,7 @@
 #include <blmc_drivers/devices/analog_sensor.hpp>
 #include <blmc_drivers/devices/motor.hpp>
 
-namespace blmc_robots
+namespace solo
 {
 /**
  * @brief Vector2d shortcut for the eigen vector of size 1.
@@ -104,4 +104,4 @@ typedef std::shared_ptr<blmc_drivers::AnalogSensor> HeightSensor_ptr;
  */
 typedef blmc_drivers::MotorInterface::MeasurementIndex mi;
 
-}  // namespace blmc_robots
+}  // namespace solo

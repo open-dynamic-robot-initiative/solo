@@ -15,9 +15,9 @@
 #include <sstream>  // std::stringstream, std::stringbuf
 
 #include "blmc_drivers/serial_reader.hpp"
-#include "blmc_robots/common_programs_header.hpp"
+#include "solo/common_programs_header.hpp"
 
-using namespace blmc_robots;
+using namespace solo;
 
 /**
  * @brief This example demonstrates configuring a serial stream and

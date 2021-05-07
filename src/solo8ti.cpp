@@ -1,7 +1,7 @@
-#include "blmc_robots/solo8ti.hpp"
+#include "solo/solo8ti.hpp"
 #include <cmath>
 
-namespace blmc_robots
+namespace solo
 {
 const double Solo8TI::max_joint_torque_security_margin_ = 0.99;
 
@@ -143,7 +143,7 @@ void Solo8TI::initialize()
     joints_.set_joint_polarities(reverse_polarities_);
 
     // The the control gains in order to perform the calibration
-    blmc_robots::Vector8d kp, kd;
+    solo::Vector8d kp, kd;
     kp.fill(3.0);
     kd.fill(0.05);
     joints_.set_position_control_gains(kp, kd);
@@ -255,4 +255,4 @@ bool Solo8TI::calibrate(const Vector8d& home_offset_rad)
     return true;
 }
 
-}  // namespace blmc_robots
+}  // namespace solo

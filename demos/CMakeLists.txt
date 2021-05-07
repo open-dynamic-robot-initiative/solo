@@ -19,21 +19,21 @@ macro(create_demo demo_name)
   endif()
 
   # Check if the given config exists. Otherwise do not compile.
-  add_executable(demo_${demo_name} demo_${demo_name}.cpp common_demo_header.hpp)
+  add_executable(solo_demo_${demo_name} demo_${demo_name}.cpp common_demo_header.hpp)
   # Add the include dependencies.
   target_include_directories(
-    demo_${demo_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    solo_demo_${demo_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                              $<INSTALL_INTERFACE:include>)
   # Link the dependecies to it.
-  target_link_libraries(demo_${demo_name} ${robot_name} ${PROJECT_NAME})
+  target_link_libraries(solo_demo_${demo_name} ${robot_name} ${PROJECT_NAME})
 
   # Export targets
-  list(APPEND all_demo_targets demo_${demo_name})
+  list(APPEND all_demo_targets solo_demo_${demo_name})
 
   if(yaml_path)
     if(EXISTS ${yaml_path})
       target_compile_definitions(
-        demo_${demo_name} PUBLIC ROBOT_PROPERTIES_YAML_PATH="${yaml_path}")
+        solo_demo_${demo_name} PUBLIC ROBOT_PROPERTIES_YAML_PATH="${yaml_path}")
     else()
       message(FATAL_ERROR "The yaml path ${yaml_path} is invalid!")
     endif()
@@ -68,3 +68,18 @@ install(
   RUNTIME DESTINATION lib/${PROJECT_NAME}
   INCLUDES
   DESTINATION include)
+
+foreach(target ${all_demo_targets})
+  # install a symlink of the executable in lib/bolt
+  string(
+    CONCAT symlink_command
+           "execute_process("
+           "  COMMAND ${CMAKE_COMMAND} -E make_directory "
+           "  ${CMAKE_INSTALL_PREFIX}/bin/)\n"
+           "execute_process("
+           "  COMMAND ${CMAKE_COMMAND} -E create_symlink "
+           "  ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${target}"
+           "  ${CMAKE_INSTALL_PREFIX}/bin/${target} )"
+  )
+  install(CODE ${symlink_command})
+endforeach()

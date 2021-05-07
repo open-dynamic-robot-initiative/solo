@@ -1,10 +1,10 @@
-#include "blmc_robots/solo12.hpp"
+#include "solo/solo12.hpp"
 #include <cmath>
 #include <odri_control_interface/common.hpp>
-#include "blmc_robots/common_programs_header.hpp"
+#include "solo/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 const double Solo12::max_joint_torque_security_margin_ = 0.99;
 
@@ -112,7 +112,7 @@ void Solo12::initialize(const std::string& network_id,
         joint_lower_limits,
         joint_upper_limits,
         80.,
-        0.5);
+        0.2);
 
     // Define the IMU.
     VectorXl rotate_vector(3);
@@ -145,12 +145,10 @@ void Solo12::initialize(const std::string& network_id,
     Eigen::VectorXd position_offsets(12);
     position_offsets.fill(0.);
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        robot_->joints, directions, position_offsets, 5., 0.05, 1.0, 0.001);
+        robot_->joints, directions, position_offsets, 5., 0.05, 3.0, 0.001);
 
     // Initialize the robot.
     robot_->Init();
-
-    rt_printf("All motors and boards are ready.\n");
 }
 
 void Solo12::acquire_sensors()
@@ -277,14 +275,34 @@ void Solo12::send_target_joint_torque(
     }
 }
 
-bool Solo12::calibrate(const Vector12d& home_offset_rad)
+void Solo12::wait_until_ready()
 {
-    printf("Solo12::calibrate called\n");
+    real_time_tools::Spinner spinner;
+    spinner.set_period(0.001);
+    static long int count_wait_until_ready = 0;
+    while(state_ != Solo12State::ready)
+    {
+        if (count_wait_until_ready % 200 == 0)
+        {
+            printf("Solo12::wait_until_ready Getting ready\n");
+        }
+        spinner.spin();
+        count_wait_until_ready++;
+    }
+}
+
+bool Solo12::is_ready()
+{
+    return state_ != Solo12State::ready;
+}
+
+bool Solo12::request_calibration(const Vector12d& home_offset_rad)
+{
+    printf("Solo12::request_calibration called\n");
     Eigen::VectorXd hor = home_offset_rad;
     calib_ctrl_->UpdatePositionOffsets(hor);
     calibrate_request_ = true;
-
     return true;
 }
 
-}  // namespace blmc_robots
+}  // namespace solo

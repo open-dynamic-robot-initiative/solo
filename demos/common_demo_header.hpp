@@ -9,9 +9,9 @@
  *
  */
 
-#include "blmc_robots/common_programs_header.hpp"
+#include "solo/common_programs_header.hpp"
 
-namespace blmc_robots
+namespace solo
 {
 /**
  * @brief This small structure is used for reading the calibration parameters
@@ -41,4 +41,4 @@ struct ThreadCalibrationData
     }
 };
 
-}  // namespace blmc_robots
+}  // namespace solo
