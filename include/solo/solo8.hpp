@@ -11,10 +11,18 @@
 #include <blmc_drivers/serial_reader.hpp>
 #include <solo/common_header.hpp>
 #include <solo/slider.hpp>
-#include <solo/spi_joint_module.hpp>
+#include <odri_control_interface/calibration.hpp>
+#include <odri_control_interface/robot.hpp>
 
 namespace solo
 {
+enum Solo8State
+{
+    initial,
+    ready,
+    calibrate
+};
+
 class Solo8
 {
 public:
@@ -42,14 +50,14 @@ public:
     void acquire_sensors();
 
     /**
-     * @brief Calibrate the joints by moving to the next joint index position.
+     * @brief Asynchrounous calibrate the joints by moving to the next joint index position.
      *
      * @param home_offset_rad This is the angle between the index and the zero
      * pose.
      * @return true
      * @return false
      */
-    bool calibrate(const Vector8d& home_offset_rad);
+    bool request_calibration(const Vector8d& home_offset_rad);
 
     /**
      * Joint properties
@@ -312,16 +320,14 @@ private:
      */
     Eigen::Vector4d contact_sensors_states_;
 
-    /** @brief Map the joint id to the motor board id, @see Solo8 description.
-     */
-    std::array<int, 8> map_joint_id_to_motor_board_id_;
-
-    /** @brief Map the joint id to the motor port id, @see Solo8 description. */
-    std::array<int, 8> map_joint_id_to_motor_port_id_;
-
     /**
      * Drivers communication objects
      */
+
+    /**
+     * @brief Reader for serial port to read arduino slider values.
+     */
+    std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
 
     /**
      * @brief Main board drivers.
@@ -331,9 +337,20 @@ private:
     std::shared_ptr<MasterBoardInterface> main_board_ptr_;
 
     /**
-     * @brief Reader for serial port to read arduino slider values.
+     * @brief The odri robot abstraction.
      */
-    std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
+    std::shared_ptr<odri_control_interface::Robot> robot_;
+
+    /**
+     * @brief Collection of Joints for solo12.
+     */
+    std::shared_ptr<odri_control_interface::JointModules> joints_;
+
+    /** @brief Controller to run the calibration procedure */
+    std::shared_ptr<odri_control_interface::JointCalibrator> calib_ctrl_;
+
+    /** @brief Indicator if calibration should start. */
+    bool calibrate_request_;
 
     /**
      * @brief For reading the raw slider values from the serial port.
@@ -341,35 +358,39 @@ private:
     std::vector<int> slider_positions_vector_;
 
     /**
-     * @brief joint_modules_ Used to communicate to the master board motor
-     * drivers and motors.
-     */
-    std::shared_ptr<solo::SpiJointModules<8> > joints_;
-
-    /**
-     * @brief motors_ are the objects allowing us to send motor commands and
-     * receive data.
-     */
-    std::array<MotorInterface_ptr, 8> motors_;
-
-    /**
-     * @brief Address the rotation direction of the motor.
-     */
-    std::array<bool, 8> reverse_polarities_;
-
-    /**
-     * @brief sliders_ these are analogue input from linear potentiometers.
-     */
-    std::array<Slider_ptr, 4> sliders_;
-
-    /**
      * @brief contact_sensors_ is the contact sensors at each foot tips. They
      * also are analogue inputs.
      */
     std::array<ContactSensor_ptr, 4> contact_sensors_;
 
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_accelerometer_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_gyroscope_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_attitude_;
+
+    /** @brief base accelerometer. */
+    Eigen::Vector3d imu_linear_acceleration_;
+
+    /** @brief base attitude quaternion. */
+    Eigen::Vector4d imu_attitude_quaternion_;
+
+    /**
+     * @brief Robot Imu drivers.
+     */
+    std::shared_ptr<odri_control_interface::IMU> imu_;
+
     /** @brief If the physical estop is pressed or not. */
     bool active_estop_;
+
+    /** @brief If the joint calibration is active or not. */
+    bool _is_calibrating;
+
+    /** @brief State of the solo robot. */
+    Solo8State state_;
 };
 
 }  // namespace solo
