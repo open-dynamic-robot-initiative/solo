@@ -85,6 +85,9 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
     def base_signals(self):
         return self.signal_base_pos_.sout, self.signal_base_vel_.sout
 
+    def base_vel_world_signal(self):
+        return self.signal_base_vel_world_.sout
+
     def _sim2signal(self):
         """Reads the state from the simulator and fills
         the corresponding signals."""
@@ -113,6 +116,8 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
                 self.robot_bullet.get_slider_position("d"),
             ]
         )
+        device.imu_gyroscope.value = dq[3:6]
+        device.imu_accelerometer.value = self.robot_bullet.get_base_imu_linacc()
 
     def run(self, steps=1, sleep=False):
         """ Get input from Device, Step the simulation, feed the Device. """
