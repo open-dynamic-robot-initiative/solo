@@ -82,6 +82,10 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
             self.config.robot_name, self.device
         )
 
+        self.add_trace("bullet_quadruped_base_pos", "sout")
+        self.add_trace("bullet_quadruped_base_vel", "sout")
+        self.add_trace("bullet_quadruped_base_vel_world", "sout")
+
     def base_signals(self):
         return self.signal_base_pos_.sout, self.signal_base_vel_.sout
 
