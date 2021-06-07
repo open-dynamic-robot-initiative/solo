@@ -10,12 +10,18 @@
 #include <numeric>
 #include "solo/common_programs_header.hpp"
 #include "solo/solo8.hpp"
+#include "common_demo_header.hpp"
 
 using namespace solo;
 
-static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
+typedef ThreadCalibrationData<Solo8> ThreadCalibrationData_t;
+
+static THREAD_FUNCTION_RETURN_TYPE control_loop(void* thread_data_void_ptr)
 {
-    Solo8& robot = *(static_cast<Solo8*>(robot_void_ptr));
+    ThreadCalibrationData_t* thread_data_ptr =
+        (static_cast<ThreadCalibrationData_t*>(thread_data_void_ptr));
+
+    std::shared_ptr<Solo8> robot = thread_data_ptr->robot;
 
     double kp = 3.0;
     double kd = 0.05;
@@ -28,24 +34,29 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     Eigen::Vector4d sliders_init;
 
     std::vector<std::deque<double> > sliders_filt_buffer(
-        robot.get_slider_positions().size());
+        robot->get_slider_positions().size());
     size_t max_filt_dim = 100;
     for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
     {
         sliders_filt_buffer[i].clear();
     }
 
-    robot.acquire_sensors();
-    sliders_init = robot.get_slider_positions();
+    robot->acquire_sensors();
+    sliders_init = robot->get_slider_positions();
+
+
+    // Calibrates the robot.
+    solo::Vector8d joint_index_to_zero = thread_data_ptr->joint_index_to_zero;
+    robot->request_calibration(joint_index_to_zero);
 
     size_t count = 0;
     while (!CTRL_C_DETECTED)
     {
         // acquire the sensors
-        robot.acquire_sensors();
+        robot->acquire_sensors();
 
         // aquire the slider signal
-        sliders = robot.get_slider_positions();
+        sliders = robot->get_slider_positions();
         // filter it
         for (unsigned i = 0; i < sliders_filt_buffer.size(); ++i)
         {
@@ -74,22 +85,26 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
 
         // we implement here a small pd control at the current level
         desired_torque =
-            kp * (desired_joint_position - robot.get_joint_positions()) -
-            kd * robot.get_joint_velocities();
+            kp * (desired_joint_position - robot->get_joint_positions()) -
+            kd * robot->get_joint_velocities();
 
         // Send the current to the motor
-        robot.send_target_joint_torque(desired_torque);
+        robot->send_target_joint_torque(desired_torque);
 
-        // print -----------------------------------------------------------
         real_time_tools::Timer::sleep_sec(0.001);
 
-        if ((count % 250) == 0)
+        // print -----------------------------------------------------------
+        if ((count % 1000) == 0)
         {
+            solo::Vector8d current_index_to_zero =
+                joint_index_to_zero - robot->get_joint_positions();
+
             print_vector("des_joint_tau", desired_torque);
             print_vector("des_joint_tau", desired_torque);
-            print_vector("    joint_pos", robot.get_joint_positions());
+            print_vector("    joint_pos", robot->get_joint_positions());
             print_vector("des_joint_pos", desired_joint_position);
-            print_vector("   slider_pos", robot.get_slider_positions());
+            print_vector("   slider_pos", robot->get_slider_positions());
+            print_vector("zero_joint_pos", current_index_to_zero);
         }
         ++count;
     }  // endwhile
@@ -107,12 +122,19 @@ int main(int argc, char** argv)
     }
 
     real_time_tools::RealTimeThread thread;
+    enable_ctrl_c();
 
-    Solo8 robot;
-    robot.initialize(std::string(argv[1]));
+    rt_printf("Please put the robot in zero position.\n");
+    rt_printf("\n");
+    rt_printf("Press enter to launch the calibration.\n");
+    char str[256];
+    std::cin.get(str, 256);  // get c-string
 
-    thread.create_realtime_thread(&control_loop, &robot);
-    // thread.create_realtime_thread(&control_loop);
+    std::shared_ptr<Solo8> robot = std::make_shared<Solo8>();
+    robot->initialize(std::string(argv[1]));
+
+    ThreadCalibrationData_t thread_data(robot);
+    thread.create_realtime_thread(&control_loop, &thread_data);
 
     rt_printf("control loop started \n");
 
