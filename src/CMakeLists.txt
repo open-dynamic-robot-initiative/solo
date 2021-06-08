@@ -64,32 +64,39 @@ build_programs(solo12_hardware_calibration solo12)
 #
 if(${dynamic_graph_manager_FOUND})
   message(STATUS "Build the dynamic_graph_manager main programs.")
-  macro(build_dgm_programs robot_name)
-    add_executable(dg_main_${robot_name}
+  macro(build_dgm_programs robot_name suffix)
+    set(exec_name dg_main_${robot_name}${suffix})
+
+    add_executable(${exec_name}
       dynamic_graph_manager/dgm_${robot_name}.cpp
       dynamic_graph_manager/dg_main_${robot_name}.cpp
     )
     # Add the include dependencies.
     target_include_directories(
-      dg_main_${robot_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+      ${exec_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>)
     # Link the dependencies.
-    target_link_libraries(dg_main_${robot_name}
+    target_link_libraries(${exec_name}
       ${robot_name} dynamic_graph_manager::dynamic_graph_manager)
     # Get the yaml configuration for the DGM.
     string(
     CONCAT dgm_yaml_path
          "${PythonModules_robot_properties_solo_PATH}/"
-         "robot_properties_solo/robot_properties_solo/dynamic_graph_manager/")
-    target_compile_definitions(dg_main_${robot_name}
+         "robot_properties_solo/robot_properties_solo/dynamic_graph_manager/"
+         "dgm_parameters_solo12"
+         ${suffix}
+         ".yaml")
+    target_compile_definitions(${exec_name}
       PUBLIC ROBOT_PROPERTIES_YAML_PATH="${dgm_yaml_path}")
     # Export the target.
-    list(APPEND all_src_targets dg_main_${robot_name})
-    list(APPEND all_exe_targets dg_main_${robot_name})
+    list(APPEND all_src_targets ${exec_name})
+    list(APPEND all_exe_targets ${exec_name})
   endmacro()
-  build_dgm_programs(solo8)
-  build_dgm_programs(solo8ti)
-  build_dgm_programs(solo12)
+  build_dgm_programs(solo8 "")
+  build_dgm_programs(solo8ti "")
+  build_dgm_programs(solo12 _mpi_is)
+  build_dgm_programs(solo12 _nyu)
+  build_dgm_programs(solo12 "")
 endif(${dynamic_graph_manager_FOUND})
 
 #
