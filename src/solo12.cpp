@@ -145,7 +145,7 @@ void Solo12::initialize(const std::string& network_id,
     Eigen::VectorXd position_offsets(12);
     position_offsets.fill(0.);
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        robot_->joints, directions, position_offsets, 5., 0.05, 3.0, 0.001);
+        robot_->joints, directions, position_offsets, 5., 0.05, 1.0, 0.001);
 
     // Initialize the robot.
     robot_->Init();
