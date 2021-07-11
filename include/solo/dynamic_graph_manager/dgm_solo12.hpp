@@ -59,6 +59,7 @@ public:
     void set_motor_controls_from_map(
         const dynamic_graph_manager::VectorDGMap& map);
 
+#ifdef BUILD_WITH_ROS
     /**
      * @brief Ros callback for the callibration procedure. Warning the robot
      * will move to the next the joint index and back to "0" upon this call.
@@ -72,6 +73,7 @@ public:
     void calibrate_joint_position_callback(
         mim_msgs::srv::JointCalibration::Request::SharedPtr req,
         mim_msgs::srv::JointCalibration::Response::SharedPtr res);
+#endif
 
     /**
      * @brief compute_safety_controls computes safety controls very fast in case
@@ -79,7 +81,6 @@ public:
      */
     void compute_safety_controls();
 
-private:
     /**
      * @brief Calibrate the robot joint position
      *
@@ -88,6 +89,13 @@ private:
      */
     void calibrate_joint_position(
         const solo::Vector12d& zero_to_index_angle);
+
+    /**
+     * @brief Calibrate the robot joint position based on the yaml information.
+     */
+    void calibrate_joint_position_from_yaml()
+
+private:
 
     /**
      * Entries for the real hardware.

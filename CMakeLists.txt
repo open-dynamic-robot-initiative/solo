@@ -20,6 +20,11 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 #
+# Options
+#
+OPTION(BUILD_WITH_ROS "Build with ROS" ON)
+
+#
 # Dependencies
 #
 

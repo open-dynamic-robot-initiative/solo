@@ -59,6 +59,7 @@ public:
     void set_motor_controls_from_map(
         const dynamic_graph_manager::VectorDGMap& map);
 
+#ifdef BUILD_WITH_ROS
     /**
      * @brief
      *
@@ -70,6 +71,7 @@ public:
     void calibrate_joint_position_callback(
         mim_msgs::srv::JointCalibration::Request::SharedPtr req,
         mim_msgs::srv::JointCalibration::Response::SharedPtr res);
+#endif
 
 private:
     /**

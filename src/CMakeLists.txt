@@ -83,6 +83,12 @@ if(${dynamic_graph_manager_FOUND})
          "robot_properties_solo/robot_properties_solo/dynamic_graph_manager/")
     target_compile_definitions(dg_main_${robot_name}
       PUBLIC ROBOT_PROPERTIES_YAML_PATH="${dgm_yaml_path}")
+
+    if (BUILD_WITH_ROS)
+        # Define flag for the hardware process.
+        target_compile_definitions(dg_main_${robot_name} PUBLIC BUILD_WITH_ROS="true")
+    endif()
+
     # Export the target.
     list(APPEND all_src_targets dg_main_${robot_name})
     list(APPEND all_exe_targets dg_main_${robot_name})

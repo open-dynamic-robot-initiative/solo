@@ -8,7 +8,10 @@
  */
 
 #include "solo/dynamic_graph_manager/dgm_solo8ti.hpp"
+
+#ifdef BUILD_WITH_ROS
 #include "dynamic_graph_manager/ros.hpp"
+#endif
 
 namespace solo
 {
@@ -31,6 +34,7 @@ void DGMSolo8TI::initialize_hardware_communication_process()
                         "index_to_zero_angle",
                         zero_to_index_angle_from_file_);
 
+#ifdef BUILD_WITH_ROS
     // get the hardware communication ros node handle
     dynamic_graph_manager::RosNodePtr ros_node_handle =
         dynamic_graph_manager::get_ros_node(
@@ -44,6 +48,7 @@ void DGMSolo8TI::initialize_hardware_communication_process()
                       this,
                       std::placeholders::_1,
                       std::placeholders::_2)));
+#endif
 
     solo_.initialize();
 }
@@ -114,6 +119,7 @@ void DGMSolo8TI::set_motor_controls_from_map(
     }
 }
 
+#ifdef BUILD_WITH_ROS
 void DGMSolo8TI::calibrate_joint_position_callback(
     mim_msgs::srv::JointCalibration::Request::SharedPtr,
     mim_msgs::srv::JointCalibration::Response::SharedPtr res)
@@ -126,6 +132,7 @@ void DGMSolo8TI::calibrate_joint_position_callback(
     // return whatever the user want
     res->sanity_check = true;
 }
+#endif
 
 void DGMSolo8TI::calibrate_joint_position(
     const solo::Vector8d& zero_to_index_angle)
