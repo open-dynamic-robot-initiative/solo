@@ -19,7 +19,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 
-OPTION(BUILD_ROS_DYNAMIC_GRAPH "Build with ROS and DynamicGraph" OFF)
+OPTION(BUILD_ROS_DYNAMIC_GRAPH "Build with ROS and DynamicGraph" ON)
 
 #
 # Dependencies
