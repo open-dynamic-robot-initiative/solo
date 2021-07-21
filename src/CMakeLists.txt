@@ -40,6 +40,16 @@ create_robots_library(solo8)
 create_robots_library(solo8ti)
 create_robots_library(solo12)
 
+# YAML parameters.
+string(
+  CONCAT odri_control_interface_yaml_path
+         "${PythonModules_robot_properties_solo_PATH}/"
+         "robot_properties_solo/robot_properties_solo/odri_control_interface/"
+         "solo12_driver.yaml")
+target_compile_definitions(
+  solo12
+  PUBLIC ODRI_CONTROL_INTERFACE_YAML_PATH="${odri_control_interface_yaml_path}")
+
 #
 # Build executables like the calibration programs.
 #

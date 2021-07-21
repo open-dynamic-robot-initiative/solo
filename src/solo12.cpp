@@ -3,6 +3,7 @@
 #include <odri_control_interface/common.hpp>
 #include "solo/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
+#include "odri_control_interface/utils.hpp"
 
 namespace solo
 {
@@ -83,69 +84,12 @@ void Solo12::initialize(const std::string& network_id,
     serial_reader_ =
         std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
 
-    main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
+    // Main driver interface.
+    robot_ = odri_control_interface::RobotFromYamlFile(
+        network_id_, ODRI_CONTROL_INTERFACE_YAML_PATH);
 
-    VectorXi motor_numbers(12);
-    motor_numbers << 0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10;
-    VectorXb motor_reversed(12);
-    motor_reversed << false, true, true, true, false, false, false, true, true,
-        true, false, false;
-
-    double lHAA = 0.9;
-    double lHFE = 1.45;
-    double lKFE = 2.80;
-    Eigen::VectorXd joint_lower_limits(12);
-    joint_lower_limits << -lHAA, -lHFE, -lKFE, -lHAA, -lHFE, -lKFE, -lHAA,
-        -lHFE, -lKFE, -lHAA, -lHFE, -lKFE;
-    Eigen::VectorXd joint_upper_limits(12);
-    joint_upper_limits << lHAA, lHFE, lKFE, lHAA, lHFE, lKFE, lHAA, lHFE, lKFE,
-        lHAA, lHFE, lKFE;
-
-    // Define the joint module.
-    joints_ = std::make_shared<odri_control_interface::JointModules>(
-        main_board_ptr_,
-        motor_numbers,
-        motor_torque_constants_(0),
-        joint_gear_ratios_(0),
-        motor_max_current_(0),
-        motor_reversed,
-        joint_lower_limits,
-        joint_upper_limits,
-        80.,
-        0.2);
-
-    // Define the IMU.
-    VectorXl rotate_vector(3);
-    rotate_vector << 1, 2, 3;
-    VectorXl orientation_vector(4);
-    orientation_vector << 1, 2, 3, 4;
-    imu_ = std::make_shared<odri_control_interface::IMU>(
-        main_board_ptr_, rotate_vector, orientation_vector);
-
-    // Define the robot.
-    robot_ = std::make_shared<odri_control_interface::Robot>(
-        main_board_ptr_, joints_, imu_);
-
-    std::vector<odri_control_interface::CalibrationMethod> directions{
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::NEGATIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::NEGATIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE};
-
-    // Use zero position offsets for now. Gets updated in the calibration
-    // method.
-    Eigen::VectorXd position_offsets(12);
-    position_offsets.fill(0.);
-    calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        robot_->joints, directions, position_offsets, 5., 0.05, 3.0, 0.001);
+    calib_ctrl_ = odri_control_interface::JointCalibratorFromYamlFile(
+        ODRI_CONTROL_INTERFACE_YAML_PATH, robot_->joints);
 
     // Initialize the robot.
     robot_->Init();
