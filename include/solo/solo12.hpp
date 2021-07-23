@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <blmc_drivers/serial_reader.hpp>
+#include <slider_box/serial_reader.hpp>
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
 #include "solo/common_header.hpp"
@@ -486,7 +486,7 @@ private:
     /**
      * @brief Reader for serial port to read arduino slider values.
      */
-    std::shared_ptr<blmc_drivers::SerialReader> serial_reader_;
+    std::shared_ptr<slider_box::SerialReader> serial_reader_;
 
     /**
      * @brief The odri robot abstraction.

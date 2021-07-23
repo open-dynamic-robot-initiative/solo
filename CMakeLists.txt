@@ -30,9 +30,10 @@ find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 
 # depend on ament macros
-find_package(blmc_drivers REQUIRED)
+find_package(blmc_drivers QUIET)
 find_package(odri_control_interface REQUIRED)
 find_package(master_board_sdk REQUIRED)
+find_package(slider_box REQUIRED)
 find_package(real_time_tools REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
@@ -42,20 +43,41 @@ find_package(PythonModules COMPONENTS robot_properties_solo)
 
 find_package(dynamic_graph_manager QUIET)
 
+# Build and export depending on weather blmc_drivers was found or not.
+if(${blmc_drivers_FOUND})
+  SET(BUILD_SOLO8_TI on)
 
-# export de dependencies
-ament_export_dependencies(
-  ament_cmake
-  mpi_cmake_modules
-  ament_index_cpp
-  blmc_drivers
-  odri_control_interface
-  master_board_sdk
-  real_time_tools
-  pybind11
-  yaml_utils
-  Eigen3
-  dynamic_graph_manager)
+  # export de dependencies
+  ament_export_dependencies(
+    ament_cmake
+    mpi_cmake_modules
+    ament_index_cpp
+    blmc_drivers
+    odri_control_interface
+    master_board_sdk
+    slider_box
+    real_time_tools
+    pybind11
+    yaml_utils
+    Eigen3
+    dynamic_graph_manager)
+else()
+  SET(BUILD_SOLO8_TI off)
+
+  # export de dependencies
+  ament_export_dependencies(
+    ament_cmake
+    mpi_cmake_modules
+    ament_index_cpp
+    odri_control_interface
+    master_board_sdk
+    slider_box
+    real_time_tools
+    pybind11
+    yaml_utils
+    Eigen3
+    dynamic_graph_manager)
+endif()
 
 # prepare the final export
 ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)

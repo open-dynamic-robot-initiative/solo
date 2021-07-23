@@ -43,7 +43,7 @@ endmacro(create_demo demo_name)
 #
 # Build the demos.
 #
-create_demo(solo8ti solo8ti)
+
 create_demo(
   solo12
   solo12
@@ -55,6 +55,10 @@ create_demo(
   solo8
   ${PythonModules_robot_properties_solo_PATH}/robot_properties_solo/robot_properties_solo/dynamic_graph_manager/dgm_parameters_solo8.yaml
 )
+
+if (BUILD_SOLO8_TI)
+  create_demo(solo8ti solo8ti)
+endif()
 
 #
 # Install and Export the libraries.
