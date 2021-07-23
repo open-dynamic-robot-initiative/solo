@@ -81,7 +81,7 @@ void Solo12::initialize(const std::string& network_id,
 
     // Use a serial port to read slider values.
     serial_reader_ =
-        std::make_shared<blmc_drivers::SerialReader>(serial_port, 5);
+        std::make_shared<slider_box::SerialReader>(serial_port, 5);
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 

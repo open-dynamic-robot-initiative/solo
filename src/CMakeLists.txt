@@ -20,6 +20,7 @@ target_link_libraries(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
                       INTERFACE real_time_tools::real_time_tools)
 target_link_libraries(${PROJECT_NAME} INTERFACE yaml_utils::yaml_utils)
+target_link_libraries(${PROJECT_NAME} INTERFACE slider_box::slider_box)
 target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 # Export the target.
 list(APPEND all_src_targets ${PROJECT_NAME})
