@@ -9,12 +9,22 @@ Low level interface to control the solo robots.
 We use `treep` to download the required packages. Make sure your ssh key is unlocked. Then
 
 
-```
+```bash
 mkdir -p ~/devel
 pip install treep  # This installs treep
 cd ~/devel
 git clone git@github.com:machines-in-motion/treep_machines_in_motion.git
 treep --clone SOLO
+```
+
+If you are using the Solo8 with TI boards, you have to get the SOLO_TI instead
+
+```bash
+mkdir -p ~/devel
+pip install treep  # This installs treep
+cd ~/devel
+git clone git@github.com:machines-in-motion/treep_machines_in_motion.git
+treep --clone SOLO_TI
 ```
 
 #### Build the package

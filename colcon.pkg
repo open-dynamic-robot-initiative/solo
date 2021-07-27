@@ -1,0 +1,4 @@
+{
+    "build-dependencies": ["dynamic_graph_manager", "blmc_driver"],
+    "test-dependencies": ["googletest-distribution"]
+}
