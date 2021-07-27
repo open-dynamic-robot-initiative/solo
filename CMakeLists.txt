@@ -29,10 +29,10 @@ OPTION(BUILD_ROS_DYNAMIC_GRAPH "Build with ROS and DynamicGraph" ON)
 find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 
-# depend on ament macros
-find_package(blmc_drivers REQUIRED)
+# depend on ament macros.
 find_package(odri_control_interface REQUIRED)
 find_package(master_board_sdk REQUIRED)
+find_package(slider_box REQUIRED)
 find_package(real_time_tools REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
@@ -40,22 +40,30 @@ find_package(Eigen3 REQUIRED)
 # Find resources from robot_properties packages.
 find_package(PythonModules COMPONENTS robot_properties_solo)
 
+# optional dependencies.
+find_package(blmc_drivers QUIET)
 find_package(dynamic_graph_manager QUIET)
 
-
-# export de dependencies
-ament_export_dependencies(
-  ament_cmake
-  mpi_cmake_modules
-  ament_index_cpp
-  blmc_drivers
-  odri_control_interface
-  master_board_sdk
-  real_time_tools
-  pybind11
-  yaml_utils
-  Eigen3
-  dynamic_graph_manager)
+# Build and export depending on weather blmc_drivers was found or not.
+set(BUILD_SOLO8_TI off)
+set(export_list
+    ament_cmake
+    mpi_cmake_modules
+    ament_index_cpp
+    odri_control_interface
+    master_board_sdk
+    slider_box
+    real_time_tools
+    pybind11
+    yaml_utils
+    Eigen3
+    dynamic_graph_manager
+)
+if(${blmc_drivers_FOUND})
+  set(BUILD_SOLO8_TI on)
+  set(export_list ${export_list} blmc_driver)
+endif()
+ament_export_dependencies(${export_list})
 
 # prepare the final export
 ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)

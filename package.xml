@@ -31,6 +31,7 @@
     <depend>blmc_drivers</depend>
     <depend>real_time_tools</depend>
     <depend>odri_control_interface</depend>
+    <depend>slider_box</depend>
     <depend>pybind11</depend>
     <depend>yaml_utils</depend>
     <depend>Eigen3</depend>

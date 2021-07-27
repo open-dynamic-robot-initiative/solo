@@ -8,8 +8,12 @@
 #pragma once
 
 #include <blmc_drivers/blmc_joint_module.hpp>
-#include <solo/common_header.hpp>
+#include <solo/common_header_ti.hpp>
 #include <solo/slider.hpp>
+
+// The robot drivers for building the robot wrapper around.
+#include <blmc_drivers/devices/analog_sensor.hpp>
+#include <blmc_drivers/devices/motor.hpp>
 
 namespace solo
 {

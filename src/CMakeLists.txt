@@ -10,7 +10,9 @@ target_include_directories(
   ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>)
 # Link the dependencies.
-target_link_libraries(${PROJECT_NAME} INTERFACE blmc_drivers::blmc_drivers)
+if (BUILD_SOLO8_TI)
+  target_link_libraries(${PROJECT_NAME} INTERFACE blmc_drivers::blmc_drivers)
+endif()
 target_link_libraries(${PROJECT_NAME}
                       INTERFACE odri_control_interface::odri_control_interface)
 target_link_libraries(${PROJECT_NAME}
@@ -18,6 +20,7 @@ target_link_libraries(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
                       INTERFACE real_time_tools::real_time_tools)
 target_link_libraries(${PROJECT_NAME} INTERFACE yaml_utils::yaml_utils)
+target_link_libraries(${PROJECT_NAME} INTERFACE slider_box::slider_box)
 target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 # Export the target.
 list(APPEND all_src_targets ${PROJECT_NAME})
@@ -37,8 +40,11 @@ macro(create_robots_library lib_name)
   list(APPEND all_src_targets ${lib_name})
 endmacro()
 create_robots_library(solo8)
-create_robots_library(solo8ti)
 create_robots_library(solo12)
+
+if (BUILD_SOLO8_TI)
+  create_robots_library(solo8ti)
+endif()
 
 #
 # Build executables like the calibration programs.
@@ -56,8 +62,11 @@ macro(build_programs program_name robot_name)
   list(APPEND all_exe_targets ${program_name})
 endmacro()
 build_programs(solo8_hardware_calibration solo8)
-build_programs(solo8ti_hardware_calibration solo8ti)
 build_programs(solo12_hardware_calibration solo12)
+
+if (BUILD_SOLO8_TI)
+  build_programs(solo8ti_hardware_calibration solo8ti)
+endif()
 
 #
 # Optionally build the DynamiGraphManager main programs.
@@ -88,8 +97,11 @@ if(${dynamic_graph_manager_FOUND} AND BUILD_ROS_DYNAMIC_GRAPH)
     list(APPEND all_exe_targets dg_main_${robot_name})
   endmacro()
   build_dgm_programs(solo8)
-  build_dgm_programs(solo8ti)
   build_dgm_programs(solo12)
+
+  if (BUILD_SOLO8_TI)
+    build_dgm_programs(solo8ti)
+  endif()
 endif(${dynamic_graph_manager_FOUND} AND BUILD_ROS_DYNAMIC_GRAPH)
 
 #
