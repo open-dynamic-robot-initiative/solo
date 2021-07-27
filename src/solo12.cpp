@@ -55,7 +55,6 @@ Solo12::Solo12()
     imu_gyroscope_.setZero();
     imu_attitude_.setZero();
     imu_linear_acceleration_.setZero();
-    imu_attitude_quaternion_.setIdentity();
 
     /**
      * Setup some known data
@@ -199,8 +198,7 @@ void Solo12::acquire_sensors()
     imu_linear_acceleration_ = imu->GetLinearAcceleration();
     imu_accelerometer_ = imu->GetAccelerometer();
     imu_gyroscope_ = imu->GetGyroscope();
-    imu_attitude_ = imu->GetAttitudeEuler();
-    imu_attitude_quaternion_ = imu->GetAttitudeQuaternion();
+    imu_attitude_ = imu->GetAttitudeQuaternion();
 
     /**
      * The different status.

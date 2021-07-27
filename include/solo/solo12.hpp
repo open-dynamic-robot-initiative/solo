@@ -247,13 +247,13 @@ public:
         return imu_gyroscope_;
     }
 
-    /** @brief base attitude from imu.
+    /** @brief base attitude quaternion (ordered {x, y, z, w}) from imu.
      * @return
      * WARNING !!!!
      * The method <acquire_sensors>"()" has to be called
      * prior to any getter to have up to date data.
      */
-    const Eigen::Ref<Eigen::Vector3d> get_imu_attitude()
+    const Eigen::Ref<Eigen::Vector4d> get_imu_attitude()
     {
         return imu_attitude_;
     }
@@ -267,17 +267,6 @@ public:
     const Eigen::Ref<Eigen::Vector3d> get_imu_linear_acceleration()
     {
         return imu_linear_acceleration_;
-    }
-
-    /** @brief base attitude quaternion (ordered {x, y, z, w}) from imu.
-     * @return
-     * WARNING !!!!
-     * The method <acquire_sensors>"()" has to be called
-     * prior to any getter to have up to date data.
-     */
-    const Eigen::Ref<Eigen::Vector4d> get_imu_attitude_quaternion()
-    {
-        return imu_attitude_quaternion_;
     }
 
     /*
@@ -455,13 +444,10 @@ private:
     Eigen::Vector3d imu_gyroscope_;
 
     /** @brief base accelerometer. */
-    Eigen::Vector3d imu_attitude_;
+    Eigen::Vector4d imu_attitude_;
 
     /** @brief base accelerometer. */
     Eigen::Vector3d imu_linear_acceleration_;
-
-    /** @brief base attitude quaternion. */
-    Eigen::Vector4d imu_attitude_quaternion_;
 
     /** @brief State of the solo robot. */
     Solo12State state_;
