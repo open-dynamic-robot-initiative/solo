@@ -12,6 +12,8 @@
 
 #include "solo/common_header.hpp"
 
+#include <blmc_drivers/devices/analog_sensor.hpp>
+
 namespace solo
 {
 

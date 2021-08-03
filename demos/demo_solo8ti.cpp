@@ -8,7 +8,7 @@
  */
 
 #include <numeric>
-#include "solo/common_programs_header_ti.hpp"
+#include "solo/common_programs_header.hpp"
 #include "solo/solo8ti.hpp"
 
 using namespace solo;
