@@ -121,10 +121,10 @@ void Solo12::initialize(const std::string& network_id,
     imu_ = std::make_shared<odri_control_interface::IMU>(
         main_board_ptr_, rotate_vector, orientation_vector);
 
-    // Define the robot.
-    robot_ = std::make_shared<odri_control_interface::Robot>(
-        main_board_ptr_, joints_, imu_);
-
+    // Use zero position offsets for now. Gets updated in the calibration
+    // method.
+    Eigen::VectorXd position_offsets(12);
+    position_offsets.fill(0.);
     std::vector<odri_control_interface::CalibrationMethod> directions{
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE,
@@ -138,13 +138,12 @@ void Solo12::initialize(const std::string& network_id,
         odri_control_interface::NEGATIVE,
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE};
-
-    // Use zero position offsets for now. Gets updated in the calibration
-    // method.
-    Eigen::VectorXd position_offsets(12);
-    position_offsets.fill(0.);
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
         robot_->joints, directions, position_offsets, 5., 0.05, 1.0, 0.001);
+
+    // Define the robot.
+    robot_ = std::make_shared<odri_control_interface::Robot>(
+        main_board_ptr_, joints_, imu_, calib_ctrl_);
 
     // Initialize the robot.
     robot_->Init();
