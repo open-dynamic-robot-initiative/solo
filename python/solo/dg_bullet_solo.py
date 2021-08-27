@@ -77,6 +77,7 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
 
         # Sync the current robot state to the graph input signals.
         self._sim2signal()
+        self.device.joint_torques.value = np.array(12 * [0.0])
 
         super(DgBulletSoloBaseRobot, self).__init__(
             self.config.robot_name, self.device
@@ -105,6 +106,7 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
         device = self.device
         device.joint_positions.value = q[7:]
         device.joint_velocities.value = dq[6:]
+        device.joint_torques.value = device.ctrl_joint_torques.value
 
         self.signal_base_pos_.sout.value = q[0:7]
         self.signal_base_vel_.sout.value = dq[0:6]
@@ -121,7 +123,9 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
             ]
         )
         device.imu_gyroscope.value = dq[3:6]
-        device.imu_accelerometer.value = self.robot_bullet.get_base_imu_linacc()
+        device.imu_accelerometer.value = (
+            self.robot_bullet.get_base_imu_linacc()
+        )
 
     def run(self, steps=1, sleep=False):
         """ Get input from Device, Step the simulation, feed the Device. """
@@ -139,6 +143,7 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
         the provided state values."""
         self.robot_bullet.reset_state(q, dq)
         self._sim2signal()
+        self.device.joint_torques.value = np.array(12 * [0.0])
 
     def add_ros_and_trace(
         self, client_name, signal_name, topic_name=None, topic_type=None
