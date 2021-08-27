@@ -121,7 +121,7 @@ void Solo8::initialize(const std::string& network_id)
         odri_control_interface::POSITIVE
        };
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        robot_->joints, directions, position_offsets, 5., 0.05, 1.0, 0.001);
+        joints_, directions, position_offsets, 5., 0.05, 1.0, 0.001);
 
     // Define the robot.
     robot_ = std::make_shared<odri_control_interface::Robot>(
