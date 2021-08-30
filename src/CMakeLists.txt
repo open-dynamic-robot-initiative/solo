@@ -89,7 +89,7 @@ if(${dynamic_graph_manager_FOUND} AND BUILD_ROS_DYNAMIC_GRAPH)
     string(
     CONCAT dgm_yaml_path
          "${PythonModules_robot_properties_solo_PATH}/"
-         "robot_properties_solo/robot_properties_solo/dynamic_graph_manager/")
+         "robot_properties_solo/resources/dynamic_graph_manager/")
     target_compile_definitions(dg_main_${robot_name}
       PUBLIC ROBOT_PROPERTIES_YAML_PATH="${dgm_yaml_path}")
     # Export the target.
