@@ -122,7 +122,9 @@ class DgBulletSoloBaseRobot(dynamic_graph_manager.robot.Robot):
                 self.robot_bullet.get_slider_position("d"),
             ]
         )
-        device.imu_gyroscope.value = dq[3:6]
+        device.imu_gyroscope.value = (
+            self.robot_bullet.get_base_imu_angvel()
+        )
         device.imu_accelerometer.value = (
             self.robot_bullet.get_base_imu_linacc()
         )
