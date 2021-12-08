@@ -272,6 +272,30 @@ void Solo12::send_target_joint_torque(
     }
 }
 
+void Solo12::send_target_joint_position(
+    const Eigen::Ref<Vector12d> target_joint_position)
+{
+    robot_->joints->SetDesiredPositions(target_joint_position);
+}
+
+void Solo12::send_target_joint_velocity(
+        const Eigen::Ref<Vector12d> target_joint_velocity)
+{
+    robot_->joints->SetDesiredVelocities(target_joint_velocity);
+}
+
+void Solo12::send_target_joint_position_gains(
+    const Eigen::Ref<Vector12d> target_joint_position_gains)
+{
+    robot_->joints->SetPositionGains(target_joint_position_gains);
+}
+
+void Solo12::send_target_joint_velocity_gains(
+    const Eigen::Ref<Vector12d> target_joint_velocity_gains)
+{
+    robot_->joints->SetVelocityGains(target_joint_velocity_gains);
+}
+
 void Solo12::wait_until_ready()
 {
     real_time_tools::Spinner spinner;
