@@ -147,6 +147,16 @@ void DGMSolo12::get_sensors_to_map(dynamic_graph_manager::VectorDGMap& map)
         map_motor_board_enabled[i] = motor_board_enabled[i];
         map_motor_board_errors[i] = motor_board_errors[i];
     }
+
+    /*
+     * Connection quality
+     */
+    map.at("num_sent_command_packets")[0] =
+        solo_.get_num_sent_command_packets();
+    map.at("num_lost_command_packets")[0] =
+        solo_.get_num_lost_command_packets();
+    map.at("num_sent_sensor_packets")[0] = solo_.get_num_sent_sensor_packets();
+    map.at("num_lost_sensor_packets")[0] = solo_.get_num_lost_sensor_packets();
 }
 
 void DGMSolo12::set_motor_controls_from_map(

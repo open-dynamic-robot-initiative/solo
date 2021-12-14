@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <slider_box/serial_reader.hpp>
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
+#include <slider_box/serial_reader.hpp>
 #include "solo/common_header.hpp"
 
 namespace solo
@@ -357,6 +357,38 @@ public:
     bool is_calibrating()
     {
         return _is_calibrating;
+    }
+
+    /**
+     * @brief Get total number of command packets sent to the robot.
+     */
+    int get_num_sent_command_packets() const
+    {
+        return main_board_ptr_->GetCmdSent();
+    }
+
+    /**
+     * @brief Get number of lost command packets.
+     */
+    int get_num_lost_command_packets() const
+    {
+        return main_board_ptr_->GetCmdLost();
+    }
+
+    /**
+     * @brief Get total number of sensor packets sent by the robot.
+     */
+    int get_num_sent_sensor_packets() const
+    {
+        return main_board_ptr_->GetSensorsSent();
+    }
+
+    /**
+     * @brief Get number of lost sensor packets.
+     */
+    int get_num_lost_sensor_packets() const
+    {
+        return main_board_ptr_->GetSensorsLost();
     }
 
 private:
