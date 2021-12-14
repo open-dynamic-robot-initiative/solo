@@ -106,6 +106,28 @@ private:
     solo::Vector12d ctrl_joint_torques_;
 
     /**
+     * @brief Desired joint positions for the PD controller running on the
+     * udriver board.
+     */
+    solo::Vector12d ctrl_joint_positions_;
+
+    /**
+     * @brief Desired joint velocities for the PD controller running on the
+     * udriver board.
+     */
+    solo::Vector12d ctrl_joint_velocities_;
+
+    /**
+     * @brief P gains for the PD controller running on the udriver board.
+     */
+    solo::Vector12d joint_position_gains_;
+
+    /**
+     * @brief D gains for the PD controller running on the udriver board.
+     */
+    solo::Vector12d joint_velocity_gains_;
+
+    /**
      * @brief Check if we entered once in the safety mode and stay there if so
      */
     bool was_in_safety_mode_;

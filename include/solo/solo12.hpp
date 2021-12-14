@@ -77,6 +77,34 @@ public:
         const Eigen::Ref<Vector12d> target_joint_torque);
 
     /**
+     * @brief Sets the desired joint position of the P controller running on
+     * the card.
+     */
+    void send_target_joint_position(
+        const Eigen::Ref<Vector12d> target_joint_position);
+
+    /**
+     * @brief Sets the desired joint velocity of the D controller running on
+     * the card.
+     */
+    void send_target_joint_velocity(
+        const Eigen::Ref<Vector12d> target_joint_velocity);
+
+    /**
+     * @brief Sets the desired joint position gain P for the P controller
+     * running on the card.
+     */
+    void send_target_joint_position_gains(
+        const Eigen::Ref<Vector12d> target_joint_position_gains);
+
+    /**
+     * @brief Sets the desired joint velocity gain D for the D controller
+     * running on the card.
+     */
+    void send_target_joint_velocity_gains(
+        const Eigen::Ref<Vector12d> target_joint_velocity_gains);
+
+    /**
      * @brief acquire_sensors acquire all available sensors, WARNING !!!!
      * this method has to be called prior to any getter to have up to date data.
      */

@@ -154,11 +154,23 @@ void DGMSolo12::set_motor_controls_from_map(
 {
     try
     {
-        // Here we need to perform and internal copy. Otherwise the compilator
+        // Here we need to perform an internal copy. Otherwise the compiler
         // complains.
         ctrl_joint_torques_ = map.at("ctrl_joint_torques");
         // Actually send the control to the robot.
         solo_.send_target_joint_torque(ctrl_joint_torques_);
+
+        ctrl_joint_positions_ = map.at("ctrl_joint_positions");
+        solo_.send_target_joint_position(ctrl_joint_positions_);
+
+        ctrl_joint_velocities_ = map.at("ctrl_joint_velocities");
+        solo_.send_target_joint_velocity(ctrl_joint_velocities_);
+
+        joint_position_gains_ = map.at("ctrl_joint_position_gains");
+        solo_.send_target_joint_position_gains(joint_position_gains_);
+
+        joint_velocity_gains_ = map.at("ctrl_joint_velocity_gains");
+        solo_.send_target_joint_velocity_gains(joint_velocity_gains_);
     }
     catch (const std::exception& e)
     {
