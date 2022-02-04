@@ -59,11 +59,21 @@ if (BUILD_SOLO8_TI)
   create_demo(solo8ti solo8ti)
 endif()
 
+
+add_executable(master_board_example_pd_rt ./example_pd.cpp)
+target_include_directories(
+    master_board_example_pd_rt
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(master_board_example_pd_rt ${PROJECT_NAME})
+
+
 #
 # Install and Export the libraries.
 #
 install(
-  TARGETS ${all_demo_targets}
+  TARGETS ${all_demo_targets} master_board_example_pd_rt
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
