@@ -121,6 +121,9 @@ void DGMSolo12::get_sensors_to_map(dynamic_graph_manager::VectorDGMap& map)
     map.at("imu_gyroscope") = solo_.get_imu_gyroscope();
     map.at("imu_attitude") = solo_.get_imu_attitude();
     map.at("imu_linear_acceleration") = solo_.get_imu_linear_acceleration();
+    map.at("powerboard_current")[0] = solo_.get_powerboard_current();
+    map.at("powerboard_voltage")[0] = solo_.get_powerboard_voltage();
+    map.at("powerboard_energy")[0] = solo_.get_powerboard_energy();
 
     /**
      * Robot status.
