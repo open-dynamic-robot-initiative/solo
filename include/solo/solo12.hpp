@@ -304,6 +304,8 @@ public:
      */
     float get_powerboard_current() const
     {
+        // FIXME better get in acquire_sensors() so its in sync with other
+        // sensor data
         return main_board_ptr_->powerboard_current();
     }
 
