@@ -57,8 +57,10 @@ set(export_list
     pybind11
     yaml_utils
     Eigen3
-    dynamic_graph_manager
 )
+if(${dynamic_graph_manager_FOUND})
+  set(export_list ${export_list} dynamic_graph_manager)
+endif()
 if(${blmc_drivers_FOUND})
   set(BUILD_SOLO8_TI on)
   set(export_list ${export_list} blmc_driver)
