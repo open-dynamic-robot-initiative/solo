@@ -314,7 +314,7 @@ void Solo12::wait_until_ready()
 
 bool Solo12::is_ready()
 {
-    return state_ != Solo12State::ready;
+    return state_ == Solo12State::ready;
 }
 
 bool Solo12::request_calibration(const Vector12d& home_offset_rad)
