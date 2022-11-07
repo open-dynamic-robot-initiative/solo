@@ -35,10 +35,11 @@ static THREAD_FUNCTION_RETURN_TYPE control_loop(void* robot_void_ptr)
     {
         sc_mutex.lock();
         robot.acquire_sensors();
-        if (count % 200 == 0 && print_home_offset)
+        if (count % 500 == 0 && print_home_offset)
         {
             print_vector("Home offset angle [Rad]", -robot.get_joint_positions());
         }
+        ++count;
         robot.send_target_joint_torque(twelve_zeros);
         sc_mutex.unlock();
         spinner.spin();
@@ -89,13 +90,17 @@ int main(int argc, char** argv)
     shared_content.sc_mutex.unlock();
 
     // print the home offset:
-    while (!robot_ready)
+    do
     {
+        // first sleep before checking the robot state, as it needs some time to
+        // get updated after calling request_calibration()
+        real_time_tools::Timer::sleep_sec(0.1);
         shared_content.sc_mutex.lock();
         robot_ready = shared_content.robot.is_ready();
         shared_content.sc_mutex.unlock();
-        real_time_tools::Timer::sleep_sec(0.1);
     }
+    while (!robot_ready);
+
     shared_content.sc_mutex.lock();
     shared_content.print_home_offset = true;
     shared_content.sc_mutex.unlock();
