@@ -79,7 +79,10 @@ void Solo12::initialize(const std::string& network_id,
     network_id_ = network_id;
 
     // Use a serial port to read slider values.
-    serial_reader_ = std::make_shared<slider_box::SerialReader>(serial_port, 5);
+    if (!serial_port.empty())
+    {
+        serial_reader_ = std::make_shared<slider_box::SerialReader>(serial_port, 5);
+    }
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 
@@ -188,19 +191,22 @@ void Solo12::acquire_sensors()
      */
     // acquire the slider positions
     // TODO: Handle case that no new values are arriving.
-    serial_reader_->fill_vector(slider_positions_vector_);
-    for (unsigned i = 0; i < slider_positions_.size(); ++i)
+    if (serial_reader_)
     {
-        // acquire the slider
-        slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
-    }
+        serial_reader_->fill_vector(slider_positions_vector_);
+        for (unsigned i = 0; i < slider_positions_.size(); ++i)
+        {
+            // acquire the slider
+            slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
+        }
 
-    // Active the estop if button is pressed or the estop was active before.
-    active_estop_ |= slider_positions_vector_[0] == 0;
+        // Active the estop if button is pressed or the estop was active before.
+        active_estop_ |= slider_positions_vector_[0] == 0;
 
-    if (active_estop_ && estop_counter_++ % 2000 == 0)
-    {
-        robot_->ReportError("Soft E-Stop is active.");
+        if (active_estop_ && estop_counter_++ % 2000 == 0)
+        {
+            robot_->ReportError("Soft E-Stop is active.");
+        }
     }
 
     // acquire imu
