@@ -1,7 +1,7 @@
 #include "solo/solo8.hpp"
 #include <cmath>
-#include "solo/common_programs_header.hpp"
 #include <odri_control_interface/common.hpp>
+#include "solo/common_programs_header.hpp"
 
 namespace solo
 {
@@ -68,8 +68,7 @@ Solo8::Solo8()
 void Solo8::initialize(const std::string& network_id)
 {
     // Use a serial port to read slider values.
-    serial_reader_ =
-        std::make_shared<slider_box::SerialReader>("Not used", 3);
+    serial_reader_ = std::make_shared<slider_box::SerialReader>("Not used", 3);
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id);
 
@@ -81,7 +80,8 @@ void Solo8::initialize(const std::string& network_id)
     double lHFE = 1.45;
     double lKFE = 2.80;
     Eigen::VectorXd joint_lower_limits(8);
-    joint_lower_limits << -lHFE, -lKFE, -lHFE, -lKFE, -lHFE, -lKFE, -lHFE, -lKFE;
+    joint_lower_limits << -lHFE, -lKFE, -lHFE, -lKFE, -lHFE, -lKFE, -lHFE,
+        -lKFE;
     Eigen::VectorXd joint_upper_limits(8);
     joint_upper_limits << lHFE, lKFE, lHFE, lKFE, lHFE, lKFE, lHFE, lKFE;
 
@@ -108,8 +108,11 @@ void Solo8::initialize(const std::string& network_id)
 
     // Use zero position offsets for now. Gets updated in the calibration
     // method.
-    Eigen::VectorXd position_offsets(8);
+    Eigen::VectorXd position_offsets(8), calibration_position(8);
+    Eigen::VectorXi calibration_order(8);
     position_offsets.fill(0.);
+    calibration_position.fill(0.);
+    calibration_order.fill(0);
     std::vector<odri_control_interface::CalibrationMethod> directions{
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE,
@@ -118,10 +121,17 @@ void Solo8::initialize(const std::string& network_id)
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE
-       };
+        odri_control_interface::POSITIVE};
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        joints_, directions, position_offsets, 5., 0.05, 1.0, 0.001);
+        joints_,
+        directions,
+        position_offsets,
+        calibration_order,
+        calibration_position,
+        5.,
+        0.05,
+        1.0,
+        0.001);
 
     // Define the robot.
     robot_ = std::make_shared<odri_control_interface::Robot>(

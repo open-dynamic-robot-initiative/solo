@@ -1,8 +1,8 @@
 #include "solo/solo12.hpp"
 #include <cmath>
 #include <odri_control_interface/common.hpp>
-#include "solo/common_programs_header.hpp"
 #include "real_time_tools/spinner.hpp"
+#include "solo/common_programs_header.hpp"
 
 namespace solo
 {
@@ -79,8 +79,7 @@ void Solo12::initialize(const std::string& network_id,
     network_id_ = network_id;
 
     // Use a serial port to read slider values.
-    serial_reader_ =
-        std::make_shared<slider_box::SerialReader>(serial_port, 5);
+    serial_reader_ = std::make_shared<slider_box::SerialReader>(serial_port, 5);
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 
@@ -123,8 +122,11 @@ void Solo12::initialize(const std::string& network_id,
 
     // Use zero position offsets for now. Gets updated in the calibration
     // method.
-    Eigen::VectorXd position_offsets(12);
+    Eigen::VectorXd position_offsets(12), calibration_position(12);
+    Eigen::VectorXi calibration_order(12);
     position_offsets.fill(0.);
+    calibration_position.fill(0.);
+    calibration_order.fill(0);
     std::vector<odri_control_interface::CalibrationMethod> directions{
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE,
@@ -139,7 +141,15 @@ void Solo12::initialize(const std::string& network_id,
         odri_control_interface::POSITIVE,
         odri_control_interface::POSITIVE};
     calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        joints_, directions, position_offsets, 5., 0.05, 1.0, 0.001);
+        joints_,
+        directions,
+        position_offsets,
+        calibration_order,
+        calibration_position,
+        5.,
+        0.05,
+        1.0,
+        0.001);
 
     // Define the robot.
     robot_ = std::make_shared<odri_control_interface::Robot>(
@@ -279,7 +289,7 @@ void Solo12::send_target_joint_position(
 }
 
 void Solo12::send_target_joint_velocity(
-        const Eigen::Ref<Vector12d> target_joint_velocity)
+    const Eigen::Ref<Vector12d> target_joint_velocity)
 {
     robot_->joints->SetDesiredVelocities(target_joint_velocity);
 }
@@ -301,7 +311,7 @@ void Solo12::wait_until_ready()
     real_time_tools::Spinner spinner;
     spinner.set_period(0.001);
     static long int count_wait_until_ready = 0;
-    while(state_ != Solo12State::ready)
+    while (state_ != Solo12State::ready)
     {
         if (count_wait_until_ready % 200 == 0)
         {
