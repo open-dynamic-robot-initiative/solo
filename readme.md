@@ -45,7 +45,10 @@ You find examples for how to use the code base in the `demos/` folder.
 
 #### API documentation
 
-To build the API documentation, please follow the steps [here](https://github.com/machines-in-motion/machines-in-motion.github.io/issues/4).
+The API documentation of the current master branch is provided here:
+https://open-dynamic-robot-initiative.github.io/solo
+
+To build the API documentation yourself, please follow the steps [here](https://github.com/machines-in-motion/machines-in-motion.github.io/issues/4).
 
 ### License and Copyrights
 
