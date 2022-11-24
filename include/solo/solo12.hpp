@@ -26,18 +26,19 @@ enum Solo12State
  * @brief Definition and drivers for the Solo12 robot.
  *
  * Mapping between the DOF and driver boards + motor ports:
- * FL_HAA - motor board 0, motor port 0, motor index 0
- * FL_HFE - motor board 1, motor port 1, motor index 3
- * FL_KFE - motor board 1, motor port 0, motor index 2
- * FR_HAA - motor board 0, motor port 1, motor index 1
- * FR_HFE - motor board 2, motor port 1, motor index 5
- * FR_KFE - motor board 2, motor port 0, motor index 4
- * HL_HAA - motor board 3, motor port 0, motor index 6
- * HL_HFE - motor board 4, motor port 1, motor index 9
- * HL_KFE - motor board 4, motor port 0, motor index 8
- * HR_HAA - motor board 3, motor port 1, motor index 7
- * HR_HFE - motor board 5, motor port 1, motor index 11
- * HR_KFE - motor board 5, motor port 0, motor index 10
+ *
+ * - FL_HAA: motor board 0, motor port 0, motor index 0
+ * - FL_HFE: motor board 1, motor port 1, motor index 3
+ * - FL_KFE: motor board 1, motor port 0, motor index 2
+ * - FR_HAA: motor board 0, motor port 1, motor index 1
+ * - FR_HFE: motor board 2, motor port 1, motor index 5
+ * - FR_KFE: motor board 2, motor port 0, motor index 4
+ * - HL_HAA: motor board 3, motor port 0, motor index 6
+ * - HL_HFE: motor board 4, motor port 1, motor index 9
+ * - HL_KFE: motor board 4, motor port 0, motor index 8
+ * - HR_HAA: motor board 3, motor port 1, motor index 7
+ * - HR_HFE: motor board 5, motor port 1, motor index 11
+ * - HR_KFE: motor board 5, motor port 0, motor index 10
  */
 class Solo12
 {
