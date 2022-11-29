@@ -43,6 +43,8 @@ enum Solo12State
 class Solo12
 {
 public:
+    inline static const std::string SERIAL_PORT_DISABLED = "none";
+
     /**
      * @brief Solo is the constructor of the class.
      */
@@ -476,11 +478,6 @@ private:
      * Can be used as a joystick input.
      */
     Eigen::Vector4d slider_positions_;
-
-    /**
-     * @brief For reading the raw slider values from the serial port.
-     */
-    std::vector<int> slider_positions_vector_;
 
     /**
      * @brief contact_sensors_ is contact sensors at each feet of teh quadruped.

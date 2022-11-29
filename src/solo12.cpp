@@ -21,7 +21,6 @@ Solo12::Solo12()
     motor_max_current_.setZero();
     max_joint_torques_.setZero();
     joint_zero_positions_.setZero();
-    slider_positions_vector_.resize(5);
 
     /**
      * Hardware status
@@ -78,8 +77,13 @@ void Solo12::initialize(const std::string& network_id,
 {
     network_id_ = network_id;
 
-    // Use a serial port to read slider values.
-    serial_reader_ = std::make_shared<slider_box::SerialReader>(serial_port, 5);
+    // only initialize serial reader if
+    if (!serial_port.empty() and serial_port != SERIAL_PORT_DISABLED)
+    {
+        // Use a serial port to read slider values.
+        serial_reader_ =
+            std::make_shared<slider_box::SerialReader>(serial_port, 5);
+    }
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 
@@ -186,17 +190,22 @@ void Solo12::acquire_sensors()
     /**
      * Additional data
      */
-    // acquire the slider positions
-    // TODO: Handle case that no new values are arriving.
-    serial_reader_->fill_vector(slider_positions_vector_);
-    for (unsigned i = 0; i < slider_positions_.size(); ++i)
+    if (serial_reader_)
     {
-        // acquire the slider
-        slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
-    }
+        std::vector<int> slider_box_values(5);
 
-    // Active the estop if button is pressed or the estop was active before.
-    active_estop_ |= slider_positions_vector_[0] == 0;
+        // acquire the slider positions
+        // TODO: Handle case that no new values are arriving.
+        serial_reader_->fill_vector(slider_box_values);
+        for (unsigned i = 0; i < slider_positions_.size(); ++i)
+        {
+            // acquire the slider
+            slider_positions_(i) = double(slider_box_values[i + 1]) / 1024.;
+        }
+
+        // Active the estop if button is pressed or the estop was active before.
+        active_estop_ |= slider_box_values[0] == 0;
+    }
 
     if (active_estop_ && estop_counter_++ % 2000 == 0)
     {
