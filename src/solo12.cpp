@@ -1,5 +1,9 @@
 #include "solo/solo12.hpp"
+
 #include <cmath>
+
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 #include <odri_control_interface/common.hpp>
 #include "real_time_tools/spinner.hpp"
 #include "solo/common_programs_header.hpp"
@@ -12,6 +16,14 @@ using namespace odri_control_interface;
 
 Solo12::Solo12()
 {
+    // initialise logger and set level
+    log_ = spdlog::get(LOGGER_NAME);
+    if (!log_)
+    {
+        log_ = spdlog::stderr_color_mt(LOGGER_NAME);
+        log_->set_level(spdlog::level::debug);
+    }
+
     /**
      * Hardware properties
      */
@@ -80,9 +92,14 @@ void Solo12::initialize(const std::string& network_id,
     // only initialize serial reader if
     if (!slider_box_port.empty() and slider_box_port != SERIAL_PORT_DISABLED)
     {
+        log_->debug("Use slider box at port '{}'", slider_box_port);
         // Use a serial port to read slider values.
         serial_reader_ =
             std::make_shared<slider_box::SerialReader>(slider_box_port, 5);
+    }
+    else
+    {
+        log_->info("No slider box port provided.  Slider box is disabled.");
     }
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);

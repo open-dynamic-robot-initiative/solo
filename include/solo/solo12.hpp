@@ -2,11 +2,11 @@
  * \file solo12.hpp
  * \author Julian Viereck
  * \date 21 November 2019
- * \copyright Copyright (c) 2019, New York University and Max Planck
- * Gesellschaft.
+ * \copyright Copyright (c) 2019 New York University & Max Planck Gesellschaft
  */
-
 #pragma once
+
+#include <spdlog/spdlog.h>
 
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
@@ -44,6 +44,9 @@ class Solo12
 {
 public:
     inline static const std::string SERIAL_PORT_DISABLED = "none";
+
+    //! @brief Name of the spdlog logger used by the class.
+    inline static const std::string LOGGER_NAME = "solo/Solo12";
 
     /**
      * @brief Solo is the constructor of the class.
@@ -400,6 +403,9 @@ public:
     }
 
 private:
+    //! Logger
+    std::shared_ptr<spdlog::logger> log_;
+
     /**
      * Joint properties
      */
