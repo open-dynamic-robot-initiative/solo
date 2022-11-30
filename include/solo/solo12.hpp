@@ -11,6 +11,7 @@
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
 #include <slider_box/serial_reader.hpp>
+
 #include "solo/common_header.hpp"
 
 namespace solo
@@ -43,7 +44,8 @@ enum Solo12State
 class Solo12
 {
 public:
-    inline static const std::string SERIAL_PORT_DISABLED = "none";
+    //! @brief Set slider box port to this value to disable it.
+    inline static const std::string SLIDER_BOX_DISABLED = "none";
 
     //! @brief Name of the spdlog logger used by the class.
     inline static const std::string LOGGER_NAME = "solo/Solo12";

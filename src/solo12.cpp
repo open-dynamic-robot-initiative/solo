@@ -90,7 +90,7 @@ void Solo12::initialize(const std::string& network_id,
     network_id_ = network_id;
 
     // only initialize serial reader if
-    if (!slider_box_port.empty() and slider_box_port != SERIAL_PORT_DISABLED)
+    if (!slider_box_port.empty() and slider_box_port != SLIDER_BOX_DISABLED)
     {
         log_->debug("Use slider box at port '{}'", slider_box_port);
         // Use a serial port to read slider values.
