@@ -53,7 +53,12 @@ public:
     /**
      * @brief Initialize the robot by setting aligning the motors and calibrate
      * the sensors to 0.
-     * @param if_name Interface for connection to hardware.
+     *
+     * @param network_id Name of the network interface for connection to the
+     *      robot.
+     * @param slider_box_port Name of the serial port to which the slider box is
+     *      connected.  Set to "" or "none" if no slider box is used.  Set to
+     *      "auto" to auto-detect the port.
      */
     void initialize(const std::string& network_id,
                     const std::string& slider_box_port);
