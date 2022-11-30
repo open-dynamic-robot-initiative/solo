@@ -408,6 +408,9 @@ private:
     //! Logger
     std::shared_ptr<spdlog::logger> log_;
 
+    // Number of values sent by the slider box through the serial port.
+    static constexpr int SLIDER_BOX_NUM_VALUES = 5;
+
     /**
      * Joint properties
      */

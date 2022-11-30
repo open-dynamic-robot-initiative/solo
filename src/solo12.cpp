@@ -94,8 +94,8 @@ void Solo12::initialize(const std::string& network_id,
     {
         log_->debug("Use slider box at port '{}'", slider_box_port);
         // Use a serial port to read slider values.
-        serial_reader_ =
-            std::make_shared<slider_box::SerialReader>(slider_box_port, 5);
+        serial_reader_ = std::make_shared<slider_box::SerialReader>(
+            slider_box_port, SLIDER_BOX_NUM_VALUES);
     }
     else
     {
@@ -209,7 +209,7 @@ void Solo12::acquire_sensors()
      */
     if (serial_reader_)
     {
-        std::vector<int> slider_box_values(5);
+        std::vector<int> slider_box_values(SLIDER_BOX_NUM_VALUES);
 
         // acquire the slider positions
         // TODO: Handle case that no new values are arriving.
