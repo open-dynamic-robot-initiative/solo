@@ -298,6 +298,39 @@ public:
         return imu_linear_acceleration_;
     }
 
+    /**
+     * @brief Get current [A] measurement from the power board.
+     *
+     * Will be zero if no power board is used.
+     */
+    float get_powerboard_current() const
+    {
+        // FIXME better get in acquire_sensors() so its in sync with other
+        // sensor data
+        return main_board_ptr_->powerboard_current();
+    }
+
+    /**
+     * @brief Get voltage [V] measurement from the power board.
+     *
+     * Will be zero if no power board is used.
+     */
+    float get_powerboard_voltage() const
+    {
+        return main_board_ptr_->powerboard_voltage();
+    }
+
+    /**
+     * @brief Get energy [J] consumed since start as measured by the power
+     * board.
+     *
+     * Will be zero if no power board is used.
+     */
+    float get_powerboard_energy() const
+    {
+        return main_board_ptr_->powerboard_energy();
+    }
+
     /*
      * Hardware Status
      */

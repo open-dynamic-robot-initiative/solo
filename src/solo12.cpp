@@ -151,9 +151,12 @@ void Solo12::initialize(const std::string& network_id,
         1.0,
         0.001);
 
+    auto powerboard =
+        std::make_shared<odri_control_interface::PowerBoard>(main_board_ptr_);
+
     // Define the robot.
     robot_ = std::make_shared<odri_control_interface::Robot>(
-        main_board_ptr_, joints_, imu_, calib_ctrl_);
+        main_board_ptr_, joints_, imu_, calib_ctrl_, powerboard);
 
     // Initialize the robot.
     robot_->Init();
