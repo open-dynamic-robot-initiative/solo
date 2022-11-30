@@ -56,7 +56,7 @@ public:
      * @param if_name Interface for connection to hardware.
      */
     void initialize(const std::string& network_id,
-                    const std::string& serial_port);
+                    const std::string& slider_box_port);
 
     /**
      * @brief Sets the maximum joint torques.
