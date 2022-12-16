@@ -2,15 +2,16 @@
  * \file solo12.hpp
  * \author Julian Viereck
  * \date 21 November 2019
- * \copyright Copyright (c) 2019, New York University and Max Planck
- * Gesellschaft.
+ * \copyright Copyright (c) 2019 New York University & Max Planck Gesellschaft
  */
-
 #pragma once
+
+#include <spdlog/spdlog.h>
 
 #include <odri_control_interface/calibration.hpp>
 #include <odri_control_interface/robot.hpp>
 #include <slider_box/serial_reader.hpp>
+
 #include "solo/common_header.hpp"
 
 namespace solo
@@ -43,6 +44,12 @@ enum Solo12State
 class Solo12
 {
 public:
+    //! @brief Set slider box port to this value to disable it.
+    inline static const std::string SLIDER_BOX_DISABLED = "none";
+
+    //! @brief Name of the spdlog logger used by the class.
+    inline static const std::string LOGGER_NAME = "solo/Solo12";
+
     /**
      * @brief Solo is the constructor of the class.
      */
@@ -51,10 +58,15 @@ public:
     /**
      * @brief Initialize the robot by setting aligning the motors and calibrate
      * the sensors to 0.
-     * @param if_name Interface for connection to hardware.
+     *
+     * @param network_id Name of the network interface for connection to the
+     *      robot.
+     * @param slider_box_port Name of the serial port to which the slider box is
+     *      connected.  Set to "" or "none" if no slider box is used.  Set to
+     *      "auto" to auto-detect the port.
      */
     void initialize(const std::string& network_id,
-                    const std::string& serial_port);
+                    const std::string& slider_box_port);
 
     /**
      * @brief Sets the maximum joint torques.
@@ -393,6 +405,12 @@ public:
     }
 
 private:
+    //! Logger
+    std::shared_ptr<spdlog::logger> log_;
+
+    // Number of values sent by the slider box through the serial port.
+    static constexpr int SLIDER_BOX_NUM_VALUES = 5;
+
     /**
      * Joint properties
      */
@@ -476,11 +494,6 @@ private:
      * Can be used as a joystick input.
      */
     Eigen::Vector4d slider_positions_;
-
-    /**
-     * @brief For reading the raw slider values from the serial port.
-     */
-    std::vector<int> slider_positions_vector_;
 
     /**
      * @brief contact_sensors_ is contact sensors at each feet of teh quadruped.

@@ -37,6 +37,7 @@ find_package(real_time_tools REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(yaml_utils REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(spdlog REQUIRED)
 # Find resources from robot_properties packages.
 find_package(PythonModules COMPONENTS robot_properties_solo)
 
@@ -57,6 +58,7 @@ set(export_list
     pybind11
     yaml_utils
     Eigen3
+    spdlog
 )
 if(${dynamic_graph_manager_FOUND})
   set(export_list ${export_list} dynamic_graph_manager)

@@ -1,5 +1,9 @@
 #include "solo/solo12.hpp"
+
 #include <cmath>
+
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 #include <odri_control_interface/common.hpp>
 #include "real_time_tools/spinner.hpp"
 #include "solo/common_programs_header.hpp"
@@ -12,6 +16,14 @@ using namespace odri_control_interface;
 
 Solo12::Solo12()
 {
+    // initialise logger and set level
+    log_ = spdlog::get(LOGGER_NAME);
+    if (!log_)
+    {
+        log_ = spdlog::stderr_color_mt(LOGGER_NAME);
+        log_->set_level(spdlog::level::debug);
+    }
+
     /**
      * Hardware properties
      */
@@ -21,7 +33,6 @@ Solo12::Solo12()
     motor_max_current_.setZero();
     max_joint_torques_.setZero();
     joint_zero_positions_.setZero();
-    slider_positions_vector_.resize(5);
 
     /**
      * Hardware status
@@ -74,12 +85,22 @@ Solo12::Solo12()
 }
 
 void Solo12::initialize(const std::string& network_id,
-                        const std::string& serial_port)
+                        const std::string& slider_box_port)
 {
     network_id_ = network_id;
 
-    // Use a serial port to read slider values.
-    serial_reader_ = std::make_shared<slider_box::SerialReader>(serial_port, 5);
+    // only initialize serial reader if
+    if (!slider_box_port.empty() and slider_box_port != SLIDER_BOX_DISABLED)
+    {
+        log_->debug("Use slider box at port '{}'", slider_box_port);
+        // Use a serial port to read slider values.
+        serial_reader_ = std::make_shared<slider_box::SerialReader>(
+            slider_box_port, SLIDER_BOX_NUM_VALUES);
+    }
+    else
+    {
+        log_->info("No slider box port provided.  Slider box is disabled.");
+    }
 
     main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
 
@@ -186,17 +207,22 @@ void Solo12::acquire_sensors()
     /**
      * Additional data
      */
-    // acquire the slider positions
-    // TODO: Handle case that no new values are arriving.
-    serial_reader_->fill_vector(slider_positions_vector_);
-    for (unsigned i = 0; i < slider_positions_.size(); ++i)
+    if (serial_reader_)
     {
-        // acquire the slider
-        slider_positions_(i) = double(slider_positions_vector_[i + 1]) / 1024.;
-    }
+        std::vector<int> slider_box_values(SLIDER_BOX_NUM_VALUES);
 
-    // Active the estop if button is pressed or the estop was active before.
-    active_estop_ |= slider_positions_vector_[0] == 0;
+        // acquire the slider positions
+        // TODO: Handle case that no new values are arriving.
+        serial_reader_->fill_vector(slider_box_values);
+        for (unsigned i = 0; i < slider_positions_.size(); ++i)
+        {
+            // acquire the slider
+            slider_positions_(i) = double(slider_box_values[i + 1]) / 1024.;
+        }
+
+        // Active the estop if button is pressed or the estop was active before.
+        active_estop_ |= slider_box_values[0] == 0;
+    }
 
     if (active_estop_ && estop_counter_++ % 2000 == 0)
     {
