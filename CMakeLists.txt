@@ -65,7 +65,7 @@ if(${dynamic_graph_manager_FOUND})
 endif()
 if(${blmc_drivers_FOUND})
   set(BUILD_SOLO8_TI on)
-  set(export_list ${export_list} blmc_driver)
+  set(export_list ${export_list} blmc_drivers)
 endif()
 ament_export_dependencies(${export_list})
 
