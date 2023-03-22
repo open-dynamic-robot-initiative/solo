@@ -29,6 +29,14 @@
 namespace solo
 {
 /**
+ * @brief Fixed-size double vector.
+ *
+ * @tparam X Size of the Vector
+ */
+template <int X>
+using Vectord = Eigen::Matrix<double, X, 1>;
+
+/**
  * @brief Vector2d shortcut for the eigen vector of size 1.
  */
 typedef Eigen::Matrix<double, 1, 1> Vector1d;

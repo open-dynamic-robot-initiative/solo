@@ -1,112 +1,13 @@
-#include "solo/solo12.hpp"
-
-#include <cmath>
-
-#include <spdlog/sinks/stdout_color_sinks.h>
-
-#include <odri_control_interface/common.hpp>
-#include "real_time_tools/spinner.hpp"
-#include "solo/common_programs_header.hpp"
+#include <solo/solo12.hpp>
 
 namespace solo
 {
-const double Solo12::max_joint_torque_security_margin_ = 0.99;
-
-using namespace odri_control_interface;
-
-Solo12::Solo12()
+template <>
+void SoloX<12>::initialize_joint_modules()
 {
-    // initialise logger and set level
-    log_ = spdlog::get(LOGGER_NAME);
-    if (!log_)
-    {
-        log_ = spdlog::stderr_color_mt(LOGGER_NAME);
-        log_->set_level(spdlog::level::debug);
-    }
-
-    /**
-     * Hardware properties
-     */
-    motor_inertias_.setZero();
-    motor_torque_constants_.setZero();
-    joint_gear_ratios_.setZero();
-    motor_max_current_.setZero();
-    max_joint_torques_.setZero();
-    joint_zero_positions_.setZero();
-
-    /**
-     * Hardware status
-     */
-    for (unsigned i = 0; i < motor_enabled_.size(); ++i)
-    {
-        motor_enabled_[i] = false;
-        motor_ready_[i] = false;
-    }
-    for (unsigned i = 0; i < motor_board_enabled_.size(); ++i)
-    {
-        motor_board_enabled_[0] = false;
-        motor_board_errors_[0] = 0;
-    }
-
-    /**
-     * Joint data
-     */
-    joint_positions_.setZero();
-    joint_velocities_.setZero();
-    joint_torques_.setZero();
-    joint_target_torques_.setZero();
-    joint_encoder_index_.setZero();
-
-    /**
-     * Additional data
-     */
-    slider_positions_.setZero();
-    contact_sensors_states_.setZero();
-    imu_accelerometer_.setZero();
-    imu_gyroscope_.setZero();
-    imu_attitude_.setZero();
-    imu_linear_acceleration_.setZero();
-
-    /**
-     * Setup some known data
-     */
-
-    // for now this value is very small but it is currently for debug mode
-    motor_max_current_.fill(8.0);  // TODO: set as paramters?
-    motor_torque_constants_.fill(0.025);
-    motor_inertias_.fill(0.045);
-    joint_gear_ratios_.fill(9.0);
-
-    // By default assume the estop is inactive.
-    active_estop_ = false;
-    calibrate_request_ = false;
-
-    state_ = Solo12State::initial;
-}
-
-void Solo12::initialize(const std::string& network_id,
-                        const std::string& slider_box_port)
-{
-    network_id_ = network_id;
-
-    // only initialize serial reader if
-    if (!slider_box_port.empty() and slider_box_port != SLIDER_BOX_DISABLED)
-    {
-        log_->debug("Use slider box at port '{}'", slider_box_port);
-        // Use a serial port to read slider values.
-        serial_reader_ = std::make_shared<slider_box::SerialReader>(
-            slider_box_port, SLIDER_BOX_NUM_VALUES);
-    }
-    else
-    {
-        log_->info("No slider box port provided.  Slider box is disabled.");
-    }
-
-    main_board_ptr_ = std::make_shared<MasterBoardInterface>(network_id_);
-
-    VectorXi motor_numbers(12);
+    odri_control_interface::VectorXi motor_numbers(12);
     motor_numbers << 0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10;
-    VectorXb motor_reversed(12);
+    odri_control_interface::VectorXb motor_reversed(12);
     motor_reversed << false, true, true, true, false, false, false, true, true,
         true, false, false;
 
@@ -132,234 +33,26 @@ void Solo12::initialize(const std::string& network_id,
         joint_upper_limits,
         80.,
         0.2);
-
-    // Define the IMU.
-    VectorXl rotate_vector(3);
-    rotate_vector << 1, 2, 3;
-    VectorXl orientation_vector(4);
-    orientation_vector << 1, 2, 3, 4;
-    imu_ = std::make_shared<odri_control_interface::IMU>(
-        main_board_ptr_, rotate_vector, orientation_vector);
-
-    // Use zero position offsets for now. Gets updated in the calibration
-    // method.
-    Eigen::VectorXd position_offsets(12), calibration_position(12);
-    Eigen::VectorXi calibration_order(12);
-    position_offsets.fill(0.);
-    calibration_position.fill(0.);
-    calibration_order.fill(0);
-    std::vector<odri_control_interface::CalibrationMethod> directions{
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::NEGATIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::NEGATIVE,
-        odri_control_interface::POSITIVE,
-        odri_control_interface::POSITIVE};
-    calib_ctrl_ = std::make_shared<odri_control_interface::JointCalibrator>(
-        joints_,
-        directions,
-        position_offsets,
-        calibration_order,
-        calibration_position,
-        5.,
-        0.05,
-        1.0,
-        0.001);
-
-    // Define the robot.
-    robot_ = std::make_shared<odri_control_interface::Robot>(
-        main_board_ptr_, joints_, imu_, calib_ctrl_);
-
-    // Initialize the robot.
-    robot_->Init();
 }
 
-void Solo12::acquire_sensors()
+template <>
+std::vector<odri_control_interface::CalibrationMethod>
+SoloX<12>::get_calibration_directions() const
 {
-    static int estop_counter_ = 0;
-
-    robot_->ParseSensorData();
-
-    auto joints = robot_->joints;
-    auto imu = robot_->imu;
-
-    /**
-     * Joint data
-     */
-    // acquire the joint position
-    joint_positions_ = joints->GetPositions();
-    // acquire the joint velocities
-    joint_velocities_ = joints->GetVelocities();
-    // acquire the joint torques
-    joint_torques_ = joints->GetMeasuredTorques();
-    // acquire the target joint torques
-    joint_target_torques_ = joints->GetSentTorques();
-
-    // TODO: The index angle is not transmitted.
-    // joint_encoder_index_ = joints_.get_measured_index_angles();
-
-    /**
-     * Additional data
-     */
-    if (serial_reader_)
-    {
-        std::vector<int> slider_box_values(SLIDER_BOX_NUM_VALUES);
-
-        // acquire the slider positions
-        // TODO: Handle case that no new values are arriving.
-        serial_reader_->fill_vector(slider_box_values);
-        for (unsigned i = 0; i < slider_positions_.size(); ++i)
-        {
-            // acquire the slider
-            slider_positions_(i) = double(slider_box_values[i + 1]) / 1024.;
-        }
-
-        // Active the estop if button is pressed or the estop was active before.
-        active_estop_ |= slider_box_values[0] == 0;
-    }
-
-    if (active_estop_ && estop_counter_++ % 2000 == 0)
-    {
-        robot_->ReportError("Soft E-Stop is active.");
-    }
-
-    // acquire imu
-    imu_linear_acceleration_ = imu->GetLinearAcceleration();
-    imu_accelerometer_ = imu->GetAccelerometer();
-    imu_gyroscope_ = imu->GetGyroscope();
-    imu_attitude_ = imu->GetAttitudeQuaternion();
-
-    /**
-     * The different status.
-     */
-
-    // motor board status
-    ConstRefVectorXi motor_board_errors = joints->GetMotorDriverErrors();
-    ConstRefVectorXb motor_driver_enabled = joints->GetMotorDriverEnabled();
-    for (int i = 0; i < 6; i++)
-    {
-        motor_board_errors_[i] = motor_board_errors[i];
-        motor_board_enabled_[i] = motor_driver_enabled[i];
-    }
-
-    // motors status
-    ConstRefVectorXb motor_enabled = joints->GetEnabled();
-    ConstRefVectorXb motor_ready = joints->GetReady();
-    for (int i = 0; i < 12; i++)
-    {
-        motor_enabled_[i] = motor_enabled[i];
-        motor_ready_[i] = motor_ready[i];
-    }
+    return {odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::NEGATIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::NEGATIVE,
+            odri_control_interface::POSITIVE,
+            odri_control_interface::POSITIVE};
 }
 
-void Solo12::set_max_current(const double& max_current)
-{
-    robot_->joints->SetMaximumCurrents(max_current);
-}
-
-void Solo12::send_target_joint_torque(
-    const Eigen::Ref<Vector12d> target_joint_torque)
-{
-    robot_->joints->SetTorques(target_joint_torque);
-
-    switch (state_)
-    {
-        case Solo12State::initial:
-            robot_->joints->SetZeroCommands();
-            if (!robot_->IsTimeout() && !robot_->IsAckMsgReceived())
-            {
-                robot_->SendInit();
-            }
-            else if (!robot_->IsReady())
-            {
-                robot_->SendCommand();
-            }
-            else
-            {
-                state_ = Solo12State::ready;
-            }
-            break;
-
-        case Solo12State::ready:
-            if (calibrate_request_)
-            {
-                calibrate_request_ = false;
-                state_ = Solo12State::calibrate;
-                _is_calibrating = true;
-                robot_->joints->SetZeroCommands();
-            }
-            robot_->SendCommand();
-            break;
-
-        case Solo12State::calibrate:
-            if (calib_ctrl_->Run())
-            {
-                state_ = Solo12State::ready;
-                _is_calibrating = false;
-            }
-            robot_->SendCommand();
-            break;
-    }
-}
-
-void Solo12::send_target_joint_position(
-    const Eigen::Ref<Vector12d> target_joint_position)
-{
-    robot_->joints->SetDesiredPositions(target_joint_position);
-}
-
-void Solo12::send_target_joint_velocity(
-    const Eigen::Ref<Vector12d> target_joint_velocity)
-{
-    robot_->joints->SetDesiredVelocities(target_joint_velocity);
-}
-
-void Solo12::send_target_joint_position_gains(
-    const Eigen::Ref<Vector12d> target_joint_position_gains)
-{
-    robot_->joints->SetPositionGains(target_joint_position_gains);
-}
-
-void Solo12::send_target_joint_velocity_gains(
-    const Eigen::Ref<Vector12d> target_joint_velocity_gains)
-{
-    robot_->joints->SetVelocityGains(target_joint_velocity_gains);
-}
-
-void Solo12::wait_until_ready()
-{
-    real_time_tools::Spinner spinner;
-    spinner.set_period(0.001);
-    static long int count_wait_until_ready = 0;
-    while (state_ != Solo12State::ready)
-    {
-        if (count_wait_until_ready % 200 == 0)
-        {
-            printf("Solo12::wait_until_ready Getting ready\n");
-        }
-        spinner.spin();
-        count_wait_until_ready++;
-    }
-}
-
-bool Solo12::is_ready()
-{
-    return state_ == Solo12State::ready;
-}
-
-bool Solo12::request_calibration(const Vector12d& home_offset_rad)
-{
-    printf("Solo12::request_calibration called\n");
-    Eigen::VectorXd hor = home_offset_rad;
-    calib_ctrl_->UpdatePositionOffsets(hor);
-    calibrate_request_ = true;
-    return true;
-}
+template class SoloX<12>;
 
 }  // namespace solo
