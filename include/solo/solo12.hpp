@@ -16,7 +16,7 @@
 
 namespace solo
 {
-enum Solo12State
+enum class Solo12State
 {
     initial,
     ready,
