@@ -901,8 +901,7 @@ void SoloX<X>::wait_until_ready()
     {
         if (count_wait_until_ready % 200 == 0)
         {
-            // FIXME use logger
-            printf("Solo::wait_until_ready Getting ready\n");
+            log_->info("Solo::wait_until_ready Getting ready");
         }
         spinner.spin();
         count_wait_until_ready++;
@@ -918,7 +917,7 @@ bool SoloX<X>::is_ready()
 template <int X>
 bool SoloX<X>::request_calibration(const Vectord<X>& home_offset_rad)
 {
-    printf("Solo::request_calibration called\n");
+    log_->info("Solo::request_calibration called");
     Eigen::VectorXd hor = home_offset_rad;
     calib_ctrl_->UpdatePositionOffsets(hor);
     calibrate_request_ = true;
