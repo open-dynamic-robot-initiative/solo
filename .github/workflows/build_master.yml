@@ -37,7 +37,7 @@ jobs:
       - name: Setup Apptainer
         uses: open-dynamic-robot-initiative/trifinger-build-action/setup_apptainer@v2
         with:
-          uri: oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/solo_user:latest
+          uri: oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/solo_bolt_user:latest
 
       - name: Build
         uses: open-dynamic-robot-initiative/trifinger-build-action/build@v2
