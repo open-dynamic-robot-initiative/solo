@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 
     // Initialize the shared content.
     SharedContent shared_content;
-    shared_content.robot.initialize(argv[1], "banana");
+    shared_content.robot.initialize(argv[1]);
     shared_content.sc_mutex.unlock();
     shared_content.print_home_offset = false;
 
