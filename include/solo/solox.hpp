@@ -378,6 +378,16 @@ public:
         return robot_->HasError();
     }
 
+    std::string get_error_message()
+    {
+        auto error = robot_->GetError();
+        if (error)
+        {
+            return error->get_message();
+        }
+        return "";
+    }
+
     /**
      * @brief is_calibrating()
      * @return Returns true if the calibration procedure is running right now.
