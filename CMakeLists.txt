@@ -19,6 +19,9 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 
+# stop build on first error
+add_compile_options(-Wfatal-errors)
+
 OPTION(BUILD_ROS_DYNAMIC_GRAPH "Build with ROS and DynamicGraph" ON)
 
 #
