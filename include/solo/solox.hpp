@@ -9,6 +9,7 @@
 #include <spdlog/spdlog.h>
 
 #include <odri_control_interface/calibration.hpp>
+#include <odri_control_interface/error.hpp>
 #include <odri_control_interface/robot.hpp>
 #include <slider_box/serial_reader.hpp>
 
@@ -378,14 +379,9 @@ public:
         return robot_->HasError();
     }
 
-    std::string get_error_message()
+    std::optional<odri_control_interface::ErrorMessage> get_error()
     {
-        auto error = robot_->GetError();
-        if (error)
-        {
-            return error->get_message();
-        }
-        return "";
+        return robot_->GetError();
     }
 
     /**
