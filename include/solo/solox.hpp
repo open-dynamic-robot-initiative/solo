@@ -384,6 +384,11 @@ public:
         return robot_->GetError();
     }
 
+    std::string get_error_description() const
+    {
+        return robot_->GetErrorDescription();
+    }
+
     /**
      * @brief is_calibrating()
      * @return Returns true if the calibration procedure is running right now.
