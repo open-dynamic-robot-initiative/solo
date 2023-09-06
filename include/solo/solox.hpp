@@ -379,11 +379,6 @@ public:
         return robot_->HasError();
     }
 
-    std::optional<odri_control_interface::ErrorMessage> get_error()
-    {
-        return robot_->GetError();
-    }
-
     std::string get_error_description() const
     {
         return robot_->GetErrorDescription();
